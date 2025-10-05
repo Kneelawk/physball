@@ -42,7 +42,7 @@ jobs:
         working-directory: dist
       - name: Zip Dist Directory
         if: matrix.os == 'windows-latest'
-        run: zip -v ../${{ env.BINARY_NAME }}-${{ runner.os }}.zip *
+        run: zip -vr ../${{ env.BINARY_NAME }}-${{ runner.os }}.zip *
         working-directory: dist
       - name: Create Unix Release
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
@@ -72,7 +72,7 @@ jobs:
       - name: Copy Bundle
         run: cp  -r target/bevy_web/web-release/${{ env.BINARY_NAME }}/* dist/
       - name: Zip Dist Directory
-        run: zip -v ../${{ env.BINARY_NAME }}-web.zip *
+        run: zip -vr ../${{ env.BINARY_NAME }}-web.zip *
         working-directory: dist
       - name: Create Web Release
         uses: softprops/action-gh-release@v2
