@@ -74,7 +74,7 @@ jobs:
       - name: Zip Dist Directory
         run: zip -v ../${{ env.BINARY_NAME }}-web.zip *
         working-directory: dist
-      - name: Create Windows Release
+      - name: Create Web Release
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ env.BINARY_NAME }}-web.zip
