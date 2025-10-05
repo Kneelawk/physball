@@ -45,7 +45,7 @@ jobs:
         working-directory: dist
       - name: Zip Dist Directory
         if: matrix.os == 'windows-latest'
-        run: zip -vr ../${{ env.BINARY_NAME }}-${{ github.ref_name }}-${{ steps.date.outputs.date }}-${{ runner.os }}.zip *
+        run: Compress-Archive -Path * -Destination ../${{ env.BINARY_NAME }}-${{ github.ref_name }}-${{ steps.date.outputs.date }}-${{ runner.os }}.zip
         working-directory: dist
       - name: Create Unix Release
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
