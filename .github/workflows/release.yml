@@ -1,0 +1,36 @@
+name: release
+
+env:
+  BEVY_CLI_VERSION: a3c83153973fec40a4589607caa691a2eff18de9
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  release-desktop:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Install Bevy CLI
+        run: cargo install --git https://github.com/TheBevyFlock/bevy_cli --rev ${{ env.BEVY_CLI_VERSION }} --locked bevy_cli
+      - name: Build
+        run: bevy build --release
+      - name: __print_results
+        run: tree target
+  release-web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Install Bevy CLI
+        run: cargo install --git https://github.com/TheBevyFlock/bevy_cli --rev ${{ env.BEVY_CLI_VERSION }} --locked bevy_cli
+      - name: Build
+        run: bevy build --release web --bundle
+      - name: __print_results
+        run: tree target
