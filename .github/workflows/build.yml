@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install Dependencies
-        run: sudo apt-get install pkg-config libwayland-bin libwayland-client0 libwayland-cursor0 libwayland-egl1 libwayland-server0
+        run: sudo apt-get install libwayland-dev
       - name: Checkout
         uses: actions/checkout@v5
       - name: Cache
