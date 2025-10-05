@@ -8,6 +8,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Install Dependencies
+        run: sudo apt-get install libwayland-client-dev libwayland-cursor-dev
       - name: Checkout
         uses: actions/checkout@v5
       - name: Cache

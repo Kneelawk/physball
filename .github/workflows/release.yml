@@ -15,6 +15,9 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Install Dependencies
+        if: matrix.os == ubuntu-latest
+        run: sudo apt-get install libwayland-client-dev libwayland-cursor-dev
       - name: Checkout
         uses: actions/checkout@v5
       - name: Install Bevy CLI
