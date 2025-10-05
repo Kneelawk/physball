@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Install Dependencies
         if: matrix.os == ubuntu-latest
-        run: sudo apt-get install libwayland-bin libwayland-client0 libwayland-cursor0 libwayland-egl1 libwayland-server
+        run: sudo apt-get install libwayland-bin libwayland-client0 libwayland-cursor0 libwayland-egl1 libwayland-server0
       - name: Checkout
         uses: actions/checkout@v5
       - name: Install Bevy CLI
