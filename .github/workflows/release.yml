@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Install Dependencies
         if: matrix.os == ubuntu-latest
-        run: sudo apt-get install libwayland-dev
+        run: sudo apt-get install libwayland-dev libasound2-dev
       - name: Checkout
         uses: actions/checkout@v5
       - name: Install Bevy CLI
