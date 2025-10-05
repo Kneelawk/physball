@@ -4,3 +4,6 @@
 .cargo/config.toml
 
 /.idea/
+/dist/
+/*.tar.gz
+/*.zip

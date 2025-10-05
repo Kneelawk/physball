@@ -2,6 +2,7 @@ name: release
 
 env:
   BEVY_CLI_VERSION: a3c83153973fec40a4589607caa691a2eff18de9
+  BINARY_NAME: ballphys
 
 on:
   push:
@@ -24,16 +25,52 @@ jobs:
         run: cargo install --git https://github.com/TheBevyFlock/bevy_cli --rev ${{ env.BEVY_CLI_VERSION }} --locked bevy_cli
       - name: Build
         run: bevy build --release
-      - name: __print_results
-        run: tree target
+      - name: Create Dist Directory
+        run: mkdir dist
+      - name: Copy Unix Executable
+        if: matrix.os == 'ubuntu-lates' || matrix.os == 'macos-latest'
+        run: cp target/release/${{ env.BINARY_NAME }} dist/
+      - name: Copy Windows Executable
+        if: matrix.os == 'windows-latest'
+        run: cp target/release/${{ env.BINARY_NAME }}.exe dist/
+      - name: Copy Assets Directory
+        run: cp -r assets dist/ || true
+      - name: Compress Dist Directory
+        if: matrix.os == 'ubuntu-lates' || matrix.os == 'macos-latest'
+        run: tar -cvzf ../${{ env.BINARY_NAME }}-${{ runner.os }}.tar.gz *
+        working-directory: dist
+      - name: Zip Dist Directory
+        if: matrix.os == 'windows-latest'
+        run: zip -v ../${{ env.BINARY_NAME }}-${{ runner.os }}.zip *
+        working-directory: dist
+      - name: Create Unix Release
+        if: matrix.os == 'ubuntu-lates' || matrix.os == 'macos-latest'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.BINARY_RELEASE }}-${{ runner.os }}.tar.gz
+      - name: Create Windows Release
+        if: matrix.os == 'windows-latest'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.BINARY_RELEASE }}-${{ runner.os }}.zip
   release-web:
     runs-on: ubuntu-latest
     steps:
+      - name: Install WASM toolchain
+        run: rustup target add wasm32-unknown-unknown
       - name: Checkout
         uses: actions/checkout@v5
       - name: Install Bevy CLI
         run: cargo install --git https://github.com/TheBevyFlock/bevy_cli --rev ${{ env.BEVY_CLI_VERSION }} --locked bevy_cli
       - name: Build
-        run: bevy build --release web --bundle
-      - name: __print_results
-        run: tree target
+        run: bevy build --release web --yes --bundle
+      - name: Create Dist Directory
+        run: mkdir dist
+      - name: Copy Bundle
+        run: cp  -r target/bevy_web/web-release/${{ env.BINARY_NAME }}/* dist/
+      - name: Zip Dist Directory
+        run: zip -v ../${{ env.BINARY_NAME }}-web.zip *
+      - name: Create Windows Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.BINARY_RELEASE }}-web.zip
