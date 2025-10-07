@@ -5,7 +5,8 @@ edition = "2024"
 
 [dependencies]
 avian3d = { git = "https://github.com/Jondolf/avian", branch = "main" }
-bevy = "0.17"
+bevy = { version = "0.17", features = ["experimental_bevy_ui_widgets"] }
+bevy_svg = { git = "https://github.com/Kneelawk/bevy_svg.git", branch = "feat/bevy-0.17" }
 # Set max log levels. This helps avoid unwanted low-severity log spam, which can affect performance.
 log = { version = "0.4", features = [
     "max_level_debug",
