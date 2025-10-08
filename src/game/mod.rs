@@ -1,4 +1,5 @@
 mod startup;
+mod state;
 
 use avian3d::PhysicsPlugins;
 use bevy::app::plugin_group;
@@ -16,6 +17,7 @@ pub fn ballphys_client_main() -> AppExit {
 
 plugin_group! {
     struct BallphysClient {
-        startup:::BallphysStartup
+        startup:::BallphysStartup,
+        state:::GameStatePlugin,
     }
 }
