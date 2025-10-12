@@ -1,3 +1,4 @@
+mod camera;
 mod startup;
 mod state;
 
@@ -18,6 +19,7 @@ pub fn ballphys_client_main() -> AppExit {
 plugin_group! {
     struct BallphysClient {
         startup:::BallphysStartup,
+        camera:::CameraPlugin,
         state:::GameStatePlugin,
     }
 }

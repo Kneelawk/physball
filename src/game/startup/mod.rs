@@ -1,7 +1,7 @@
 use crate::game::state::GameState;
-use bevy::animation::{animated_field, AnimationTargetId};
-use bevy::asset::embedded_asset;
+use bevy::asset::{embedded_asset, load_embedded_asset};
 use bevy::prelude::*;
+use bevy_svg::prelude::*;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct BallphysStartup;
@@ -10,29 +10,58 @@ impl Plugin for BallphysStartup {
     fn build(&self, app: &mut App) {
         embedded_asset!(app, "bevy_logo_dark.svg");
 
-        app.add_systems(OnEnter(GameState::Splash), splash_screen);
+        app.add_systems(OnEnter(GameState::Splash), splash_screen)
+            .add_systems(Update, splash_countdown.run_if(in_state(GameState::Splash)));
     }
 }
 
-#[derive(Debug, Clone, Resource, Reflect)]
-struct SplashScreenData {
-    name: Name,
-    target_id: AnimationTargetId,
-    graph: Handle<AnimationGraph>,
-    node_index: AnimationNodeIndex,
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+pub struct SplashCamera;
+
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+pub struct SplashScreen;
+
+#[derive(Debug, Clone, PartialEq, Eq, Resource, Deref, DerefMut)]
+struct SplashScreenTimer(Timer);
+
+fn splash_screen(mut cmd: Commands, asset_server: Res<AssetServer>) {
+    cmd.spawn((SplashCamera, Camera2d, DespawnOnExit(GameState::Splash)));
+
+    cmd.spawn((
+        Node {
+            width: percent(100),
+            height: percent(100),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        },
+        DespawnOnExit(GameState::Splash),
+        children![(
+            Node {
+                bottom: px(100),
+                ..default()
+            },
+            Text::new("Made with")
+        )],
+    ));
+
+    let svg = load_embedded_asset!(&*asset_server, "bevy_logo_dark.svg");
+    cmd.spawn((
+        SplashScreen,
+        Svg2d(svg),
+        Origin::Center,
+        DespawnOnExit(GameState::Splash),
+    ));
+
+    cmd.insert_resource(SplashScreenTimer(Timer::from_seconds(2.0, TimerMode::Once)));
 }
 
-fn splash_screen_setup(
-    mut cmd: Commands,
-    mut animations: ResMut<Assets<AnimationClip>>,
-    mut graphs: ResMut<Assets<AnimationGraph>>,
+fn splash_countdown(
+    mut game_state: ResMut<NextState<GameState>>,
+    time: Res<Time>,
+    mut timer: ResMut<SplashScreenTimer>,
 ) {
-    let name = Name::new("bevy_logo_splash");
-    let target_id = AnimationTargetId::from_name(&name);
-
-    let mut clip = AnimationClip::default();
-
-    clip.add_curve_to_target(target_id, AnimatableCurve::new(animated_field!()))
+    if timer.tick(time.delta()).is_finished() {
+        game_state.set(GameState::MainMenu);
+    }
 }
-
-fn splash_screen(mut cmd: Commands, asset_server: Res<AssetServer>) {}
