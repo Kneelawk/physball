@@ -38,6 +38,7 @@ plugin_group! {
         state:::GameStatePlugin,
         startup:::BallphysStartup,
         camera:::CameraPlugin,
+        gui:::GuiPlugin,
         main_menu:::MainMenuPlugin,
     }
 }
