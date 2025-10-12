@@ -2,7 +2,7 @@ name: release
 
 env:
   BEVY_CLI_VERSION: a3c83153973fec40a4589607caa691a2eff18de9
-  BINARY_NAME: ballphys
+  BINARY_NAME: physball
 
 on:
   push:
@@ -21,7 +21,9 @@ jobs:
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
       - name: Install Dependencies
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get install libwayland-dev libasound2-dev libudev-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install libwayland-dev libasound2-dev libudev-dev
       - name: Checkout
         uses: actions/checkout@v5
       - name: Install Bevy CLI

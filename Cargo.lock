@@ -357,18 +357,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ballphys"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "avian3d",
- "bevy",
- "bevy_svg",
- "log",
- "tracing",
-]
-
-[[package]]
 name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1379,7 +1367,8 @@ dependencies = [
 [[package]]
 name = "bevy_svg"
 version = "0.17.0"
-source = "git+https://github.com/Kneelawk/bevy_svg.git?branch=feat%2Fbevy-0.17#0da82868291429627a61fbce32123a451f5ec048"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95c58f1c5ae310cdf8034e61b978a6f92165888f6a8d6a6d320aaee824e0cf14"
 dependencies = [
  "anyhow",
  "bevy",
@@ -3966,6 +3955,18 @@ dependencies = [
  "indexmap",
  "serde",
  "serde_derive",
+]
+
+[[package]]
+name = "physball"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "avian3d",
+ "bevy",
+ "bevy_svg",
+ "log",
+ "tracing",
 ]
 
 [[package]]

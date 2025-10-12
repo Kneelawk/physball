@@ -1,5 +1,5 @@
 [package]
-name = "ballphys"
+name = "physball"
 version = "0.1.0"
 edition = "2024"
 
@@ -7,7 +7,7 @@ edition = "2024"
 anyhow = "1.0"
 avian3d = { git = "https://github.com/Jondolf/avian", branch = "main" }
 bevy = { version = "0.17", features = ["experimental_bevy_ui_widgets"] }
-bevy_svg = { git = "https://github.com/Kneelawk/bevy_svg.git", branch = "feat/bevy-0.17" }
+bevy_svg = "0.17"
 # Set max log levels. This helps avoid unwanted low-severity log spam, which can affect performance.
 log = { version = "0.4", features = [
     "max_level_debug",

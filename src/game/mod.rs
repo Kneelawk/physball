@@ -12,7 +12,7 @@ use bevy::prelude::*;
 use bevy::ui_widgets::UiWidgetsPlugins;
 use bevy_svg::SvgPlugin;
 
-pub fn ballphys_client_main() -> AppExit {
+pub fn physball_client_main() -> AppExit {
     App::new()
         .add_plugins((
             DefaultPlugins.set(WindowPlugin {

@@ -9,7 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install Dependencies
-        run: sudo apt-get install libwayland-dev libasound2-dev libudev-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install libwayland-dev libasound2-dev libudev-dev
       - name: Checkout
         uses: actions/checkout@v5
       - name: Cache

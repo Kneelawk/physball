@@ -4,5 +4,5 @@ mod game;
 
 fn main() -> ExitCode {
     // maybe use clap later
-    game::ballphys_client_main().report()
+    game::physball_client_main().report()
 }

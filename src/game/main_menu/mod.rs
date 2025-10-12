@@ -41,7 +41,7 @@ fn setup_main_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
         TabGroup::default(),
         children![
             (
-                title(&asset_server, "ballphys"),
+                title(&asset_server, "physball"),
                 Node {
                     bottom: px(100),
                     ..default()
