@@ -28,7 +28,7 @@ pub struct PlayerCamera {
 impl Default for PlayerCamera {
     fn default() -> Self {
         PlayerCamera {
-            pitch: PI / 4.0,
+            pitch: -PI / 4.0,
             yaw: 0.0,
             distance: 5.0,
         }

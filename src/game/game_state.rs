@@ -1,4 +1,5 @@
 use crate::game::state::AppState;
+use avian3d::prelude::{Physics, PhysicsTime};
 use bevy::input::keyboard::Key;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, CursorOptions};
@@ -58,14 +59,20 @@ fn pause_play(
     }
 }
 
-fn show_hide_cursor(cur_state: Res<State<GameState>>, mut cursor: Single<&mut CursorOptions>) {
+fn show_hide_cursor(
+    cur_state: Res<State<GameState>>,
+    mut cursor: Single<&mut CursorOptions>,
+    mut physics: ResMut<Time<Physics>>,
+) {
     if cur_state.is_changed() {
         if *cur_state == GameState::Playing {
             cursor.grab_mode = CursorGrabMode::Locked;
             cursor.visible = false;
+            physics.unpause();
         } else {
             cursor.grab_mode = CursorGrabMode::None;
             cursor.visible = true;
+            physics.pause();
         }
     }
 }

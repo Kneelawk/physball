@@ -1,3 +1,4 @@
+use std::f32::consts::PI;
 use crate::game::camera::PlayerCamera;
 use crate::game::game_state::GameState;
 use crate::game::levels::{LevelReadyEvent, PlayerSpawnPoint};
@@ -5,6 +6,8 @@ use crate::game::state::AppState;
 use crate::type_expr;
 use avian3d::prelude::*;
 use bevy::prelude::*;
+
+pub const MOVEMENT_ACCELERATION: f32 = 10.0 * PI;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct GamePlugin;
@@ -36,14 +39,14 @@ fn add_player(
 
     cmd.spawn((
         Player,
-        Mesh3d(asset_server.add(Sphere::new(0.125).mesh().build())),
+        Mesh3d(asset_server.add(Sphere::new(0.25).mesh().build())),
         MeshMaterial3d(asset_server.add(type_expr!(
             StandardMaterial,
             Color::linear_rgb(0.0, 10.0, 12.0).into()
         ))),
         spawn_transform,
         RigidBody::Dynamic,
-        Collider::sphere(0.125),
+        Collider::sphere(0.25),
     ));
 }
 
@@ -54,9 +57,10 @@ fn remove_player(mut cmd: Commands, players: Query<Entity, With<Player>>) {
 }
 
 fn move_player(
-    forces: Query<Forces, With<Player>>,
+    forces: Query<&mut AngularVelocity, With<Player>>,
     camera: Single<&PlayerCamera>,
     key: Res<ButtonInput<KeyCode>>,
+    time: Res<Time>,
 ) {
     let mut movement = Vec3::default();
     if key.pressed(KeyCode::KeyW) {
@@ -74,8 +78,10 @@ fn move_player(
 
     let torque = Vec3::Y.cross(movement.normalize_or_zero());
 
-    for mut force in forces {
-        force.apply_torque(torque);
+    if torque.length_squared() > 0.001 {
+        for mut force in forces {
+            force.0 += torque * time.delta_secs() * MOVEMENT_ACCELERATION;
+        }
     }
 }
 
