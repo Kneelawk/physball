@@ -60,11 +60,38 @@ pub fn title(asset_server: &AssetServer, text: impl ToString) -> impl Bundle {
     )
 }
 
-pub fn button(asset_server: &AssetServer, text: impl ToString) -> impl Bundle {
+pub struct ButtonSettings {
+    width: u32,
+    height: u32,
+}
+
+impl Default for ButtonSettings {
+    fn default() -> Self {
+        Self {
+            width: 300,
+            height: 65,
+        }
+    }
+}
+
+impl ButtonSettings {
+    pub fn level_select() -> Self {
+        Self {
+            width: 140,
+            height: 65,
+        }
+    }
+}
+
+pub fn button(
+    asset_server: &AssetServer,
+    text: impl ToString,
+    settings: ButtonSettings,
+) -> impl Bundle {
     (
         Node {
-            width: px(300),
-            height: px(65),
+            width: px(settings.width),
+            height: px(settings.height),
             border: UiRect::all(px(1)),
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,

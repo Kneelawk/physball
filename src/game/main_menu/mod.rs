@@ -1,4 +1,4 @@
-use crate::game::gui::{button, menu_root, title};
+use crate::game::gui::{ButtonSettings, button, menu_root, title};
 use crate::game::state::GameState;
 use bevy::prelude::*;
 use bevy::ui_widgets::*;
@@ -44,7 +44,7 @@ fn setup_main_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
                 }
             ),
             (
-                button(&asset_server, "Level Select"),
+                button(&asset_server, "Level Select", default()),
                 observe(
                     |_a: On<Activate>, mut next_menu: ResMut<NextState<MenuState>>| {
                         next_menu.set(MenuState::LevelSelect);
@@ -52,7 +52,7 @@ fn setup_main_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
                 )
             ),
             (
-                button(&asset_server, "Quit"),
+                button(&asset_server, "Quit", default()),
                 observe(|_a: On<Activate>, mut exit: MessageWriter<AppExit>| {
                     exit.write(AppExit::Success);
                 })
@@ -86,17 +86,17 @@ fn setup_level_select(mut cmd: Commands, asset_server: Res<AssetServer>) {
                 },
                 children![
                     (
-                        button(&asset_server, "Level 1"),
+                        button(&asset_server, "Level 1", ButtonSettings::level_select()),
                         observe(|_a: On<Activate>| {})
                     ),
                     (
-                        button(&asset_server, "Level 2"),
+                        button(&asset_server, "Level 2", ButtonSettings::level_select()),
                         observe(|_a: On<Activate>| {})
                     )
                 ]
             ),
             (
-                button(&asset_server, "Back"),
+                button(&asset_server, "Back", default()),
                 observe(
                     |_a: On<Activate>, mut next_menu: ResMut<NextState<MenuState>>| {
                         next_menu.set(MenuState::Main);
