@@ -23,6 +23,7 @@ pub enum MenuState {
     Disabled,
     Main,
     LevelSelect,
+    Options,
 }
 
 fn set_main_menu(mut next_menu: ResMut<NextState<MenuState>>) {
@@ -49,6 +50,14 @@ fn setup_main_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
                 observe(
                     |_a: On<Activate>, mut next_menu: ResMut<NextState<MenuState>>| {
                         next_menu.set(MenuState::LevelSelect);
+                    }
+                )
+            ),
+            (
+                button(&asset_server, "Options", default()),
+                observe(
+                    |_a: On<Activate>, mut next_menu: ResMut<NextState<MenuState>>| {
+                        next_menu.set(MenuState::Options);
                     }
                 )
             ),

@@ -3,7 +3,7 @@ mod game;
 mod game_state;
 mod gui;
 mod levels;
-mod main_menu;
+mod menus;
 mod startup;
 mod state;
 
@@ -42,7 +42,8 @@ plugin_group! {
         startup:::BallphysStartup,
         camera:::CameraPlugin,
         gui:::GuiPlugin,
-        main_menu:::MainMenuPlugin,
+        menus:::MainMenuPlugin,
+        menus:::OptionsMenuPlugin,
         levels:::LevelsPlugin,
         game_state:::GameStatePlugin,
         game:::GamePlugin,
