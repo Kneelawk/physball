@@ -1,6 +1,5 @@
-use crate::game::gui::{button, title};
+use crate::game::gui::{button, menu_root, title};
 use crate::game::state::GameState;
-use bevy::input_focus::tab_navigation::TabGroup;
 use bevy::prelude::*;
 use bevy::ui_widgets::*;
 
@@ -11,7 +10,9 @@ impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<MenuState>()
             .add_systems(OnEnter(GameState::MainMenu), set_main_menu)
-            .add_systems(OnEnter(MenuState::Main), setup_main_menu);
+            .add_systems(OnExit(GameState::MainMenu), disable_main_menu)
+            .add_systems(OnEnter(MenuState::Main), setup_main_menu)
+            .add_systems(OnEnter(MenuState::LevelSelect), setup_level_select);
     }
 }
 
@@ -20,25 +21,20 @@ pub enum MenuState {
     #[default]
     Disabled,
     Main,
+    LevelSelect,
 }
 
 fn set_main_menu(mut next_menu: ResMut<NextState<MenuState>>) {
     next_menu.set(MenuState::Main);
 }
 
+fn disable_main_menu(mut next_menu: ResMut<NextState<MenuState>>) {
+    next_menu.set(MenuState::Disabled);
+}
+
 fn setup_main_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
     cmd.spawn((
-        Node {
-            width: percent(100),
-            height: percent(100),
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
-            display: Display::Flex,
-            flex_direction: FlexDirection::Column,
-            row_gap: px(20),
-            ..default()
-        },
-        TabGroup::default(),
+        menu_root(MenuState::Main),
         children![
             (
                 title(&asset_server, "physball"),
@@ -49,15 +45,61 @@ fn setup_main_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
             ),
             (
                 button(&asset_server, "Level Select"),
-                observe(|_activate: On<Activate>| {
-                    info!("TODO: Level Select");
-                })
+                observe(
+                    |_a: On<Activate>, mut next_menu: ResMut<NextState<MenuState>>| {
+                        next_menu.set(MenuState::LevelSelect);
+                    }
+                )
             ),
             (
                 button(&asset_server, "Quit"),
+                observe(|_a: On<Activate>, mut exit: MessageWriter<AppExit>| {
+                    exit.write(AppExit::Success);
+                })
+            )
+        ],
+    ));
+}
+
+fn setup_level_select(mut cmd: Commands, asset_server: Res<AssetServer>) {
+    cmd.spawn((
+        menu_root(MenuState::LevelSelect),
+        children![
+            (
+                title(&asset_server, "Level Select"),
+                Node {
+                    bottom: px(100),
+                    ..default()
+                }
+            ),
+            (
+                Node {
+                    width: percent(100),
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Row,
+                    flex_wrap: FlexWrap::Wrap,
+                    row_gap: px(20),
+                    column_gap: px(20),
+                    ..default()
+                },
+                children![
+                    (
+                        button(&asset_server, "Level 1"),
+                        observe(|_a: On<Activate>| {})
+                    ),
+                    (
+                        button(&asset_server, "Level 2"),
+                        observe(|_a: On<Activate>| {})
+                    )
+                ]
+            ),
+            (
+                button(&asset_server, "Back"),
                 observe(
-                    |_activate: On<Activate>, mut exit: MessageWriter<AppExit>| {
-                        exit.write(AppExit::Success);
+                    |_a: On<Activate>, mut next_menu: ResMut<NextState<MenuState>>| {
+                        next_menu.set(MenuState::Main);
                     }
                 )
             )

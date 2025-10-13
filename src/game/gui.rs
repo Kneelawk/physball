@@ -1,4 +1,5 @@
-use bevy::input_focus::tab_navigation::TabIndex;
+use bevy::input_focus::tab_navigation::{TabGroup, TabIndex};
+use bevy::input_focus::{InputFocus, IsFocused, IsFocusedHelper};
 use bevy::picking::hover::Hovered;
 use bevy::prelude::*;
 use bevy::reflect::Is;
@@ -11,9 +12,13 @@ pub const BUTTON_BG_DISABLED: Color = Color::srgb(0.3, 0.3, 0.3);
 pub const BUTTON_BG_HOVERED: Color = Color::srgb(0.4, 0.4, 0.4);
 pub const BUTTON_BG_PRESSED: Color = Color::srgb(0.1, 0.1, 0.1);
 pub const BUTTON_BORDER: Color = Color::srgb(0.6, 0.6, 0.6);
+pub const BUTTON_BORDER_FOCUSED: Color = Color::srgb(0.0, 0.8, 0.9);
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct GuiPlugin;
+
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+pub struct MenuButton;
 
 impl Plugin for GuiPlugin {
     fn build(&self, app: &mut App) {
@@ -21,8 +26,26 @@ impl Plugin for GuiPlugin {
             .add_observer(button_on_interaction::<Remove, Pressed>)
             .add_observer(button_on_interaction::<Add, InteractionDisabled>)
             .add_observer(button_on_interaction::<Remove, InteractionDisabled>)
-            .add_observer(button_on_interaction::<Insert, Hovered>);
+            .add_observer(button_on_interaction::<Insert, Hovered>)
+            .add_systems(Update, on_button_focus);
     }
+}
+
+pub fn menu_root<S: States>(menu_state: S) -> impl Bundle {
+    (
+        Node {
+            width: percent(100),
+            height: percent(100),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
+            row_gap: px(20),
+            ..default()
+        },
+        TabGroup::default(),
+        DespawnOnExit(menu_state),
+    )
 }
 
 pub fn title(asset_server: &AssetServer, text: impl ToString) -> impl Bundle {
@@ -48,6 +71,7 @@ pub fn button(asset_server: &AssetServer, text: impl ToString) -> impl Bundle {
             ..default()
         },
         Button,
+        MenuButton,
         Hovered::default(),
         TabIndex(0),
         BorderColor::all(BUTTON_BORDER),
@@ -65,7 +89,7 @@ pub fn button(asset_server: &AssetServer, text: impl ToString) -> impl Bundle {
 }
 
 // Copied from Bevy Standard Widgets examples
-fn button_on_interaction<E: EntityEvent, C: Component>(
+fn button_on_interaction<E: EntityEvent, C: Bundle>(
     event: On<E, C>,
     mut buttons: Query<
         (
@@ -75,7 +99,7 @@ fn button_on_interaction<E: EntityEvent, C: Component>(
             &mut BackgroundColor,
             &Children,
         ),
-        With<Button>,
+        With<MenuButton>,
     >,
 ) {
     if let Ok((hovered, disabled, pressed, mut color, children)) =
@@ -108,6 +132,28 @@ fn button_on_interaction<E: EntityEvent, C: Component>(
             // Unhovered button (either pressed or not).
             (false, false, _) => {
                 *color = BUTTON_BG_DEFAULT.into();
+            }
+        }
+    }
+}
+
+// Copied from Bevy Tab Navigation example
+fn on_button_focus(
+    mut cmd: Commands,
+    focus: Res<InputFocus>,
+    focus_helper: IsFocusedHelper,
+    query: Query<Entity, With<MenuButton>>,
+) {
+    if focus.is_changed() {
+        for button in query {
+            if focus_helper.is_focus_visible(button) {
+                cmd.entity(button).insert(Outline {
+                    color: BUTTON_BORDER_FOCUSED,
+                    width: px(2),
+                    offset: px(0),
+                });
+            } else {
+                cmd.entity(button).remove::<Outline>();
             }
         }
     }
