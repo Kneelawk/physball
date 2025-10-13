@@ -1,23 +1,28 @@
-use crate::game::state::GameState;
+use crate::game::game_state::GameState;
+use crate::game::state::AppState;
 use bevy::core_pipeline::tonemapping::Tonemapping;
+use bevy::input::mouse::MouseMotion;
 use bevy::post_process::bloom::{Bloom, BloomCompositeMode};
 use bevy::prelude::*;
 use std::f32::consts::PI;
+
+pub const MOUSE_SPEED: f32 = 0.0025;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnExit(GameState::Splash), setup_camera);
+        app.add_systems(OnExit(AppState::Splash), setup_camera)
+            .add_systems(Update, rotate_camera.run_if(in_state(GameState::Playing)));
     }
 }
 
 #[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Component, Reflect)]
 pub struct PlayerCamera {
-    pitch: f32,
-    yaw: f32,
-    distance: f32,
+    pub pitch: f32,
+    pub yaw: f32,
+    pub distance: f32,
 }
 
 impl Default for PlayerCamera {
@@ -46,6 +51,14 @@ fn setup_camera(mut cmd: Commands) {
             composite_mode: BloomCompositeMode::Additive,
             ..Bloom::NATURAL
         },
-        DespawnOnEnter(GameState::Splash),
+        DespawnOnEnter(AppState::Splash),
     ));
+}
+
+fn rotate_camera(mut camera: Single<&mut PlayerCamera>, mut mouse: MessageReader<MouseMotion>) {
+    for mouse in mouse.read() {
+        camera.yaw += -mouse.delta.x * MOUSE_SPEED;
+        camera.pitch =
+            (camera.pitch - mouse.delta.y * MOUSE_SPEED).clamp(-PI / 2.0 + 0.001, PI / 2.0 - 0.001);
+    }
 }

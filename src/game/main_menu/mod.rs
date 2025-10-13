@@ -1,5 +1,6 @@
 use crate::game::gui::{ButtonSettings, button, menu_root, title};
-use crate::game::state::GameState;
+use crate::game::levels::SelectedLevel;
+use crate::game::state::AppState;
 use bevy::prelude::*;
 use bevy::ui_widgets::*;
 
@@ -9,8 +10,8 @@ pub struct MainMenuPlugin;
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<MenuState>()
-            .add_systems(OnEnter(GameState::MainMenu), set_main_menu)
-            .add_systems(OnExit(GameState::MainMenu), disable_main_menu)
+            .add_systems(OnEnter(AppState::MainMenu), set_main_menu)
+            .add_systems(OnExit(AppState::MainMenu), disable_main_menu)
             .add_systems(OnEnter(MenuState::Main), setup_main_menu)
             .add_systems(OnEnter(MenuState::LevelSelect), setup_level_select);
     }
@@ -87,11 +88,25 @@ fn setup_level_select(mut cmd: Commands, asset_server: Res<AssetServer>) {
                 children![
                     (
                         button(&asset_server, "Level 1", ButtonSettings::level_select()),
-                        observe(|_a: On<Activate>| {})
+                        observe(
+                            |_a: On<Activate>,
+                             mut next_state: ResMut<NextState<AppState>>,
+                             mut cmd: Commands| {
+                                next_state.set(AppState::Game);
+                                cmd.insert_resource(SelectedLevel::Level1);
+                            }
+                        )
                     ),
                     (
                         button(&asset_server, "Level 2", ButtonSettings::level_select()),
-                        observe(|_a: On<Activate>| {})
+                        observe(
+                            |_a: On<Activate>,
+                             mut next_state: ResMut<NextState<AppState>>,
+                             mut cmd: Commands| {
+                                next_state.set(AppState::Game);
+                                cmd.insert_resource(SelectedLevel::Level2);
+                            }
+                        )
                     )
                 ]
             ),

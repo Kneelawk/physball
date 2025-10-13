@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, States, Reflect)]
-pub enum GameState {
+pub enum AppState {
     #[default]
     Splash,
     MainMenu,
+    // Loading would go here
     Game,
 }
 
@@ -13,6 +14,6 @@ pub struct GameStatePlugin;
 
 impl Plugin for GameStatePlugin {
     fn build(&self, app: &mut App) {
-        app.init_state::<GameState>();
+        app.init_state::<AppState>();
     }
 }

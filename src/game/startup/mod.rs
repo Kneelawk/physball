@@ -1,4 +1,4 @@
-use crate::game::state::GameState;
+use crate::game::state::AppState;
 use bevy::asset::{embedded_asset, load_embedded_asset};
 use bevy::prelude::*;
 use bevy_svg::prelude::*;
@@ -10,8 +10,8 @@ impl Plugin for BallphysStartup {
     fn build(&self, app: &mut App) {
         embedded_asset!(app, "bevy_logo_dark.svg");
 
-        app.add_systems(OnEnter(GameState::Splash), splash_screen)
-            .add_systems(Update, splash_countdown.run_if(in_state(GameState::Splash)));
+        app.add_systems(OnEnter(AppState::Splash), splash_screen)
+            .add_systems(Update, splash_countdown.run_if(in_state(AppState::Splash)));
     }
 }
 
@@ -25,7 +25,7 @@ pub struct SplashScreen;
 struct SplashScreenTimer(Timer);
 
 fn splash_screen(mut cmd: Commands, asset_server: Res<AssetServer>) {
-    cmd.spawn((SplashCamera, Camera2d, DespawnOnExit(GameState::Splash)));
+    cmd.spawn((SplashCamera, Camera2d, DespawnOnExit(AppState::Splash)));
 
     cmd.spawn((
         Node {
@@ -35,7 +35,7 @@ fn splash_screen(mut cmd: Commands, asset_server: Res<AssetServer>) {
             justify_content: JustifyContent::Center,
             ..default()
         },
-        DespawnOnExit(GameState::Splash),
+        DespawnOnExit(AppState::Splash),
         children![(
             Node {
                 bottom: px(100),
@@ -50,18 +50,18 @@ fn splash_screen(mut cmd: Commands, asset_server: Res<AssetServer>) {
         SplashScreen,
         Svg2d(svg),
         Origin::Center,
-        DespawnOnExit(GameState::Splash),
+        DespawnOnExit(AppState::Splash),
     ));
 
     cmd.insert_resource(SplashScreenTimer(Timer::from_seconds(2.0, TimerMode::Once)));
 }
 
 fn splash_countdown(
-    mut game_state: ResMut<NextState<GameState>>,
+    mut game_state: ResMut<NextState<AppState>>,
     time: Res<Time>,
     mut timer: ResMut<SplashScreenTimer>,
 ) {
     if timer.tick(time.delta()).is_finished() {
-        game_state.set(GameState::MainMenu);
+        game_state.set(AppState::MainMenu);
     }
 }

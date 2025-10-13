@@ -1,6 +1,7 @@
 use std::process::{ExitCode, Termination};
 
 mod game;
+mod macros;
 
 fn main() -> ExitCode {
     // maybe use clap later

@@ -1,5 +1,8 @@
 mod camera;
+mod game;
+mod game_state;
 mod gui;
+mod levels;
 mod main_menu;
 mod startup;
 mod state;
@@ -40,5 +43,8 @@ plugin_group! {
         camera:::CameraPlugin,
         gui:::GuiPlugin,
         main_menu:::MainMenuPlugin,
+        levels:::LevelsPlugin,
+        game_state:::GameStatePlugin,
+        game:::GamePlugin,
     }
 }
