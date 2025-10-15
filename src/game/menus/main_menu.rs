@@ -1,5 +1,6 @@
 use crate::game::gui::{ButtonSettings, button, menu_root, title};
 use crate::game::levels::SelectedLevel;
+use crate::game::menus::options_menu::OptionsReturn;
 use crate::game::state::AppState;
 use bevy::prelude::*;
 use bevy::ui_widgets::*;
@@ -17,7 +18,7 @@ impl Plugin for MainMenuPlugin {
     }
 }
 
-#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, States)]
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, States, Reflect)]
 pub enum MenuState {
     #[default]
     Disabled,
@@ -56,7 +57,10 @@ fn setup_main_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
             (
                 button(&asset_server, "Options", default()),
                 observe(
-                    |_a: On<Activate>, mut next_menu: ResMut<NextState<MenuState>>| {
+                    |_a: On<Activate>,
+                     mut cmd: Commands,
+                     mut next_menu: ResMut<NextState<MenuState>>| {
+                        cmd.insert_resource(OptionsReturn::MainMenu);
                         next_menu.set(MenuState::Options);
                     }
                 )

@@ -1,5 +1,6 @@
 use crate::game::game_state::GameState;
 use crate::game::gui::{button, menu_root, title};
+use crate::game::menus::options_menu::OptionsReturn;
 use crate::game::state::AppState;
 use bevy::prelude::*;
 use bevy::ui_widgets::{Activate, observe};
@@ -16,7 +17,7 @@ impl Plugin for PauseMenuPlugin {
     }
 }
 
-#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, States)]
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, States, Reflect)]
 pub enum PauseMenuState {
     #[default]
     Disabled,
@@ -58,7 +59,10 @@ fn spawn_pause_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
             (
                 button(&asset_server, "Options", default()),
                 observe(
-                    |_a: On<Activate>, mut next_state: ResMut<NextState<PauseMenuState>>| {
+                    |_a: On<Activate>,
+                     mut cmd: Commands,
+                     mut next_state: ResMut<NextState<PauseMenuState>>| {
+                        cmd.insert_resource(OptionsReturn::PauseMenu);
                         next_state.set(PauseMenuState::Options);
                     }
                 )
