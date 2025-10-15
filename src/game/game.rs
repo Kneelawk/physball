@@ -1,4 +1,3 @@
-use std::f32::consts::PI;
 use crate::game::camera::PlayerCamera;
 use crate::game::game_state::GameState;
 use crate::game::levels::{LevelReadyEvent, PlayerSpawnPoint};
@@ -6,6 +5,7 @@ use crate::game::state::AppState;
 use crate::type_expr;
 use avian3d::prelude::*;
 use bevy::prelude::*;
+use std::f32::consts::PI;
 
 pub const MOVEMENT_ACCELERATION: f32 = 10.0 * PI;
 

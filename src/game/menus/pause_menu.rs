@@ -1,10 +1,10 @@
 use crate::game::game_state::GameState;
 use crate::game::gui::{button, menu_root, title};
+use crate::game::menus::main_menu::MenuState;
 use crate::game::menus::options_menu::OptionsReturn;
 use crate::game::state::AppState;
 use bevy::prelude::*;
 use bevy::ui_widgets::{Activate, observe};
-use crate::game::menus::main_menu::MenuState;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct PauseMenuPlugin;
@@ -71,7 +71,9 @@ fn spawn_pause_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
             (
                 button(&asset_server, "Leave Level", default()),
                 observe(
-                    |_a: On<Activate>, mut next_state: ResMut<NextState<AppState>>, mut next_menu: ResMut<NextState<MenuState>>| {
+                    |_a: On<Activate>,
+                     mut next_state: ResMut<NextState<AppState>>,
+                     mut next_menu: ResMut<NextState<MenuState>>| {
                         next_state.set(AppState::MainMenu);
                         next_menu.set(MenuState::LevelSelect);
                     }
