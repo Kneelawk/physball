@@ -27,8 +27,10 @@ pub enum MenuState {
     Options,
 }
 
-fn set_main_menu(mut next_menu: ResMut<NextState<MenuState>>) {
-    next_menu.set(MenuState::Main);
+fn set_main_menu(state: Res<State<MenuState>>, mut next_menu: ResMut<NextState<MenuState>>) {
+    if *state == MenuState::Disabled {
+        next_menu.set(MenuState::Main);
+    }
 }
 
 fn disable_main_menu(mut next_menu: ResMut<NextState<MenuState>>) {
