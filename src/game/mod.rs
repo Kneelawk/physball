@@ -44,6 +44,7 @@ plugin_group! {
         gui:::GuiPlugin,
         menus:::MainMenuPlugin,
         menus:::OptionsMenuPlugin,
+        menus:::PauseMenuPlugin,
         levels:::LevelsPlugin,
         game_state:::GameStatePlugin,
         game:::GamePlugin,
