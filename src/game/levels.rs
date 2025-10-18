@@ -2,7 +2,6 @@ use crate::game::state::AppState;
 use crate::type_expr;
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use std::f32::consts::PI;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct LevelsPlugin;
