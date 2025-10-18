@@ -7,7 +7,7 @@ use avian3d::prelude::*;
 use bevy::prelude::*;
 use std::f32::consts::PI;
 
-pub const MOVEMENT_ACCELERATION: f32 = 10.0 * PI;
+pub const MOVEMENT_ACCELERATION: f32 = 30.0 * PI;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct GamePlugin;
@@ -42,11 +42,21 @@ fn add_player(
         Mesh3d(asset_server.add(Sphere::new(0.25).mesh().build())),
         MeshMaterial3d(asset_server.add(type_expr!(
             StandardMaterial,
-            Color::linear_rgb(0.0, 10.0, 12.0).into()
+            Color::linear_rgb(0.0, 200.0, 240.0).into()
         ))),
         spawn_transform,
         RigidBody::Dynamic,
         Collider::sphere(0.25),
+        AngularDamping(0.25),
+        LinearDamping(0.25),
+        children![
+            PointLight {
+                shadows_enabled: true,
+                intensity: 20000.0,
+                color: Color::linear_rgb(0.0, 0.833, 1.0),
+                ..default()
+            }
+        ]
     ));
 }
 

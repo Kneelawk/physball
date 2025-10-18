@@ -59,16 +59,16 @@ fn spawn_level1(mut cmd: Commands, asset_server: &AssetServer) {
         )],
     ));
 
-    cmd.spawn((
-        DirectionalLight {
-            illuminance: light_consts::lux::OVERCAST_DAY,
-            shadows_enabled: true,
-            ..default()
-        },
-        Transform::from_rotation(
-            Quat::from_rotation_x(-PI / 4.0) * Quat::from_rotation_z(-PI / 6.0),
-        ),
-    ));
+    // cmd.spawn((
+    //     DirectionalLight {
+    //         illuminance: light_consts::lux::OVERCAST_DAY,
+    //         shadows_enabled: true,
+    //         ..default()
+    //     },
+    //     Transform::from_rotation(
+    //         Quat::from_rotation_x(-PI / 4.0) * Quat::from_rotation_z(-PI / 6.0),
+    //     ),
+    // ));
 
     cmd.trigger(LevelReadyEvent);
 }
@@ -95,16 +95,16 @@ fn spawn_level2(mut cmd: Commands, asset_server: &AssetServer) {
         Collider::cuboid(0.5, 0.5, 0.5),
     ));
 
-    cmd.spawn((
-        DirectionalLight {
-            illuminance: light_consts::lux::OVERCAST_DAY,
-            shadows_enabled: true,
-            ..default()
-        },
-        Transform::from_rotation(
-            Quat::from_rotation_z(-PI / 6.0) * Quat::from_rotation_x(-PI / 4.0),
-        ),
-    ));
+    // cmd.spawn((
+    //     DirectionalLight {
+    //         illuminance: light_consts::lux::OVERCAST_DAY,
+    //         shadows_enabled: true,
+    //         ..default()
+    //     },
+    //     Transform::from_rotation(
+    //         Quat::from_rotation_z(-PI / 6.0) * Quat::from_rotation_x(-PI / 4.0),
+    //     ),
+    // ));
 
     cmd.trigger(LevelReadyEvent);
 }
