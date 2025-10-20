@@ -1,5 +1,6 @@
 use crate::game::game_state::GameState;
 use crate::game::gui::{button, menu_root, title};
+use crate::game::levels::LevelRespawnEvent;
 use crate::game::menus::main_menu::MenuState;
 use crate::game::menus::options_menu::OptionsReturn;
 use crate::game::state::AppState;
@@ -55,7 +56,14 @@ fn spawn_pause_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
             ),
             (
                 button(&asset_server, "Restart", default()),
-                observe(|_a: On<Activate>| {})
+                observe(
+                    |_a: On<Activate>,
+                     mut cmd: Commands,
+                     mut next_state: ResMut<NextState<GameState>>| {
+                        cmd.trigger(LevelRespawnEvent);
+                        next_state.set(GameState::Playing);
+                    }
+                )
             ),
             (
                 button(&asset_server, "Options", default()),

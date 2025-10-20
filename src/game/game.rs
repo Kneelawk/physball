@@ -1,6 +1,6 @@
 use crate::game::camera::PlayerCamera;
 use crate::game::game_state::GameState;
-use crate::game::levels::{LevelReadyEvent, PlayerSpawnPoint};
+use crate::game::levels::{LevelReadyEvent, LevelRespawnEvent, PlayerSpawnPoint};
 use crate::game::state::AppState;
 use crate::type_expr;
 use avian3d::prelude::*;
@@ -16,12 +16,13 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_observer(add_player)
+            .add_observer(reset_player)
             .add_systems(OnExit(AppState::Game), remove_player)
             .add_systems(
                 Update,
-                (move_player, move_camera, update_grounded, jump_player)
-                    .run_if(in_state(GameState::Playing)),
-            );
+                (move_player, update_grounded, jump_player).run_if(in_state(GameState::Playing)),
+            )
+            .add_systems(Update, move_camera.run_if(in_state(AppState::Game)));
     }
 }
 
@@ -35,13 +36,10 @@ pub struct Grounded;
 fn add_player(
     _event: On<LevelReadyEvent>,
     mut cmd: Commands,
-    spawn_point: Query<&Transform, With<PlayerSpawnPoint>>,
+    spawn_point: Query<&Transform, (With<PlayerSpawnPoint>, Without<Player>)>,
     asset_server: Res<AssetServer>,
 ) {
-    let spawn_transform = match spawn_point.iter().next() {
-        None => Transform::from_translation(Vec3::new(0.0, 0.5, 0.0)),
-        Some(trans) => *trans,
-    };
+    let spawn_transform = spawn_transform(spawn_point);
 
     let collider = Collider::sphere(0.25);
 
@@ -64,6 +62,32 @@ fn add_player(
             ..default()
         }],
     ));
+}
+
+fn spawn_transform(
+    spawn_point: Query<&Transform, (With<PlayerSpawnPoint>, Without<Player>)>,
+) -> Transform {
+    match spawn_point.iter().next() {
+        None => Transform::from_translation(Vec3::new(0.0, 0.5, 0.0)),
+        Some(trans) => *trans,
+    }
+}
+
+fn reset_player(
+    _on: On<LevelRespawnEvent>,
+    spawn_point: Query<&Transform, (With<PlayerSpawnPoint>, Without<Player>)>,
+    player: Query<
+        (&mut Transform, &mut AngularVelocity, &mut LinearVelocity),
+        (With<Player>, Without<PlayerSpawnPoint>),
+    >,
+) {
+    let spawn_transform = spawn_transform(spawn_point);
+
+    for (mut transform, mut ang_vel, mut lin_vel) in player {
+        *transform = spawn_transform;
+        ang_vel.0 = Vec3::ZERO;
+        lin_vel.0 = Vec3::ZERO;
+    }
 }
 
 fn remove_player(mut cmd: Commands, players: Query<Entity, With<Player>>) {

@@ -8,13 +8,17 @@ pub struct LevelsPlugin;
 
 impl Plugin for LevelsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnExit(AppState::Game), (unselect_level, despawn_level))
+        app.add_observer(respawn_level)
+            .add_systems(OnExit(AppState::Game), (unselect_level, despawn_level))
             .add_systems(OnEnter(AppState::Game), spawn_level);
     }
 }
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Event, Reflect)]
 pub struct LevelReadyEvent;
+
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Event, Reflect)]
+pub struct LevelRespawnEvent;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Resource, Reflect)]
 pub enum SelectedLevel {
@@ -25,27 +29,49 @@ pub enum SelectedLevel {
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
 pub struct LevelObject;
 
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+pub struct PlayerSpawnPoint;
+
 fn unselect_level(mut cmd: Commands) {
     cmd.remove_resource::<SelectedLevel>();
 }
 
 fn despawn_level(mut cmd: Commands, query: Query<Entity, With<LevelObject>>) {
+    despawn_level_impl(&mut cmd, query);
+}
+
+fn despawn_level_impl(cmd: &mut Commands, query: Query<Entity, With<LevelObject>>) {
     for level in query {
         cmd.entity(level).despawn();
     }
 }
 
-#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
-pub struct PlayerSpawnPoint;
+fn respawn_level(
+    _on: On<LevelRespawnEvent>,
+    mut cmd: Commands,
+    query: Query<Entity, With<LevelObject>>,
+    level: Res<SelectedLevel>,
+    asset_server: Res<AssetServer>,
+) {
+    // TODO: Implement checkpoint system
+    despawn_level_impl(&mut cmd, query);
+    spawn_level_impl(&mut cmd, level, &asset_server);
+}
 
-fn spawn_level(cmd: Commands, level: Res<SelectedLevel>, asset_server: Res<AssetServer>) {
+fn spawn_level(mut cmd: Commands, level: Res<SelectedLevel>, asset_server: Res<AssetServer>) {
+    spawn_level_impl(&mut cmd, level, &asset_server);
+
+    cmd.trigger(LevelReadyEvent);
+}
+
+fn spawn_level_impl(cmd: &mut Commands, level: Res<SelectedLevel>, asset_server: &AssetServer) {
     match *level {
-        SelectedLevel::Level1 => spawn_level1(cmd, &asset_server),
-        SelectedLevel::Level2 => spawn_level2(cmd, &asset_server),
+        SelectedLevel::Level1 => spawn_level1(cmd, asset_server),
+        SelectedLevel::Level2 => spawn_level2(cmd, asset_server),
     }
 }
 
-fn spawn_level1(mut cmd: Commands, asset_server: &AssetServer) {
+fn spawn_level1(cmd: &mut Commands, asset_server: &AssetServer) {
     cmd.spawn((
         LevelObject,
         Transform::default(),
@@ -68,11 +94,9 @@ fn spawn_level1(mut cmd: Commands, asset_server: &AssetServer) {
     //         Quat::from_rotation_x(-PI / 4.0) * Quat::from_rotation_z(-PI / 6.0),
     //     ),
     // ));
-
-    cmd.trigger(LevelReadyEvent);
 }
 
-fn spawn_level2(mut cmd: Commands, asset_server: &AssetServer) {
+fn spawn_level2(cmd: &mut Commands, asset_server: &AssetServer) {
     cmd.spawn((
         LevelObject,
         Transform::default(),
@@ -104,6 +128,4 @@ fn spawn_level2(mut cmd: Commands, asset_server: &AssetServer) {
     //         Quat::from_rotation_z(-PI / 6.0) * Quat::from_rotation_x(-PI / 4.0),
     //     ),
     // ));
-
-    cmd.trigger(LevelReadyEvent);
 }
