@@ -14,7 +14,8 @@ pub struct CameraPlugin;
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnExit(AppState::Splash), setup_camera)
-            .add_systems(Update, rotate_camera.run_if(in_state(GameState::Playing)));
+            .add_systems(Update, rotate_camera.run_if(in_state(GameState::Playing)))
+            .add_systems(OnExit(AppState::Game), reset_camera);
     }
 }
 
@@ -61,4 +62,8 @@ fn rotate_camera(mut camera: Single<&mut PlayerCamera>, mut mouse: MessageReader
         camera.pitch =
             (camera.pitch - mouse.delta.y * MOUSE_SPEED).clamp(-PI / 2.0 + 0.001, PI / 2.0 - 0.001);
     }
+}
+
+fn reset_camera(mut camera: Single<&mut PlayerCamera>) {
+    **camera = PlayerCamera::default();
 }
