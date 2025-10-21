@@ -17,10 +17,12 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_observer(add_player)
             .add_observer(reset_player)
+            .add_observer(on_collision_start)
+            .add_observer(on_collision_stop)
             .add_systems(OnExit(AppState::Game), remove_player)
             .add_systems(
                 Update,
-                (move_player, update_grounded, jump_player).run_if(in_state(GameState::Playing)),
+                (move_player, jump_player).run_if(in_state(GameState::Playing)),
             )
             .add_systems(Update, move_camera.run_if(in_state(AppState::Game)));
     }
@@ -55,6 +57,7 @@ fn add_player(
         collider,
         AngularDamping(0.25),
         LinearDamping(0.25),
+        CollisionEventsEnabled,
         children![PointLight {
             shadows_enabled: true,
             intensity: 20000.0,
@@ -125,32 +128,48 @@ fn move_player(
     }
 }
 
-// Copied from Avian3d example
-fn update_grounded(
-    mut cmd: Commands,
-    query: Query<Entity, With<Player>>,
-    contacts: Res<ContactGraph>,
+fn on_collision_start(
+    on: On<CollisionStart>,
+    filter: Query<(), With<Player>>,
+    cmd: Commands,
+    collisions: Collisions,
 ) {
-    for entity in query {
-        let is_grounded = contacts
-            .contact_pairs_with(entity)
-            .filter(|pair| pair.is_touching() && pair.generates_constraints())
-            .flat_map(|pair| {
-                pair.manifolds.iter().map(|manifold| {
-                    if pair.collider1 == entity {
-                        -manifold.normal
-                    } else {
-                        manifold.normal
-                    }
-                })
-            })
-            .any(|hit| hit.angle_between(Vec3::Y).abs() <= PI * 2.0 / 3.0);
+    if filter.contains(on.collider1) {
+        update_grounded(cmd, on.collider1, collisions);
+    }
+}
 
-        if is_grounded {
-            cmd.entity(entity).insert(Grounded);
-        } else {
-            cmd.entity(entity).remove::<Grounded>();
-        }
+fn on_collision_stop(
+    on: On<CollisionEnd>,
+    filter: Query<(), With<Player>>,
+    cmd: Commands,
+    collisions: Collisions,
+) {
+    if filter.contains(on.collider1) {
+        update_grounded(cmd, on.collider1, collisions);
+    }
+}
+
+// Copied from Avian3d example
+fn update_grounded(mut cmd: Commands, player: Entity, collisions: Collisions) {
+    let is_grounded = collisions
+        .collisions_with(player)
+        .filter(|pair| pair.is_touching() && pair.generates_constraints())
+        .flat_map(|pair| {
+            pair.manifolds.iter().map(|manifold| {
+                if pair.collider1 == player {
+                    -manifold.normal
+                } else {
+                    manifold.normal
+                }
+            })
+        })
+        .any(|hit| hit.angle_between(Vec3::Y).abs() <= PI * 2.0 / 3.0);
+
+    if is_grounded {
+        cmd.entity(player).insert(Grounded);
+    } else {
+        cmd.entity(player).remove::<Grounded>();
     }
 }
 

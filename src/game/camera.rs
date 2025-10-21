@@ -65,5 +65,6 @@ fn rotate_camera(mut camera: Single<&mut PlayerCamera>, mut mouse: MessageReader
 }
 
 fn reset_camera(mut camera: Single<&mut PlayerCamera>) {
+    // TODO: set camera to player on spawn
     **camera = PlayerCamera::default();
 }
