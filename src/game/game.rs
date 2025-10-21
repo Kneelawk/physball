@@ -1,6 +1,6 @@
 use crate::game::camera::PlayerCamera;
 use crate::game::game_state::GameState;
-use crate::game::levels::{LevelReadyEvent, LevelRespawnEvent, PlayerSpawnPoint};
+use crate::game::levels::{LevelReadyEvent, LevelRestartEvent, PlayerSpawnPoint};
 use crate::game::state::AppState;
 use crate::type_expr;
 use avian3d::prelude::*;
@@ -35,6 +35,15 @@ pub struct Player;
 #[component(storage = "SparseSet")]
 pub struct Grounded;
 
+pub fn spawn_transform(
+    spawn_point: Query<&Transform, (With<PlayerSpawnPoint>, Without<Player>)>,
+) -> Transform {
+    match spawn_point.iter().next() {
+        None => Transform::from_translation(Vec3::new(0.0, 0.5, 0.0)),
+        Some(trans) => *trans,
+    }
+}
+
 fn add_player(
     _event: On<LevelReadyEvent>,
     mut cmd: Commands,
@@ -67,17 +76,8 @@ fn add_player(
     ));
 }
 
-fn spawn_transform(
-    spawn_point: Query<&Transform, (With<PlayerSpawnPoint>, Without<Player>)>,
-) -> Transform {
-    match spawn_point.iter().next() {
-        None => Transform::from_translation(Vec3::new(0.0, 0.5, 0.0)),
-        Some(trans) => *trans,
-    }
-}
-
 fn reset_player(
-    _on: On<LevelRespawnEvent>,
+    _on: On<LevelRestartEvent>,
     spawn_point: Query<&Transform, (With<PlayerSpawnPoint>, Without<Player>)>,
     player: Query<
         (&mut Transform, &mut AngularVelocity, &mut LinearVelocity),

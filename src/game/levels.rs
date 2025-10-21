@@ -18,7 +18,7 @@ impl Plugin for LevelsPlugin {
 pub struct LevelReadyEvent;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Event, Reflect)]
-pub struct LevelRespawnEvent;
+pub struct LevelRestartEvent;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Resource, Reflect)]
 pub enum SelectedLevel {
@@ -47,7 +47,7 @@ fn despawn_level_impl(cmd: &mut Commands, query: Query<Entity, With<LevelObject>
 }
 
 fn respawn_level(
-    _on: On<LevelRespawnEvent>,
+    _on: On<LevelRestartEvent>,
     mut cmd: Commands,
     query: Query<Entity, With<LevelObject>>,
     level: Res<SelectedLevel>,

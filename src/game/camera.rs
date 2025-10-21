@@ -1,4 +1,6 @@
+use crate::game::game::{Player, spawn_transform};
 use crate::game::game_state::GameState;
+use crate::game::levels::{LevelReadyEvent, LevelRestartEvent, PlayerSpawnPoint};
 use crate::game::state::AppState;
 use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::input::mouse::MouseMotion;
@@ -13,7 +15,9 @@ pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnExit(AppState::Splash), setup_camera)
+        app.add_observer(on_start_level)
+            .add_observer(on_restart_level)
+            .add_systems(OnExit(AppState::Splash), setup_camera)
             .add_systems(Update, rotate_camera.run_if(in_state(GameState::Playing)))
             .add_systems(OnExit(AppState::Game), reset_camera);
     }
@@ -64,7 +68,31 @@ fn rotate_camera(mut camera: Single<&mut PlayerCamera>, mut mouse: MessageReader
     }
 }
 
+fn on_start_level(
+    _on: On<LevelReadyEvent>,
+    mut camera: Single<&mut PlayerCamera>,
+    spawn_point: Query<&Transform, (With<PlayerSpawnPoint>, Without<Player>)>,
+) {
+    **camera = apply_spawn_point_rotation(spawn_point);
+}
+
+fn on_restart_level(
+    _on: On<LevelRestartEvent>,
+    mut camera: Single<&mut PlayerCamera>,
+    spawn_point: Query<&Transform, (With<PlayerSpawnPoint>, Without<Player>)>,
+) {
+    **camera = apply_spawn_point_rotation(spawn_point);
+}
+
+fn apply_spawn_point_rotation(
+    spawn_point: Query<&Transform, (With<PlayerSpawnPoint>, Without<Player>)>,
+) -> PlayerCamera {
+    let spawn_transform = spawn_transform(spawn_point);
+    let (axis, angle) = spawn_transform.rotation.to_axis_angle();
+    let yaw = angle * axis.dot(Vec3::Y);
+    PlayerCamera { yaw, ..default() }
+}
+
 fn reset_camera(mut camera: Single<&mut PlayerCamera>) {
-    // TODO: set camera to player on spawn
     **camera = PlayerCamera::default();
 }
