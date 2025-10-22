@@ -1,3 +1,5 @@
+mod finish_point;
+
 use crate::game::state::AppState;
 use crate::type_expr;
 use avian3d::prelude::*;
@@ -15,21 +17,26 @@ impl Plugin for LevelsPlugin {
 }
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Event, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash)]
 pub struct LevelReadyEvent;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Event, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash)]
 pub struct LevelRestartEvent;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Resource, Reflect)]
+#[reflect(Debug, Clone, PartialEq, Hash, Resource)]
 pub enum SelectedLevel {
     Level1,
     Level2,
 }
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
 pub struct LevelObject;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
 pub struct PlayerSpawnPoint;
 
 fn unselect_level(mut cmd: Commands) {
