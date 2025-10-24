@@ -19,6 +19,7 @@ impl Plugin for OptionsMenuPlugin {
 }
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, States, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash)]
 pub enum OptionsMenuState {
     #[default]
     Disabled,
@@ -26,6 +27,7 @@ pub enum OptionsMenuState {
 }
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Resource, Reflect)]
+#[reflect(Debug, Clone, PartialEq, Hash, Resource)]
 pub enum OptionsReturn {
     MainMenu,
     PauseMenu,

@@ -22,11 +22,13 @@ impl Plugin for GameStatePlugin {
 }
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, States, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash)]
 pub enum GameState {
     #[default]
     Disabled,
     Playing,
     Paused,
+    Finished,
 }
 
 impl Not for GameState {
@@ -37,6 +39,7 @@ impl Not for GameState {
             GameState::Disabled => GameState::Disabled,
             GameState::Playing => GameState::Paused,
             GameState::Paused => GameState::Playing,
+            GameState::Finished => GameState::Finished,
         }
     }
 }

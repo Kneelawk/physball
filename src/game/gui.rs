@@ -18,6 +18,7 @@ pub const BUTTON_BORDER_FOCUSED: Color = Color::srgb(0.0, 0.8, 0.9);
 pub struct GuiPlugin;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
 pub struct MenuButton;
 
 impl Plugin for GuiPlugin {

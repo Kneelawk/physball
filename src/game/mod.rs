@@ -75,7 +75,9 @@ plugin_group! {
         menus:::MainMenuPlugin,
         menus:::OptionsMenuPlugin,
         menus:::PauseMenuPlugin,
+        menus:::FinishMenuPlugin,
         levels:::LevelsPlugin,
+        levels::finish_point:::FinishPointPlugin,
         game_state:::GameStatePlugin,
         game:::GamePlugin,
     }

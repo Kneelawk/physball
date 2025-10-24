@@ -16,12 +16,15 @@ impl Plugin for BallphysStartup {
 }
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
 pub struct SplashCamera;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
 pub struct SplashScreen;
 
-#[derive(Debug, Clone, PartialEq, Eq, Resource, Deref, DerefMut)]
+#[derive(Debug, Clone, PartialEq, Eq, Resource, Deref, DerefMut, Reflect)]
+#[reflect(Debug, Clone, PartialEq, Resource)]
 struct SplashScreenTimer(Timer);
 
 fn splash_screen(mut cmd: Commands, asset_server: Res<AssetServer>) {

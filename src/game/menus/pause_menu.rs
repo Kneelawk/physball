@@ -20,6 +20,7 @@ impl Plugin for PauseMenuPlugin {
 }
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, States, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash)]
 pub enum PauseMenuState {
     #[default]
     Disabled,
@@ -77,7 +78,7 @@ fn spawn_pause_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
                 )
             ),
             (
-                button(&asset_server, "Leave Level", default()),
+                button(&asset_server, "Exit Level", default()),
                 observe(
                     |_a: On<Activate>,
                      mut next_state: ResMut<NextState<AppState>>,

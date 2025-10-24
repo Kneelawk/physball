@@ -24,6 +24,7 @@ impl Plugin for CameraPlugin {
 }
 
 #[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Component)]
 pub struct PlayerCamera {
     pub pitch: f32,
     pub yaw: f32,

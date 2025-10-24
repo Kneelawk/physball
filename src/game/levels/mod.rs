@@ -1,5 +1,6 @@
-mod finish_point;
+pub mod finish_point;
 
+use crate::game::levels::finish_point::FinishPoint;
 use crate::game::state::AppState;
 use crate::type_expr;
 use avian3d::prelude::*;
@@ -124,6 +125,8 @@ fn spawn_level2(cmd: &mut Commands, asset_server: &AssetServer) {
         RigidBody::Dynamic,
         Collider::cuboid(0.5, 0.5, 0.5),
     ));
+
+    cmd.spawn((FinishPoint, Transform::from_xyz(4.5, 0.25, 0.0)));
 
     // cmd.spawn((
     //     DirectionalLight {
