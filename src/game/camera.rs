@@ -1,14 +1,13 @@
 use crate::game::game::{Player, spawn_transform};
 use crate::game::game_state::GameState;
 use crate::game::levels::{LevelReadyEvent, LevelRestartEvent, PlayerSpawnPoint};
+use crate::game::settings::GamePrefs;
 use crate::game::state::AppState;
 use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::input::mouse::MouseMotion;
 use bevy::post_process::bloom::{Bloom, BloomCompositeMode};
 use bevy::prelude::*;
 use std::f32::consts::PI;
-
-pub const MOUSE_SPEED: f32 = 0.0025;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct CameraPlugin;
@@ -61,11 +60,16 @@ fn setup_camera(mut cmd: Commands) {
     ));
 }
 
-fn rotate_camera(mut camera: Single<&mut PlayerCamera>, mut mouse: MessageReader<MouseMotion>) {
+fn rotate_camera(
+    mut camera: Single<&mut PlayerCamera>,
+    mut mouse: MessageReader<MouseMotion>,
+    prefs: Res<GamePrefs>,
+) {
+    let mouse_speed = prefs.mouse_speed / 1000.0;
     for mouse in mouse.read() {
-        camera.yaw += -mouse.delta.x * MOUSE_SPEED;
+        camera.yaw += -mouse.delta.x * mouse_speed;
         camera.pitch =
-            (camera.pitch - mouse.delta.y * MOUSE_SPEED).clamp(-PI / 2.0 + 0.001, PI / 2.0 - 0.001);
+            (camera.pitch - mouse.delta.y * mouse_speed).clamp(-PI / 2.0 + 0.001, PI / 2.0 - 0.001);
     }
 }
 

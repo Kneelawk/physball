@@ -4,7 +4,7 @@ use bevy::picking::hover::Hovered;
 use bevy::prelude::*;
 use bevy::reflect::Is;
 use bevy::ui::{InteractionDisabled, Pressed};
-use bevy::ui_widgets::Button;
+use bevy::ui_widgets::{Button, Slider, SliderRange, SliderThumb, SliderValue};
 
 pub const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 pub const BUTTON_BG_DEFAULT: Color = Color::srgb(0.2, 0.2, 0.2);
@@ -13,6 +13,9 @@ pub const BUTTON_BG_HOVERED: Color = Color::srgb(0.4, 0.4, 0.4);
 pub const BUTTON_BG_PRESSED: Color = Color::srgb(0.1, 0.1, 0.1);
 pub const BUTTON_BORDER: Color = Color::srgb(0.6, 0.6, 0.6);
 pub const BUTTON_BORDER_FOCUSED: Color = Color::srgb(0.0, 0.8, 0.9);
+pub const SLIDER_THUMB: Color = Color::srgb(0.35, 0.75, 0.35);
+pub const SLIDER_TRACK: Color = Color::srgb(0.05, 0.05, 0.05);
+pub const SLIDER_THUMB_DISABLED: Color = Color::srgb(0.5, 0.5, 0.5);
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct GuiPlugin;
@@ -21,6 +24,14 @@ pub struct GuiPlugin;
 #[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
 pub struct MenuButton;
 
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
+pub struct MenuSlider;
+
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
+pub struct MenuSliderThumb;
+
 impl Plugin for GuiPlugin {
     fn build(&self, app: &mut App) {
         app.add_observer(button_on_interaction::<Add, Pressed>)
@@ -28,7 +39,13 @@ impl Plugin for GuiPlugin {
             .add_observer(button_on_interaction::<Add, InteractionDisabled>)
             .add_observer(button_on_interaction::<Remove, InteractionDisabled>)
             .add_observer(button_on_interaction::<Insert, Hovered>)
-            .add_systems(Update, on_button_focus);
+            .add_systems(Update, on_focus_outline::<MenuButton>)
+            .add_observer(slider_on_interaction::<Add, InteractionDisabled>)
+            .add_observer(slider_on_interaction::<Remove, InteractionDisabled>)
+            .add_observer(slider_on_interaction::<Insert, Hovered>)
+            .add_observer(slider_on_change_value::<SliderValue>)
+            .add_observer(slider_on_change_value::<SliderRange>)
+            .add_systems(Update, on_focus_outline::<MenuSlider>);
     }
 }
 
@@ -166,11 +183,11 @@ fn button_on_interaction<E: EntityEvent, C: Bundle>(
 }
 
 // Copied from Bevy Tab Navigation example
-fn on_button_focus(
+fn on_focus_outline<T: Component>(
     mut cmd: Commands,
     focus: Res<InputFocus>,
     focus_helper: IsFocusedHelper,
-    query: Query<Entity, With<MenuButton>>,
+    query: Query<Entity, With<T>>,
 ) {
     if focus.is_changed() {
         for button in query {
@@ -184,5 +201,120 @@ fn on_button_focus(
                 cmd.entity(button).remove::<Outline>();
             }
         }
+    }
+}
+
+/// Copied from Bevy standard widgets example
+pub fn slider(min: f32, max: f32, value: f32) -> impl Bundle {
+    (
+        Node {
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Stretch,
+            justify_items: JustifyItems::Center,
+            column_gap: px(4),
+            height: px(12),
+            width: percent(30),
+            ..default()
+        },
+        Name::new("Slider"),
+        Hovered::default(),
+        MenuSlider,
+        Slider::default(),
+        SliderValue(value),
+        SliderRange::new(min, max),
+        TabIndex(0),
+        Children::spawn((
+            // Slider background rail
+            Spawn((
+                Node {
+                    height: px(6),
+                    ..default()
+                },
+                BackgroundColor(SLIDER_TRACK), // Border color for the checkbox
+                BorderRadius::all(px(3)),
+            )),
+            // Invisible track to allow absolute placement of thumb entity. This is narrower than
+            // the actual slider, which allows us to position the thumb entity using simple
+            // percentages, without having to measure the actual width of the slider thumb.
+            Spawn((
+                Node {
+                    display: Display::Flex,
+                    position_type: PositionType::Absolute,
+                    left: px(0),
+                    // Track is short by 12px to accommodate the thumb.
+                    right: px(12),
+                    top: px(0),
+                    bottom: px(0),
+                    ..default()
+                },
+                children![(
+                    // Thumb
+                    MenuSliderThumb,
+                    SliderThumb,
+                    Node {
+                        display: Display::Flex,
+                        width: px(12),
+                        height: px(12),
+                        position_type: PositionType::Absolute,
+                        left: percent(0), // This will be updated by the slider's value
+                        ..default()
+                    },
+                    BorderRadius::MAX,
+                    BackgroundColor(SLIDER_THUMB),
+                )],
+            )),
+        )),
+    )
+}
+
+/// Copied from Bevy standard widgets example
+fn slider_on_interaction<E: EntityEvent, C: Component>(
+    event: On<E, C>,
+    sliders: Query<(Entity, &Hovered, Has<InteractionDisabled>), With<MenuSlider>>,
+    children: Query<&Children>,
+    mut thumbs: Query<(&mut BackgroundColor, Has<MenuSliderThumb>), Without<MenuSlider>>,
+) {
+    if let Ok((slider_ent, hovered, disabled)) = sliders.get(event.event_target()) {
+        // These "removal event checks" exist because the `Remove` event is triggered _before_ the component is actually
+        // removed, meaning it still shows up in the query. We're investigating the best way to improve this scenario.
+        let disabled = disabled && !(E::is::<Remove>() && C::is::<InteractionDisabled>());
+        for child in children.iter_descendants(slider_ent) {
+            if let Ok((mut thumb_bg, is_thumb)) = thumbs.get_mut(child)
+                && is_thumb
+            {
+                thumb_bg.0 = thumb_color(disabled, hovered.0);
+            }
+        }
+    }
+}
+
+/// Copied from Bevy standard widgets example
+fn slider_on_change_value<C: Component>(
+    insert: On<Insert, C>,
+    sliders: Query<(Entity, &SliderValue, &SliderRange), With<MenuSlider>>,
+    children: Query<&Children>,
+    mut thumbs: Query<(&mut Node, Has<MenuSliderThumb>), Without<MenuSlider>>,
+) {
+    if let Ok((slider_ent, value, range)) = sliders.get(insert.entity) {
+        for child in children.iter_descendants(slider_ent) {
+            if let Ok((mut thumb_node, is_thumb)) = thumbs.get_mut(child)
+                && is_thumb
+            {
+                thumb_node.left = percent(range.thumb_position(value.0) * 100.0);
+            }
+        }
+    }
+}
+
+/// Copied from Bevy standard widgets example
+fn thumb_color(disabled: bool, hovered: bool) -> Color {
+    match (disabled, hovered) {
+        (true, _) => SLIDER_THUMB_DISABLED,
+
+        (false, true) => SLIDER_THUMB.lighter(0.3),
+
+        _ => SLIDER_THUMB,
     }
 }

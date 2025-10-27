@@ -12,6 +12,8 @@ pub struct GamePrefs {
     pub window_width: u32,
     #[serde(default = "default_window_height")]
     pub window_height: u32,
+    #[serde(default = "default_mouse_speed")]
+    pub mouse_speed: f32,
 }
 
 impl Default for GamePrefs {
@@ -19,6 +21,7 @@ impl Default for GamePrefs {
         Self {
             window_width: default_window_width(),
             window_height: default_window_height(),
+            mouse_speed: default_mouse_speed(),
         }
     }
 }
@@ -29,6 +32,10 @@ fn default_window_width() -> u32 {
 
 fn default_window_height() -> u32 {
     720
+}
+
+fn default_mouse_speed() -> f32 {
+    2.5
 }
 
 impl GamePrefs {

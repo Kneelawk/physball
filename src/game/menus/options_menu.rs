@@ -1,9 +1,9 @@
-use crate::game::gui::{ButtonSettings, TEXT_COLOR, button, menu_root, title};
+use crate::game::gui::{ButtonSettings, TEXT_COLOR, button, menu_root, slider, title};
 use crate::game::menus::main_menu::MenuState;
 use crate::game::menus::pause_menu::PauseMenuState;
 use crate::game::settings::GamePrefs;
 use bevy::prelude::*;
-use bevy::ui_widgets::{Activate, observe};
+use bevy::ui_widgets::{Activate, SliderValue, ValueChange, observe};
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct OptionsMenuPlugin;
@@ -15,7 +15,8 @@ impl Plugin for OptionsMenuPlugin {
             .add_systems(OnExit(MenuState::Options), disable_options_menu)
             .add_systems(OnEnter(PauseMenuState::Options), set_options_menu)
             .add_systems(OnExit(PauseMenuState::Options), disable_options_menu)
-            .add_systems(OnEnter(OptionsMenuState::Main), setup_main_options_menu);
+            .add_systems(OnEnter(OptionsMenuState::Main), setup_main_options_menu)
+            .add_systems(Update, update_mouse_speed_slider);
     }
 }
 
@@ -33,6 +34,10 @@ pub enum OptionsReturn {
     MainMenu,
     PauseMenu,
 }
+
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Component)]
+pub struct MouseSpeedSlider;
 
 fn set_options_menu(mut next_state: ResMut<NextState<OptionsMenuState>>) {
     next_state.set(OptionsMenuState::Main);
@@ -101,7 +106,16 @@ fn setup_main_options_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
                         },
                         TextColor(TEXT_COLOR),
                     ),
-                    ()
+                    (
+                        slider(0.0, 10.0, 2.5),
+                        MouseSpeedSlider,
+                        observe(
+                            |value_change: On<ValueChange<f32>>, mut prefs: ResMut<GamePrefs>| {
+                                prefs.mouse_speed = value_change.value;
+                                prefs.save();
+                            }
+                        )
+                    )
                 ]
             ),
             (
@@ -142,4 +156,14 @@ fn window_resize_button(asset_server: &AssetServer, width: u32, height: u32) -> 
             },
         ),
     )
+}
+
+fn update_mouse_speed_slider(
+    prefs: Res<GamePrefs>,
+    slider: Single<Entity, With<MouseSpeedSlider>>,
+    mut cmd: Commands,
+) {
+    if prefs.is_changed() {
+        cmd.entity(*slider).insert(SliderValue(prefs.mouse_speed));
+    }
 }
