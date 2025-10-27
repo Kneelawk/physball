@@ -1,6 +1,7 @@
 use crate::game::gui::{ButtonSettings, TEXT_COLOR, button, menu_root, title};
 use crate::game::menus::main_menu::MenuState;
 use crate::game::menus::pause_menu::PauseMenuState;
+use crate::game::settings::GamePrefs;
 use bevy::prelude::*;
 use bevy::ui_widgets::{Activate, observe};
 
@@ -66,7 +67,7 @@ fn setup_main_options_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
                         Text::new("Window Resolution"),
                         TextFont {
                             font: asset_server.load("fonts/FiraSans-Regular.ttf"),
-                            font_size: 33.0,
+                            font_size: 32.0,
                             ..default()
                         },
                         TextColor(TEXT_COLOR),
@@ -83,56 +84,24 @@ fn setup_main_options_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
                             ..default()
                         },
                         children![
-                            (
-                                button(&asset_server, "640x480", ButtonSettings::small()),
-                                observe(|_a: On<Activate>, mut window: Single<&mut Window>| {
-                                    info!("Resizing window...");
-                                    window.resolution.set(640.0, 480.0);
-                                    info!("Physical size: {}", window.physical_size());
-                                })
-                            ),
-                            (
-                                button(&asset_server, "1280x720", ButtonSettings::small()),
-                                observe(|_a: On<Activate>, mut window: Single<&mut Window>| {
-                                    info!("Resizing window...");
-                                    window.resolution.set(1280.0, 720.0);
-                                    info!("Physical size: {}", window.physical_size());
-                                })
-                            ),
-                            (
-                                button(&asset_server, "1920x1080", ButtonSettings::small()),
-                                observe(|_a: On<Activate>, mut window: Single<&mut Window>| {
-                                    info!("Resizing window...");
-                                    window.resolution.set(1920.0, 1080.0);
-                                    info!("Physical size: {}", window.physical_size());
-                                })
-                            ),
-                            (
-                                button(&asset_server, "2048x1152", ButtonSettings::small()),
-                                observe(|_a: On<Activate>, mut window: Single<&mut Window>| {
-                                    info!("Resizing window...");
-                                    window.resolution.set(2048.0, 1152.0);
-                                    info!("Physical size: {}", window.physical_size());
-                                })
-                            ),
-                            (
-                                button(&asset_server, "2560x1440", ButtonSettings::small()),
-                                observe(|_a: On<Activate>, mut window: Single<&mut Window>| {
-                                    info!("Resizing window...");
-                                    window.resolution.set(2560.0, 1440.0);
-                                    info!("Physical size: {}", window.physical_size());
-                                })
-                            ),
-                            (
-                                button(&asset_server, "3840x2160", ButtonSettings::small()),
-                                observe(|_a: On<Activate>, mut window: Single<&mut Window>| {
-                                    info!("Resizing window...");
-                                    window.resolution.set(3840.0, 2160.0);
-                                    info!("Physical size: {}", window.physical_size());
-                                })
-                            )
+                            window_resize_button(&asset_server, 960, 540),
+                            window_resize_button(&asset_server, 1280, 720),
+                            window_resize_button(&asset_server, 1920, 1080),
+                            window_resize_button(&asset_server, 2048, 1152),
+                            window_resize_button(&asset_server, 2560, 1440),
+                            window_resize_button(&asset_server, 3840, 2160),
                         ]
                     ),
+                    (
+                        Text::new("Mouse Sensitivity"),
+                        TextFont {
+                            font: asset_server.load("fonts/FiraSans-Regular.ttf"),
+                            font_size: 32.0,
+                            ..default()
+                        },
+                        TextColor(TEXT_COLOR),
+                    ),
+                    ()
                 ]
             ),
             (
@@ -151,4 +120,26 @@ fn setup_main_options_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
             )
         ],
     ));
+}
+
+fn window_resize_button(asset_server: &AssetServer, width: u32, height: u32) -> impl Bundle {
+    (
+        button(
+            asset_server,
+            format!("{}x{}", width, height),
+            ButtonSettings::small(),
+        ),
+        observe(
+            move |_a: On<Activate>,
+                  mut window: Single<&mut Window>,
+                  mut prefs: ResMut<GamePrefs>| {
+                info!("Resizing window...");
+                window.resolution.set(width as f32, height as f32);
+                info!("Physical size: {}", window.physical_size());
+                prefs.window_width = width;
+                prefs.window_height = height;
+                prefs.save();
+            },
+        ),
+    )
 }

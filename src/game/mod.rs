@@ -4,9 +4,11 @@ mod game_state;
 mod gui;
 mod levels;
 mod menus;
+mod settings;
 mod startup;
 mod state;
 
+use crate::game::settings::GamePrefs;
 use avian3d::PhysicsPlugins;
 use bevy::app::plugin_group;
 use bevy::input_focus::InputDispatchPlugin;
@@ -15,15 +17,24 @@ use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy::ui_widgets::UiWidgetsPlugins;
 use bevy_svg::SvgPlugin;
+use directories::ProjectDirs;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    pub static ref PROJECT_DIRS: ProjectDirs = ProjectDirs::from("com", "kneelawk", "physball")
+        .expect("Unable to find user home directory");
+}
 
 pub fn physball_client_main() -> AppExit {
+    let prefs = GamePrefs::load();
+
     App::new()
         .add_plugins((
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
                         resizable: false,
-                        resolution: (1280, 720).into(),
+                        resolution: (prefs.window_width, prefs.window_height).into(),
                         ..default()
                     }),
                     ..default()
@@ -63,6 +74,7 @@ pub fn physball_client_main() -> AppExit {
             InputDispatchPlugin,
             TabNavigationPlugin,
         ))
+        .insert_resource(prefs)
         .run()
 }
 
