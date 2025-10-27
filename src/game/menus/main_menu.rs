@@ -103,7 +103,7 @@ fn setup_level_select(mut cmd: Commands, asset_server: Res<AssetServer>) {
                 },
                 children![
                     (
-                        button(&asset_server, "Level 1", ButtonSettings::level_select()),
+                        button(&asset_server, "Level 1", ButtonSettings::small()),
                         observe(
                             |_a: On<Activate>,
                              mut next_state: ResMut<NextState<AppState>>,
@@ -114,7 +114,7 @@ fn setup_level_select(mut cmd: Commands, asset_server: Res<AssetServer>) {
                         )
                     ),
                     (
-                        button(&asset_server, "Level 2", ButtonSettings::level_select()),
+                        button(&asset_server, "Level 2", ButtonSettings::small()),
                         observe(
                             |_a: On<Activate>,
                              mut next_state: ResMut<NextState<AppState>>,

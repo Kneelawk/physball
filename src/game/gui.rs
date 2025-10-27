@@ -76,7 +76,7 @@ impl Default for ButtonSettings {
 }
 
 impl ButtonSettings {
-    pub fn level_select() -> Self {
+    pub fn small() -> Self {
         Self {
             width: 140,
             height: 65,
@@ -108,7 +108,7 @@ pub fn button(
             Text::new(text.to_string()),
             TextFont {
                 font: asset_server.load("fonts/FiraSans-Regular.ttf"),
-                font_size: 33.0,
+                font_size: 30.0,
                 ..default()
             },
             TextColor(TEXT_COLOR),
