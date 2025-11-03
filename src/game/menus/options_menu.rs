@@ -47,7 +47,12 @@ fn disable_options_menu(mut next_state: ResMut<NextState<OptionsMenuState>>) {
     next_state.set(OptionsMenuState::Disabled);
 }
 
-fn setup_main_options_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
+fn setup_main_options_menu(
+    mut cmd: Commands,
+    asset_server: Res<AssetServer>,
+    prefs: Res<GamePrefs>,
+) {
+    info!("mouse speed: {}", prefs.mouse_speed);
     cmd.spawn((
         menu_root(OptionsMenuState::Main),
         children![
@@ -98,23 +103,36 @@ fn setup_main_options_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
                         ]
                     ),
                     (
-                        Text::new("Mouse Sensitivity"),
-                        TextFont {
-                            font: asset_server.load("fonts/FiraSans-Regular.ttf"),
-                            font_size: 32.0,
+                        Node {
+                            align_items: AlignItems::Start,
+                            justify_content: JustifyContent::Center,
+                            display: Display::Flex,
+                            flex_direction: FlexDirection::Column,
+                            row_gap: px(10),
+                            width: percent(100),
                             ..default()
                         },
-                        TextColor(TEXT_COLOR),
-                    ),
-                    (
-                        slider(0.0, 10.0, 2.5),
-                        MouseSpeedSlider,
-                        observe(
-                            |value_change: On<ValueChange<f32>>, mut prefs: ResMut<GamePrefs>| {
-                                prefs.mouse_speed = value_change.value;
-                                prefs.save();
-                            }
-                        )
+                        children![
+                            (
+                                Text::new("Mouse Sensitivity"),
+                                TextFont {
+                                    font: asset_server.load("fonts/FiraSans-Regular.ttf"),
+                                    font_size: 32.0,
+                                    ..default()
+                                },
+                                TextColor(TEXT_COLOR),
+                            ),
+                            (
+                                slider(0.0, 10.0, prefs.mouse_speed),
+                                MouseSpeedSlider,
+                                observe(
+                                    |value_change: On<ValueChange<f32>>, mut prefs: ResMut<GamePrefs>| {
+                                        prefs.mouse_speed = value_change.value;
+                                        prefs.save();
+                                    }
+                                )
+                            )
+                        ]
                     )
                 ]
             ),

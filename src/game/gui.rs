@@ -215,7 +215,7 @@ pub fn slider(min: f32, max: f32, value: f32) -> impl Bundle {
             justify_items: JustifyItems::Center,
             column_gap: px(4),
             height: px(12),
-            width: percent(30),
+            width: percent(100),
             ..default()
         },
         Name::new("Slider"),
