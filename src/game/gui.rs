@@ -58,7 +58,7 @@ pub fn menu_root<S: States>(menu_state: S) -> impl Bundle {
             justify_content: JustifyContent::Center,
             display: Display::Flex,
             flex_direction: FlexDirection::Column,
-            row_gap: px(20),
+            row_gap: px(25),
             ..default()
         },
         TabGroup::default(),

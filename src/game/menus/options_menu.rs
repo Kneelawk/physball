@@ -1,7 +1,7 @@
 use crate::game::gui::{ButtonSettings, TEXT_COLOR, button, menu_root, slider, title};
 use crate::game::menus::main_menu::MenuState;
 use crate::game::menus::pause_menu::PauseMenuState;
-use crate::game::settings::GamePrefs;
+use crate::game::settings::{DEFAULT_MOUSE_SPEED, GamePrefs};
 use bevy::prelude::*;
 use bevy::ui_widgets::{Activate, SliderValue, ValueChange, observe};
 
@@ -16,7 +16,8 @@ impl Plugin for OptionsMenuPlugin {
             .add_systems(OnEnter(PauseMenuState::Options), set_options_menu)
             .add_systems(OnExit(PauseMenuState::Options), disable_options_menu)
             .add_systems(OnEnter(OptionsMenuState::Main), setup_main_options_menu)
-            .add_systems(Update, update_mouse_speed_slider);
+            .add_systems(Update, update_mouse_speed_slider)
+            .add_systems(Update, update_mouse_speed_text);
     }
 }
 
@@ -38,6 +39,10 @@ pub enum OptionsReturn {
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Component, Reflect)]
 #[reflect(Debug, Default, Clone, PartialEq, Component)]
 pub struct MouseSpeedSlider;
+
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Component)]
+pub struct MouseSpeedText;
 
 fn set_options_menu(mut next_state: ResMut<NextState<OptionsMenuState>>) {
     next_state.set(OptionsMenuState::Main);
@@ -69,71 +74,12 @@ fn setup_main_options_menu(
                     justify_content: JustifyContent::Center,
                     display: Display::Flex,
                     flex_direction: FlexDirection::Column,
-                    row_gap: px(10),
+                    row_gap: px(20),
                     ..default()
                 },
                 children![
-                    (
-                        Text::new("Window Resolution"),
-                        TextFont {
-                            font: asset_server.load("fonts/FiraSans-Regular.ttf"),
-                            font_size: 32.0,
-                            ..default()
-                        },
-                        TextColor(TEXT_COLOR),
-                    ),
-                    (
-                        Node {
-                            align_items: AlignItems::Center,
-                            justify_content: JustifyContent::Center,
-                            display: Display::Flex,
-                            flex_direction: FlexDirection::Row,
-                            flex_wrap: FlexWrap::Wrap,
-                            row_gap: px(10),
-                            column_gap: px(10),
-                            ..default()
-                        },
-                        children![
-                            window_resize_button(&asset_server, 960, 540),
-                            window_resize_button(&asset_server, 1280, 720),
-                            window_resize_button(&asset_server, 1920, 1080),
-                            window_resize_button(&asset_server, 2048, 1152),
-                            window_resize_button(&asset_server, 2560, 1440),
-                            window_resize_button(&asset_server, 3840, 2160),
-                        ]
-                    ),
-                    (
-                        Node {
-                            align_items: AlignItems::Start,
-                            justify_content: JustifyContent::Center,
-                            display: Display::Flex,
-                            flex_direction: FlexDirection::Column,
-                            row_gap: px(10),
-                            width: percent(100),
-                            ..default()
-                        },
-                        children![
-                            (
-                                Text::new("Mouse Sensitivity"),
-                                TextFont {
-                                    font: asset_server.load("fonts/FiraSans-Regular.ttf"),
-                                    font_size: 32.0,
-                                    ..default()
-                                },
-                                TextColor(TEXT_COLOR),
-                            ),
-                            (
-                                slider(0.0, 10.0, prefs.mouse_speed),
-                                MouseSpeedSlider,
-                                observe(
-                                    |value_change: On<ValueChange<f32>>, mut prefs: ResMut<GamePrefs>| {
-                                        prefs.mouse_speed = value_change.value;
-                                        prefs.save();
-                                    }
-                                )
-                            )
-                        ]
-                    )
+                    window_resize_section(&asset_server),
+                    mouse_sensitivity_section(&asset_server, &prefs),
                 ]
             ),
             (
@@ -152,6 +98,128 @@ fn setup_main_options_menu(
             )
         ],
     ));
+}
+
+fn mouse_sensitivity_section(asset_server: &AssetServer, prefs: &GamePrefs) -> impl Bundle {
+    (
+        Node {
+            width: percent(100),
+            align_items: AlignItems::Start,
+            justify_content: JustifyContent::Center,
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
+            row_gap: px(10),
+            ..default()
+        },
+        children![
+            (
+                Node {
+                    width: percent(100),
+                    align_items: AlignItems::Start,
+                    justify_content: JustifyContent::SpaceBetween,
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Row,
+                    ..default()
+                },
+                children![
+                    (
+                        Text::new("Mouse Sensitivity"),
+                        TextFont {
+                            font: asset_server.load("fonts/FiraSans-Regular.ttf"),
+                            font_size: 32.0,
+                            ..default()
+                        },
+                        TextColor(TEXT_COLOR),
+                    ),
+                    (
+                        MouseSpeedText,
+                        Text::new(format!("{:.2}", prefs.mouse_speed)),
+                        TextFont {
+                            font: asset_server.load("fonts/FiraSans-Regular.ttf"),
+                            font_size: 32.0,
+                            ..default()
+                        },
+                        TextColor(TEXT_COLOR),
+                    )
+                ]
+            ),
+            (
+                Node {
+                    width: percent(100),
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Row,
+                    column_gap: px(10),
+                    ..default()
+                },
+                children![
+                    (
+                        slider(0.0, 10.0, prefs.mouse_speed),
+                        MouseSpeedSlider,
+                        observe(
+                            |value_change: On<ValueChange<f32>>, mut prefs: ResMut<GamePrefs>| {
+                                prefs.mouse_speed = value_change.value;
+                                prefs.save();
+                            }
+                        )
+                    ),
+                    (
+                        button(asset_server, "Reset", ButtonSettings::small()),
+                        observe(|_on: On<Activate>, mut prefs: ResMut<GamePrefs>| {
+                            prefs.mouse_speed = DEFAULT_MOUSE_SPEED;
+                            prefs.save();
+                        })
+                    )
+                ]
+            )
+        ],
+    )
+}
+
+fn window_resize_section(asset_server: &AssetServer) -> impl Bundle {
+    (
+        Node {
+            width: percent(100),
+            align_items: AlignItems::Start,
+            justify_content: JustifyContent::Center,
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
+            row_gap: px(10),
+            ..default()
+        },
+        children![
+            (
+                Text::new("Window Resolution"),
+                TextFont {
+                    font: asset_server.load("fonts/FiraSans-Regular.ttf"),
+                    font_size: 32.0,
+                    ..default()
+                },
+                TextColor(TEXT_COLOR),
+            ),
+            (
+                Node {
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Row,
+                    flex_wrap: FlexWrap::Wrap,
+                    row_gap: px(10),
+                    column_gap: px(10),
+                    ..default()
+                },
+                children![
+                    window_resize_button(asset_server, 960, 540),
+                    window_resize_button(asset_server, 1280, 720),
+                    window_resize_button(asset_server, 1920, 1080),
+                    window_resize_button(asset_server, 2048, 1152),
+                    window_resize_button(asset_server, 2560, 1440),
+                    window_resize_button(asset_server, 3840, 2160),
+                ],
+            ),
+        ],
+    )
 }
 
 fn window_resize_button(asset_server: &AssetServer, width: u32, height: u32) -> impl Bundle {
@@ -183,5 +251,16 @@ fn update_mouse_speed_slider(
 ) {
     if prefs.is_changed() {
         cmd.entity(*slider).insert(SliderValue(prefs.mouse_speed));
+    }
+}
+
+fn update_mouse_speed_text(
+    prefs: Res<GamePrefs>,
+    slider: Single<Entity, With<MouseSpeedText>>,
+    mut cmd: Commands,
+) {
+    if prefs.is_changed() {
+        cmd.entity(*slider)
+            .insert(Text::new(format!("{:.2}", prefs.mouse_speed)));
     }
 }

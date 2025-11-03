@@ -3,6 +3,8 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fs::{OpenOptions, create_dir_all};
 
+pub const DEFAULT_MOUSE_SPEED: f32 = 2.5;
+
 const PREFS_FILENAME: &str = "prefs.json";
 
 #[derive(Debug, Copy, Clone, PartialEq, Resource, Reflect, Serialize, Deserialize)]
@@ -35,7 +37,7 @@ fn default_window_height() -> u32 {
 }
 
 fn default_mouse_speed() -> f32 {
-    2.5
+    DEFAULT_MOUSE_SPEED
 }
 
 impl GamePrefs {
