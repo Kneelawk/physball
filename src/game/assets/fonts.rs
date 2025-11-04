@@ -1,4 +1,4 @@
-use crate::game::assets::builtin::BuiltinAssetsState;
+use crate::game::assets::BuiltinAssetsState;
 use bevy::asset::io::Reader;
 use bevy::asset::{AssetLoader, LoadContext};
 use bevy::prelude::*;
@@ -20,14 +20,13 @@ pub fn load_fonts_system(
 ) {
     if let Some(handle) = handle {
         for e in msg.read() {
-            if e.is_loaded_with_dependencies(handle.0.id()) {
+            if e.is_loaded_with_dependencies(&handle.0) {
                 cmd.insert_resource(asset.get(&handle.0).unwrap().clone());
                 *builtin_state = BuiltinAssetsState {
                     fonts: true,
                     ..*builtin_state
                 };
                 info!("Builtin fonts loaded.");
-                return;
             }
         }
     }
@@ -41,7 +40,7 @@ pub struct BuiltinFontsLoader;
 pub struct BuiltinFontsAsset(Handle<BuiltinFonts>);
 
 #[derive(Debug, Clone, Asset, Resource, Reflect)]
-#[reflect(Debug)]
+#[reflect(Debug, Resource)]
 pub struct BuiltinFonts {
     pub title: Handle<Font>,
     pub text: Handle<Font>,
@@ -77,7 +76,7 @@ impl AssetLoader for BuiltinFontsLoader {
 
 #[derive(Debug, Error)]
 pub enum BuiltinFontsLoadingError {
-    #[error("IO Error {0}")]
+    #[error("IO error {0}")]
     Io(#[from] std::io::Error),
     #[error("JSON parsing error {0}")]
     Json(#[from] serde_json::Error),

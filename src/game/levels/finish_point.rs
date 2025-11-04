@@ -1,3 +1,4 @@
+use crate::game::assets::preload::Preloads;
 use crate::game::game::Player;
 use crate::game::game_state::GameState;
 use crate::game::levels::LevelObject;
@@ -31,6 +32,19 @@ pub struct FinishPoint;
 
 fn finish_point_on_insert(mut world: DeferredWorld, ctx: HookContext) {
     let serv = world.get_asset_server();
+    if let Some(level_end) = world.get_resource::<Preloads>().unwrap().get("level-end") {
+        if let Ok(level_end) = level_end.clone().try_typed::<Scene>() {
+            world
+                .commands()
+                .entity(ctx.entity)
+                .insert_if_new(SceneRoot(level_end));
+            return;
+        } else {
+            warn!("'level-end' preload exist but is not of type 'scene'");
+        }
+    } else {
+        warn!("Missing 'level-end' preload");
+    }
     let mesh = serv.add(type_expr!(Mesh, Cuboid::new(0.5, 0.5, 0.5).into()));
     let material = serv.add(StandardMaterial {
         base_color: Color::linear_rgba(0.0, 0.0, 0.0, 0.25),

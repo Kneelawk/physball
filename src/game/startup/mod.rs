@@ -1,4 +1,4 @@
-use crate::game::assets::builtin::{BuiltinAssetsState, load_all_builtins};
+use crate::game::assets::{BuiltinAssetsState, load_all_builtins};
 use crate::game::state::AppState;
 use bevy::asset::{embedded_asset, load_embedded_asset};
 use bevy::prelude::*;

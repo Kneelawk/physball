@@ -82,7 +82,7 @@ pub fn physball_client_main() -> AppExit {
 plugin_group! {
     struct BallphysClient {
         state:::GameStatePlugin,
-        assets::builtin:::BuiltinAssetsPlugin,
+        assets:::BuiltinAssetsPlugin,
         startup:::BallphysStartup,
         camera:::CameraPlugin,
         gui:::GuiPlugin,
