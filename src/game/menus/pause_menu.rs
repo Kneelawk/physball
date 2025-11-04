@@ -1,3 +1,4 @@
+use crate::game::assets::fonts::BuiltinFonts;
 use crate::game::game_state::GameState;
 use crate::game::gui::{button, menu_root, title};
 use crate::game::levels::LevelRestartEvent;
@@ -36,19 +37,19 @@ fn disable_pause_menu(mut next_state: ResMut<NextState<PauseMenuState>>) {
     next_state.set(PauseMenuState::Disabled);
 }
 
-fn spawn_pause_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
+fn spawn_pause_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>) {
     cmd.spawn((
         menu_root(PauseMenuState::Main),
         children![
             (
-                title(&asset_server, "Game Paused"),
+                title(&fonts, "Game Paused"),
                 Node {
                     bottom: px(50),
                     ..default()
                 }
             ),
             (
-                button(&asset_server, "Continue", default()),
+                button(&fonts, "Continue", default()),
                 observe(
                     |_a: On<Activate>, mut next_state: ResMut<NextState<GameState>>| {
                         next_state.set(GameState::Playing);
@@ -56,7 +57,7 @@ fn spawn_pause_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
                 )
             ),
             (
-                button(&asset_server, "Restart", default()),
+                button(&fonts, "Restart", default()),
                 observe(
                     |_a: On<Activate>,
                      mut cmd: Commands,
@@ -67,7 +68,7 @@ fn spawn_pause_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
                 )
             ),
             (
-                button(&asset_server, "Options", default()),
+                button(&fonts, "Options", default()),
                 observe(
                     |_a: On<Activate>,
                      mut cmd: Commands,
@@ -78,7 +79,7 @@ fn spawn_pause_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
                 )
             ),
             (
-                button(&asset_server, "Exit Level", default()),
+                button(&fonts, "Exit Level", default()),
                 observe(
                     |_a: On<Activate>,
                      mut next_state: ResMut<NextState<AppState>>,

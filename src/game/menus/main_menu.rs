@@ -1,3 +1,4 @@
+use crate::game::assets::fonts::BuiltinFonts;
 use crate::game::gui::{ButtonSettings, button, menu_root, title};
 use crate::game::levels::SelectedLevel;
 use crate::game::menus::options_menu::OptionsReturn;
@@ -38,19 +39,19 @@ fn disable_main_menu(mut next_menu: ResMut<NextState<MenuState>>) {
     next_menu.set(MenuState::Disabled);
 }
 
-fn setup_main_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
+fn setup_main_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>) {
     cmd.spawn((
         menu_root(MenuState::Main),
         children![
             (
-                title(&asset_server, "physball"),
+                title(&fonts, "physball"),
                 Node {
                     bottom: px(100),
                     ..default()
                 }
             ),
             (
-                button(&asset_server, "Level Select", default()),
+                button(&fonts, "Level Select", default()),
                 observe(
                     |_a: On<Activate>, mut next_menu: ResMut<NextState<MenuState>>| {
                         next_menu.set(MenuState::LevelSelect);
@@ -58,7 +59,7 @@ fn setup_main_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
                 )
             ),
             (
-                button(&asset_server, "Options", default()),
+                button(&fonts, "Options", default()),
                 observe(
                     |_a: On<Activate>,
                      mut cmd: Commands,
@@ -69,7 +70,7 @@ fn setup_main_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
                 )
             ),
             (
-                button(&asset_server, "Quit", default()),
+                button(&fonts, "Quit", default()),
                 observe(|_a: On<Activate>, mut exit: MessageWriter<AppExit>| {
                     exit.write(AppExit::Success);
                 })
@@ -78,12 +79,12 @@ fn setup_main_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
-fn setup_level_select(mut cmd: Commands, asset_server: Res<AssetServer>) {
+fn setup_level_select(mut cmd: Commands, fonts: Res<BuiltinFonts>) {
     cmd.spawn((
         menu_root(MenuState::LevelSelect),
         children![
             (
-                title(&asset_server, "Level Select"),
+                title(&fonts, "Level Select"),
                 Node {
                     bottom: px(100),
                     ..default()
@@ -103,7 +104,7 @@ fn setup_level_select(mut cmd: Commands, asset_server: Res<AssetServer>) {
                 },
                 children![
                     (
-                        button(&asset_server, "Level 1", ButtonSettings::small()),
+                        button(&fonts, "Level 1", ButtonSettings::small()),
                         observe(
                             |_a: On<Activate>,
                              mut next_state: ResMut<NextState<AppState>>,
@@ -114,7 +115,7 @@ fn setup_level_select(mut cmd: Commands, asset_server: Res<AssetServer>) {
                         )
                     ),
                     (
-                        button(&asset_server, "Level 2", ButtonSettings::small()),
+                        button(&fonts, "Level 2", ButtonSettings::small()),
                         observe(
                             |_a: On<Activate>,
                              mut next_state: ResMut<NextState<AppState>>,
@@ -127,7 +128,7 @@ fn setup_level_select(mut cmd: Commands, asset_server: Res<AssetServer>) {
                 ]
             ),
             (
-                button(&asset_server, "Back", default()),
+                button(&fonts, "Back", default()),
                 observe(
                     |_a: On<Activate>, mut next_menu: ResMut<NextState<MenuState>>| {
                         next_menu.set(MenuState::Main);

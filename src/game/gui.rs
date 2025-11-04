@@ -1,3 +1,4 @@
+use crate::game::assets::fonts::BuiltinFonts;
 use bevy::input_focus::tab_navigation::{TabGroup, TabIndex};
 use bevy::input_focus::{InputFocus, IsFocused, IsFocusedHelper};
 use bevy::picking::hover::Hovered;
@@ -66,11 +67,11 @@ pub fn menu_root<S: States>(menu_state: S) -> impl Bundle {
     )
 }
 
-pub fn title(asset_server: &AssetServer, text: impl ToString) -> impl Bundle {
+pub fn title(fonts: &BuiltinFonts, text: impl ToString) -> impl Bundle {
     (
         Text::new(text.to_string()),
         TextFont {
-            font: asset_server.load("fonts/BBHSansBartle-Regular.ttf"),
+            font: fonts.title.clone(),
             font_size: 45.0,
             ..default()
         },
@@ -101,11 +102,7 @@ impl ButtonSettings {
     }
 }
 
-pub fn button(
-    asset_server: &AssetServer,
-    text: impl ToString,
-    settings: ButtonSettings,
-) -> impl Bundle {
+pub fn button(fonts: &BuiltinFonts, text: impl ToString, settings: ButtonSettings) -> impl Bundle {
     (
         Node {
             width: px(settings.width),
@@ -124,7 +121,7 @@ pub fn button(
         children![(
             Text::new(text.to_string()),
             TextFont {
-                font: asset_server.load("fonts/FiraSans-Regular.ttf"),
+                font: fonts.text.clone(),
                 font_size: 30.0,
                 ..default()
             },

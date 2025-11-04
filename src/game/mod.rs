@@ -1,3 +1,4 @@
+mod assets;
 mod camera;
 mod game;
 mod game_state;
@@ -81,6 +82,7 @@ pub fn physball_client_main() -> AppExit {
 plugin_group! {
     struct BallphysClient {
         state:::GameStatePlugin,
+        assets::builtin:::BuiltinAssetsPlugin,
         startup:::BallphysStartup,
         camera:::CameraPlugin,
         gui:::GuiPlugin,

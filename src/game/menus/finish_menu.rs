@@ -1,3 +1,4 @@
+use crate::game::assets::fonts::BuiltinFonts;
 use crate::game::game_state::GameState;
 use crate::game::gui::{button, menu_root, title};
 use crate::game::menus::main_menu::MenuState;
@@ -33,19 +34,19 @@ fn disable_finish_menu(mut next_state: ResMut<NextState<FinishMenuState>>) {
     next_state.set(FinishMenuState::Disabled);
 }
 
-fn setup_finish_menu(mut cmd: Commands, asset_server: Res<AssetServer>) {
+fn setup_finish_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>) {
     cmd.spawn((
         menu_root(FinishMenuState::Main),
         children![
             (
-                title(&asset_server, "Level Finished"),
+                title(&fonts, "Level Finished"),
                 Node {
                     bottom: px(50),
                     ..default()
                 }
             ),
             (
-                button(&asset_server, "Exit Level", default()),
+                button(&fonts, "Exit Level", default()),
                 observe(
                     |_a: On<Activate>,
                      mut next_state: ResMut<NextState<AppState>>,

@@ -1,3 +1,4 @@
+use crate::game::assets::fonts::BuiltinFonts;
 use crate::game::gui::{ButtonSettings, TEXT_COLOR, button, menu_root, slider, title};
 use crate::game::menus::main_menu::MenuState;
 use crate::game::menus::pause_menu::PauseMenuState;
@@ -52,17 +53,13 @@ fn disable_options_menu(mut next_state: ResMut<NextState<OptionsMenuState>>) {
     next_state.set(OptionsMenuState::Disabled);
 }
 
-fn setup_main_options_menu(
-    mut cmd: Commands,
-    asset_server: Res<AssetServer>,
-    prefs: Res<GamePrefs>,
-) {
+fn setup_main_options_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>, prefs: Res<GamePrefs>) {
     info!("mouse speed: {}", prefs.mouse_speed);
     cmd.spawn((
         menu_root(OptionsMenuState::Main),
         children![
             (
-                title(&asset_server, "Options"),
+                title(&fonts, "Options"),
                 Node {
                     bottom: px(50),
                     ..default()
@@ -78,12 +75,12 @@ fn setup_main_options_menu(
                     ..default()
                 },
                 children![
-                    window_resize_section(&asset_server),
-                    mouse_sensitivity_section(&asset_server, &prefs),
+                    window_resize_section(&fonts),
+                    mouse_sensitivity_section(&fonts, &prefs),
                 ]
             ),
             (
-                button(&asset_server, "Back", default()),
+                button(&fonts, "Back", default()),
                 observe(
                     |_a: On<Activate>,
                      ret: Res<OptionsReturn>,
@@ -100,7 +97,7 @@ fn setup_main_options_menu(
     ));
 }
 
-fn mouse_sensitivity_section(asset_server: &AssetServer, prefs: &GamePrefs) -> impl Bundle {
+fn mouse_sensitivity_section(fonts: &BuiltinFonts, prefs: &GamePrefs) -> impl Bundle {
     (
         Node {
             width: percent(100),
@@ -125,7 +122,7 @@ fn mouse_sensitivity_section(asset_server: &AssetServer, prefs: &GamePrefs) -> i
                     (
                         Text::new("Mouse Sensitivity"),
                         TextFont {
-                            font: asset_server.load("fonts/FiraSans-Regular.ttf"),
+                            font: fonts.text.clone(),
                             font_size: 32.0,
                             ..default()
                         },
@@ -135,7 +132,7 @@ fn mouse_sensitivity_section(asset_server: &AssetServer, prefs: &GamePrefs) -> i
                         MouseSpeedText,
                         Text::new(format!("{:.2}", prefs.mouse_speed)),
                         TextFont {
-                            font: asset_server.load("fonts/FiraSans-Regular.ttf"),
+                            font: fonts.text.clone(),
                             font_size: 32.0,
                             ..default()
                         },
@@ -165,7 +162,7 @@ fn mouse_sensitivity_section(asset_server: &AssetServer, prefs: &GamePrefs) -> i
                         )
                     ),
                     (
-                        button(asset_server, "Reset", ButtonSettings::small()),
+                        button(fonts, "Reset", ButtonSettings::small()),
                         observe(|_on: On<Activate>, mut prefs: ResMut<GamePrefs>| {
                             prefs.mouse_speed = DEFAULT_MOUSE_SPEED;
                             prefs.save();
@@ -177,7 +174,7 @@ fn mouse_sensitivity_section(asset_server: &AssetServer, prefs: &GamePrefs) -> i
     )
 }
 
-fn window_resize_section(asset_server: &AssetServer) -> impl Bundle {
+fn window_resize_section(fonts: &BuiltinFonts) -> impl Bundle {
     (
         Node {
             width: percent(100),
@@ -192,7 +189,7 @@ fn window_resize_section(asset_server: &AssetServer) -> impl Bundle {
             (
                 Text::new("Window Resolution"),
                 TextFont {
-                    font: asset_server.load("fonts/FiraSans-Regular.ttf"),
+                    font: fonts.text.clone(),
                     font_size: 32.0,
                     ..default()
                 },
@@ -210,22 +207,22 @@ fn window_resize_section(asset_server: &AssetServer) -> impl Bundle {
                     ..default()
                 },
                 children![
-                    window_resize_button(asset_server, 960, 540),
-                    window_resize_button(asset_server, 1280, 720),
-                    window_resize_button(asset_server, 1920, 1080),
-                    window_resize_button(asset_server, 2048, 1152),
-                    window_resize_button(asset_server, 2560, 1440),
-                    window_resize_button(asset_server, 3840, 2160),
+                    window_resize_button(fonts, 960, 540),
+                    window_resize_button(fonts, 1280, 720),
+                    window_resize_button(fonts, 1920, 1080),
+                    window_resize_button(fonts, 2048, 1152),
+                    window_resize_button(fonts, 2560, 1440),
+                    window_resize_button(fonts, 3840, 2160),
                 ],
             ),
         ],
     )
 }
 
-fn window_resize_button(asset_server: &AssetServer, width: u32, height: u32) -> impl Bundle {
+fn window_resize_button(fonts: &BuiltinFonts, width: u32, height: u32) -> impl Bundle {
     (
         button(
-            asset_server,
+            fonts,
             format!("{}x{}", width, height),
             ButtonSettings::small(),
         ),

@@ -1,3 +1,4 @@
+use crate::game::assets::builtin::{BuiltinAssetsState, load_all_builtins};
 use crate::game::state::AppState;
 use bevy::asset::{embedded_asset, load_embedded_asset};
 use bevy::prelude::*;
@@ -10,7 +11,7 @@ impl Plugin for BallphysStartup {
     fn build(&self, app: &mut App) {
         embedded_asset!(app, "bevy_logo_dark.svg");
 
-        app.add_systems(OnEnter(AppState::Splash), splash_screen)
+        app.add_systems(OnEnter(AppState::Splash), (splash_screen, load_builtins))
             .add_systems(Update, splash_countdown.run_if(in_state(AppState::Splash)));
     }
 }
@@ -59,12 +60,17 @@ fn splash_screen(mut cmd: Commands, asset_server: Res<AssetServer>) {
     cmd.insert_resource(SplashScreenTimer(Timer::from_seconds(2.0, TimerMode::Once)));
 }
 
+fn load_builtins(mut cmd: Commands, asset_server: Res<AssetServer>) {
+    load_all_builtins(&mut cmd, &asset_server);
+}
+
 fn splash_countdown(
     mut game_state: ResMut<NextState<AppState>>,
     time: Res<Time>,
     mut timer: ResMut<SplashScreenTimer>,
+    builtins_state: Res<BuiltinAssetsState>,
 ) {
-    if timer.tick(time.delta()).is_finished() {
+    if timer.tick(time.delta()).is_finished() && builtins_state.is_done() {
         game_state.set(AppState::MainMenu);
     }
 }
