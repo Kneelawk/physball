@@ -16,6 +16,11 @@ lazy_static! {
         tys.insert("scene".to_string(), TypeId::of::<Scene>());
         tys
     };
+    pub static ref REQURED_PRELOADS: HashMap<String, String> = {
+        let mut reqs = HashMap::new();
+        reqs.insert("level-end".to_string(), "scene".to_string());
+        reqs
+    };
 }
 
 pub fn load_preloads(cmd: &mut Commands, asset_server: &AssetServer) {
@@ -52,10 +57,17 @@ pub struct PreloadsAsset(Handle<Preloads>);
 
 #[derive(Debug, Clone, Asset, Resource, Deref, Reflect)]
 #[reflect(Debug, Clone, Resource)]
-pub struct Preloads(HashMap<String, UntypedHandle>);
+pub struct Preloads(HashMap<String, Preload>);
+
+#[derive(Debug, Clone, Reflect)]
+#[reflect(Debug, Clone)]
+pub struct Preload {
+    pub ty: String,
+    pub handle: UntypedHandle,
+}
 
 #[derive(Debug, Clone, Deserialize)]
-struct Preload {
+struct PreloadJson {
     ty: String,
     path: String,
 }
@@ -73,20 +85,34 @@ impl AssetLoader for PreloadsLoader {
     ) -> Result<Self::Asset, Self::Error> {
         let mut vec = vec![];
         reader.read_to_end(&mut vec).await?;
-        let index: HashMap<String, Preload> = serde_json::from_slice(&vec)?;
+        let index: HashMap<String, PreloadJson> = serde_json::from_slice(&vec)?;
 
+        let mut reqs = REQURED_PRELOADS.clone();
         let mut preloads = HashMap::new();
         for (key, preload) in index {
+            if let Some(req_ty) = reqs.remove(&key)
+                && preload.ty != req_ty
+            {
+                return Err(PreloadsLoadingError::WrongPreloadType(preload.ty, req_ty));
+            }
+
             let ty = *ASSET_TYPES
                 .get(&preload.ty)
-                .ok_or(PreloadsLoadingError::UnknownAssetType(preload.ty))?;
-            preloads.insert(
-                key,
-                load_context
+                .ok_or(PreloadsLoadingError::UnknownAssetType(preload.ty.clone()))?;
+            let preload = Preload {
+                ty: preload.ty,
+                handle: load_context
                     .loader()
                     .with_dynamic_type(ty)
                     .load(preload.path),
-            );
+            };
+            preloads.insert(key, preload);
+        }
+
+        if !reqs.is_empty() {
+            return Err(PreloadsLoadingError::MissingPreloads(
+                reqs.keys().cloned().collect(),
+            ));
         }
 
         Ok(Preloads(preloads))
@@ -95,8 +121,12 @@ impl AssetLoader for PreloadsLoader {
 
 #[derive(Debug, Error)]
 pub enum PreloadsLoadingError {
-    #[error("Unknown asset type: {0}")]
+    #[error("Unknown asset type '{0}'")]
     UnknownAssetType(String),
+    #[error("Missing required preloads {0:?}")]
+    MissingPreloads(Vec<String>),
+    #[error("Preload has wrong type '{0}', expected '{1}'")]
+    WrongPreloadType(String, String),
     #[error("IO error {0}")]
     Io(#[from] std::io::Error),
     #[error("JSON parse error {0}")]

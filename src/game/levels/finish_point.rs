@@ -2,9 +2,7 @@ use crate::game::assets::preload::Preloads;
 use crate::game::game::Player;
 use crate::game::game_state::GameState;
 use crate::game::levels::LevelObject;
-use crate::type_expr;
 use avian3d::prelude::*;
-use bevy::asset::io::embedded::GetAssetServer;
 use bevy::ecs::lifecycle::HookContext;
 use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::*;
@@ -31,31 +29,20 @@ impl Plugin for FinishPointPlugin {
 pub struct FinishPoint;
 
 fn finish_point_on_insert(mut world: DeferredWorld, ctx: HookContext) {
-    let serv = world.get_asset_server();
-    if let Some(level_end) = world.get_resource::<Preloads>().unwrap().get("level-end") {
-        if let Ok(level_end) = level_end.clone().try_typed::<Scene>() {
-            world
-                .commands()
-                .entity(ctx.entity)
-                .insert_if_new(SceneRoot(level_end));
-            return;
-        } else {
-            warn!("'level-end' preload exist but is not of type 'scene'");
-        }
-    } else {
-        warn!("Missing 'level-end' preload");
-    }
-    let mesh = serv.add(type_expr!(Mesh, Cuboid::new(0.5, 0.5, 0.5).into()));
-    let material = serv.add(StandardMaterial {
-        base_color: Color::linear_rgba(0.0, 0.0, 0.0, 0.25),
-        emissive: LinearRgba::new(0.0, 12.0, 8.0, 0.25),
-        alpha_mode: AlphaMode::Add,
-        ..default()
-    });
+    let level_end = world
+        .get_resource::<Preloads>()
+        .unwrap()
+        .get("level-end")
+        .expect("missing required preload");
+    let level_end = level_end
+        .clone()
+        .handle
+        .try_typed::<Scene>()
+        .expect("required preload with wrong type");
     world
         .commands()
         .entity(ctx.entity)
-        .insert_if_new((Mesh3d(mesh), MeshMaterial3d(material)));
+        .insert_if_new(SceneRoot(level_end));
 }
 
 fn detect_level_finish(
