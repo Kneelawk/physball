@@ -126,7 +126,7 @@ fn spawn_level2(cmd: &mut Commands, asset_server: &AssetServer) {
         Collider::cuboid(0.5, 0.5, 0.5),
     ));
 
-    cmd.spawn((FinishPoint, Transform::from_xyz(4.5, 0.25, 0.0)));
+    cmd.spawn((FinishPoint, Transform::from_xyz(4.5, 0.5, 0.0)));
 
     // cmd.spawn((
     //     DirectionalLight {

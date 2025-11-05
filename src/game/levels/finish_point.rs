@@ -21,7 +21,7 @@ impl Plugin for FinishPointPlugin {
     LevelObject,
     Transform,
     Sensor,
-    Collider::cuboid(0.5, 0.5, 0.5),
+    Collider::cuboid(1.0, 1.0, 1.0),
     CollisionEventsEnabled
 )]
 #[component(on_insert = finish_point_on_insert)]
