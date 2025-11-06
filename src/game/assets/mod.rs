@@ -2,6 +2,7 @@ pub mod fonts;
 pub mod preload;
 
 use crate::game::assets::preload::{Preloads, PreloadsLoader, load_preloads, load_preloads_system};
+use crate::game::levels::index::load_level_index;
 use bevy::prelude::*;
 use fonts::{BuiltinFonts, BuiltinFontsLoader, load_fonts, load_fonts_system};
 
@@ -22,6 +23,7 @@ impl Plugin for BuiltinAssetsPlugin {
 pub fn load_all_builtins(cmd: &mut Commands, asset_server: &AssetServer) {
     load_fonts(cmd, asset_server);
     load_preloads(cmd, asset_server);
+    load_level_index(cmd, asset_server);
 }
 
 #[derive(Debug, Default, Clone, Resource, Reflect)]

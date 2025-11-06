@@ -1,6 +1,7 @@
 use crate::game::assets::fonts::BuiltinFonts;
 use crate::game::gui::{ButtonSettings, button, menu_root, title};
 use crate::game::levels::SelectedLevel;
+use crate::game::levels::index::{LevelIndex, LevelIndexAsset, LevelRef};
 use crate::game::menus::options_menu::OptionsReturn;
 use crate::game::state::AppState;
 use bevy::prelude::*;
@@ -15,7 +16,11 @@ impl Plugin for MainMenuPlugin {
             .add_systems(OnEnter(AppState::MainMenu), set_main_menu)
             .add_systems(OnExit(AppState::MainMenu), disable_main_menu)
             .add_systems(OnEnter(MenuState::Main), setup_main_menu)
-            .add_systems(OnEnter(MenuState::LevelSelect), setup_level_select);
+            .add_systems(OnEnter(MenuState::LevelSelect), setup_level_select)
+            .add_systems(
+                PreUpdate,
+                on_level_index_change.run_if(in_state(MenuState::LevelSelect)),
+            );
     }
 }
 
@@ -28,6 +33,14 @@ pub enum MenuState {
     LevelSelect,
     Options,
 }
+
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
+pub struct LevelSelectMenu;
+
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Clone, PartialEq, Hash, Component)]
+pub struct LevelSelectButton(String);
 
 fn set_main_menu(state: Res<State<MenuState>>, mut next_menu: ResMut<NextState<MenuState>>) {
     if *state == MenuState::Disabled {
@@ -79,9 +92,45 @@ fn setup_main_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>) {
     ));
 }
 
-fn setup_level_select(mut cmd: Commands, fonts: Res<BuiltinFonts>) {
+fn on_level_index_change(
+    mut msg: MessageReader<AssetEvent<LevelIndex>>,
+    mut cmd: Commands,
+    menu: Query<Entity, With<LevelSelectMenu>>,
+    fonts: Res<BuiltinFonts>,
+    index_handle: Res<LevelIndexAsset>,
+    index: Res<Assets<LevelIndex>>,
+) {
+    for e in msg.read() {
+        if e.is_loaded_with_dependencies(&index_handle.0) {
+            // despawn the old menu
+            for entity in menu {
+                cmd.entity(entity).despawn();
+            }
+
+            setup_level_select(cmd, fonts, index_handle, index);
+
+            msg.clear();
+            return;
+        }
+    }
+}
+
+fn setup_level_select(
+    mut cmd: Commands,
+    fonts: Res<BuiltinFonts>,
+    index_handle: Res<LevelIndexAsset>,
+    index: Res<Assets<LevelIndex>>,
+) {
+    let level_buttons = index
+        .get(&index_handle.0)
+        .iter()
+        .flat_map(|idx| idx.order.iter().map(|name| &idx.levels[name]))
+        .map(|r| level_select_button(&fonts, r))
+        .collect::<Vec<_>>();
+
     cmd.spawn((
         menu_root(MenuState::LevelSelect),
+        LevelSelectMenu,
         children![
             (
                 title(&fonts, "Level Select"),
@@ -102,30 +151,7 @@ fn setup_level_select(mut cmd: Commands, fonts: Res<BuiltinFonts>) {
                     column_gap: px(20),
                     ..default()
                 },
-                children![
-                    (
-                        button(&fonts, "Level 1", ButtonSettings::small()),
-                        observe(
-                            |_a: On<Activate>,
-                             mut next_state: ResMut<NextState<AppState>>,
-                             mut cmd: Commands| {
-                                next_state.set(AppState::Game);
-                                cmd.insert_resource(SelectedLevel::Level1);
-                            }
-                        )
-                    ),
-                    (
-                        button(&fonts, "Level 2", ButtonSettings::small()),
-                        observe(
-                            |_a: On<Activate>,
-                             mut next_state: ResMut<NextState<AppState>>,
-                             mut cmd: Commands| {
-                                next_state.set(AppState::Game);
-                                cmd.insert_resource(SelectedLevel::Level2);
-                            }
-                        )
-                    )
-                ]
+                Children::spawn(SpawnIter(level_buttons.into_iter())),
             ),
             (
                 button(&fonts, "Back", default()),
@@ -137,4 +163,33 @@ fn setup_level_select(mut cmd: Commands, fonts: Res<BuiltinFonts>) {
             )
         ],
     ));
+}
+
+fn level_select_button(fonts: &BuiltinFonts, level: &LevelRef) -> impl Bundle + use<> {
+    info!("Adding button for: {:?}", level);
+    let display = level.display.clone();
+    let name = level.name.clone();
+
+    // we use LevelSelectButton to pass data into the observe closure because there's a bug in
+    // observe closures that strips them of their extra moved data
+    (
+        button(fonts, display, ButtonSettings::small()),
+        LevelSelectButton(name),
+        observe(
+            |a: On<Activate>,
+             mut next_state: ResMut<NextState<AppState>>,
+             button: Query<&LevelSelectButton>,
+             mut cmd: Commands| {
+                let name = button
+                    .get(a.entity)
+                    .expect("level select button missing LevelSelectButton component")
+                    .0
+                    .clone();
+                info!("Loading level '{}'", &name);
+                next_state.set(AppState::Game);
+                cmd.insert_resource(SelectedLevel(name.clone()));
+                info!("Loading level sent '{}'", &name);
+            },
+        ),
+    )
 }

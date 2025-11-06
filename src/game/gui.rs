@@ -102,7 +102,7 @@ impl ButtonSettings {
     }
 }
 
-pub fn button(fonts: &BuiltinFonts, text: impl ToString, settings: ButtonSettings) -> impl Bundle {
+pub fn button<T: ToString>(fonts: &BuiltinFonts, text: T, settings: ButtonSettings) -> impl Bundle + use<T> {
     (
         Node {
             width: px(settings.width),

@@ -1,6 +1,9 @@
 pub mod finish_point;
+pub mod index;
+pub mod serial;
 
 use crate::game::levels::finish_point::FinishPoint;
+use crate::game::levels::index::{LevelIndex, LevelIndexLoader, on_level_index_loaded};
 use crate::game::state::AppState;
 use crate::type_expr;
 use avian3d::prelude::*;
@@ -11,7 +14,10 @@ pub struct LevelsPlugin;
 
 impl Plugin for LevelsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_observer(respawn_level)
+        app.init_asset::<LevelIndex>()
+            .init_asset_loader::<LevelIndexLoader>()
+            .add_systems(Update, on_level_index_loaded)
+            .add_observer(respawn_level)
             .add_systems(OnExit(AppState::Game), (unselect_level, despawn_level))
             .add_systems(OnEnter(AppState::Game), spawn_level);
     }
@@ -25,12 +31,9 @@ pub struct LevelReadyEvent;
 #[reflect(Debug, Default, Clone, PartialEq, Hash)]
 pub struct LevelRestartEvent;
 
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Resource, Reflect)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Resource, Reflect)]
 #[reflect(Debug, Clone, PartialEq, Hash, Resource)]
-pub enum SelectedLevel {
-    Level1,
-    Level2,
-}
+pub struct SelectedLevel(pub String);
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
 #[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
@@ -73,10 +76,10 @@ fn spawn_level(mut cmd: Commands, level: Res<SelectedLevel>, asset_server: Res<A
 }
 
 fn spawn_level_impl(cmd: &mut Commands, level: Res<SelectedLevel>, asset_server: &AssetServer) {
-    match *level {
-        SelectedLevel::Level1 => spawn_level1(cmd, asset_server),
-        SelectedLevel::Level2 => spawn_level2(cmd, asset_server),
-    }
+    // match *level {
+    //     SelectedLevel::Level1 => spawn_level1(cmd, asset_server),
+    //     SelectedLevel::Level2 => spawn_level2(cmd, asset_server),
+    // }
 }
 
 fn spawn_level1(cmd: &mut Commands, asset_server: &AssetServer) {
