@@ -80,15 +80,15 @@ pub fn title(fonts: &BuiltinFonts, text: impl ToString) -> impl Bundle {
 }
 
 pub struct ButtonSettings {
-    width: u32,
-    height: u32,
+    width: Val,
+    height: Val,
 }
 
 impl Default for ButtonSettings {
     fn default() -> Self {
         Self {
-            width: 300,
-            height: 65,
+            width: px(300),
+            height: px(65),
         }
     }
 }
@@ -96,20 +96,25 @@ impl Default for ButtonSettings {
 impl ButtonSettings {
     pub fn small() -> Self {
         Self {
-            width: 140,
-            height: 65,
+            width: auto(),
+            height: px(65),
         }
     }
 }
 
-pub fn button<T: ToString>(fonts: &BuiltinFonts, text: T, settings: ButtonSettings) -> impl Bundle + use<T> {
+pub fn button<T: ToString>(
+    fonts: &BuiltinFonts,
+    text: T,
+    settings: ButtonSettings,
+) -> impl Bundle + use<T> {
     (
         Node {
-            width: px(settings.width),
-            height: px(settings.height),
+            width: settings.width,
+            height: settings.height,
             border: UiRect::all(px(1)),
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
+            padding: UiRect::all(px(15)),
             ..default()
         },
         Button,
