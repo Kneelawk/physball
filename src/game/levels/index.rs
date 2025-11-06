@@ -14,13 +14,11 @@ pub fn load_level_index(cmd: &mut Commands, asset_server: &AssetServer) {
 pub fn on_level_index_loaded(
     mut msg: MessageReader<AssetEvent<LevelIndex>>,
     handle: Option<Res<LevelIndexAsset>>,
-    asset: Res<Assets<LevelIndex>>,
 ) {
     if let Some(handle) = handle {
         for e in msg.read() {
             if e.is_loaded_with_dependencies(&handle.0) {
-                let index = asset.get(&handle.0).expect("Level index missing");
-                info!("Level index loaded: {:?}", index);
+                info!("Level index loaded.");
             }
         }
     }
@@ -66,8 +64,6 @@ impl AssetLoader for LevelIndexLoader {
         let mut bytes = vec![];
         reader.read_to_end(&mut bytes).await?;
         let index: LevelIndexJson = serde_json::from_slice(&bytes)?;
-
-        info!("Loading level index: {:?}", &index);
 
         let mut order = vec![];
         let mut levels = HashMap::new();

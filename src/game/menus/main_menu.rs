@@ -166,7 +166,6 @@ fn setup_level_select(
 }
 
 fn level_select_button(fonts: &BuiltinFonts, level: &LevelRef) -> impl Bundle + use<> {
-    info!("Adding button for: {:?}", level);
     let display = level.display.clone();
     let name = level.name.clone();
 
@@ -185,10 +184,8 @@ fn level_select_button(fonts: &BuiltinFonts, level: &LevelRef) -> impl Bundle + 
                     .expect("level select button missing LevelSelectButton component")
                     .0
                     .clone();
-                info!("Loading level '{}'", &name);
                 next_state.set(AppState::Game);
                 cmd.insert_resource(SelectedLevel(name.clone()));
-                info!("Loading level sent '{}'", &name);
             },
         ),
     )
