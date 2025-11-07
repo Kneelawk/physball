@@ -40,6 +40,8 @@ pub struct Grounded;
 pub fn spawn_transform(
     spawn_point: Query<&Transform, (With<PlayerSpawnPoint>, Without<Player>)>,
 ) -> Transform {
+    let spawn_point = spawn_point.iter().copied().collect::<Vec<_>>();
+    info!("Spawn points: {:?}", spawn_point);
     match spawn_point.iter().next() {
         None => Transform::from_translation(Vec3::new(0.0, 0.5, 0.0)),
         Some(trans) => *trans,
@@ -87,6 +89,7 @@ fn reset_player(
     >,
 ) {
     let spawn_transform = spawn_transform(spawn_point);
+    info!("Respawning player: {:?}", &spawn_transform);
 
     for (mut transform, mut ang_vel, mut lin_vel) in player {
         *transform = spawn_transform;

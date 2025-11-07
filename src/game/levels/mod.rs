@@ -2,12 +2,13 @@ pub mod finish_point;
 pub mod index;
 pub mod serial;
 
-use crate::game::levels::finish_point::FinishPoint;
+use crate::game::assets::preload::Preloads;
 use crate::game::levels::index::{LevelIndex, LevelIndexLoader, on_level_index_loaded};
+use crate::game::levels::serial::SerialLevelLoader;
+use crate::game::levels::serial::level::LevelBuildArgs;
 use crate::game::state::AppState;
-use crate::type_expr;
-use avian3d::prelude::*;
 use bevy::prelude::*;
+use serial::level::SerialLevel;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct LevelsPlugin;
@@ -15,11 +16,17 @@ pub struct LevelsPlugin;
 impl Plugin for LevelsPlugin {
     fn build(&self, app: &mut App) {
         app.init_asset::<LevelIndex>()
+            .init_asset::<SerialLevel>()
             .init_asset_loader::<LevelIndexLoader>()
+            .init_asset_loader::<SerialLevelLoader>()
             .add_systems(Update, on_level_index_loaded)
+            .add_systems(OnEnter(AppState::LoadingLevel), start_loading_level)
+            .add_systems(
+                Update,
+                spawn_level.run_if(in_state(AppState::LoadingLevel).or(in_state(AppState::Game))),
+            )
             .add_observer(respawn_level)
-            .add_systems(OnExit(AppState::Game), (unselect_level, despawn_level))
-            .add_systems(OnEnter(AppState::Game), spawn_level);
+            .add_systems(OnExit(AppState::Game), (unselect_level, despawn_level));
     }
 }
 
@@ -35,6 +42,10 @@ pub struct LevelRestartEvent;
 #[reflect(Debug, Clone, PartialEq, Hash, Resource)]
 pub struct SelectedLevel(pub String);
 
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Resource, Reflect)]
+#[reflect(Debug, Clone, PartialEq, Hash, Resource)]
+pub struct LevelHandle(pub Handle<SerialLevel>);
+
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
 #[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
 pub struct LevelObject;
@@ -43,8 +54,27 @@ pub struct LevelObject;
 #[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
 pub struct PlayerSpawnPoint;
 
+fn start_loading_level(
+    mut cmd: Commands,
+    level: Res<SelectedLevel>,
+    assets: Res<AssetServer>,
+    index: Res<LevelIndex>,
+    mut broken_state: ResMut<NextState<AppState>>,
+) {
+    let level = if let Some(level) = index.levels.get(&level.0) {
+        level
+    } else {
+        error!("Attempted to load invalid level '{}'", &level.0);
+        broken_state.set(AppState::MainMenu);
+        return;
+    };
+    info!("Loading level '{}'", &level.name);
+    cmd.insert_resource(LevelHandle(assets.load(&level.path)));
+}
+
 fn unselect_level(mut cmd: Commands) {
     cmd.remove_resource::<SelectedLevel>();
+    cmd.remove_resource::<LevelHandle>();
 }
 
 fn despawn_level(mut cmd: Commands, query: Query<Entity, With<LevelObject>>) {
@@ -61,84 +91,75 @@ fn respawn_level(
     _on: On<LevelRestartEvent>,
     mut cmd: Commands,
     query: Query<Entity, With<LevelObject>>,
-    level: Res<SelectedLevel>,
     asset_server: Res<AssetServer>,
+    preloads: Res<Preloads>,
+    level_handle: Res<LevelHandle>,
+    level_assets: Res<Assets<SerialLevel>>,
 ) {
     // TODO: Implement checkpoint system
     despawn_level_impl(&mut cmd, query);
-    spawn_level_impl(&mut cmd, level, &asset_server);
+    spawn_level_impl(
+        &mut cmd,
+        &asset_server,
+        &preloads,
+        &level_handle,
+        &level_assets,
+        true,
+    );
 }
 
-fn spawn_level(mut cmd: Commands, level: Res<SelectedLevel>, asset_server: Res<AssetServer>) {
-    spawn_level_impl(&mut cmd, level, &asset_server);
+fn spawn_level(
+    mut msg: MessageReader<AssetEvent<SerialLevel>>,
+    mut cmd: Commands,
+    query: Query<Entity, With<LevelObject>>,
+    asset_server: Res<AssetServer>,
+    preloads: Res<Preloads>,
+    level_handle: Option<Res<LevelHandle>>,
+    level_assets: Res<Assets<SerialLevel>>,
+    app_state: Res<State<AppState>>,
+    mut next_state: ResMut<NextState<AppState>>,
+) {
+    if let Some(level_handle) = level_handle {
+        for e in msg.read() {
+            if e.is_loaded_with_dependencies(&level_handle.0) {
+                despawn_level_impl(&mut cmd, query);
+                spawn_level_impl(
+                    &mut cmd,
+                    &asset_server,
+                    &preloads,
+                    &level_handle,
+                    &level_assets,
+                    true,
+                );
 
-    cmd.trigger(LevelReadyEvent);
+                if **app_state != AppState::Game {
+                    next_state.set(AppState::Game);
+                    cmd.trigger(LevelReadyEvent);
+                }
+
+                msg.clear();
+                return;
+            }
+        }
+    }
 }
 
-fn spawn_level_impl(cmd: &mut Commands, level: Res<SelectedLevel>, asset_server: &AssetServer) {
-    // match *level {
-    //     SelectedLevel::Level1 => spawn_level1(cmd, asset_server),
-    //     SelectedLevel::Level2 => spawn_level2(cmd, asset_server),
-    // }
-}
-
-fn spawn_level1(cmd: &mut Commands, asset_server: &AssetServer) {
-    cmd.spawn((
-        LevelObject,
-        Transform::default(),
-        Mesh3d(asset_server.add(Plane3d::new(Vec3::Y, Vec2::splat(5.0)).into())),
-        MeshMaterial3d(asset_server.add(type_expr!(StandardMaterial, Color::WHITE.into()))),
-        children![(
-            RigidBody::Static,
-            Collider::cuboid(10.0, 0.2, 10.0),
-            Transform::from_xyz(0.0, -0.1, 0.0)
-        )],
-    ));
-
-    // cmd.spawn((
-    //     DirectionalLight {
-    //         illuminance: light_consts::lux::OVERCAST_DAY,
-    //         shadows_enabled: true,
-    //         ..default()
-    //     },
-    //     Transform::from_rotation(
-    //         Quat::from_rotation_x(-PI / 4.0) * Quat::from_rotation_z(-PI / 6.0),
-    //     ),
-    // ));
-}
-
-fn spawn_level2(cmd: &mut Commands, asset_server: &AssetServer) {
-    cmd.spawn((
-        LevelObject,
-        Transform::default(),
-        Mesh3d(asset_server.add(Plane3d::new(Vec3::Y, Vec2::splat(5.0)).into())),
-        MeshMaterial3d(asset_server.add(type_expr!(StandardMaterial, Color::WHITE.into()))),
-        children![(
-            RigidBody::Static,
-            Collider::cuboid(10.0, 0.2, 10.0),
-            Transform::from_xyz(0.0, -0.1, 0.0)
-        )],
-    ));
-
-    cmd.spawn((
-        LevelObject,
-        Transform::from_xyz(0.0, 0.25, -4.5),
-        Mesh3d(asset_server.add(Cuboid::from_length(0.5).into())),
-        MeshMaterial3d(asset_server.add(type_expr!(StandardMaterial, Color::WHITE.into()))),
-        RigidBody::Dynamic,
-        Collider::cuboid(0.5, 0.5, 0.5),
-    ));
-
-    cmd.spawn((FinishPoint, Transform::from_xyz(4.5, 0.5, 0.0)));
-
-    // cmd.spawn((
-    //     DirectionalLight {
-    //         illuminance: light_consts::lux::OVERCAST_DAY,
-    //         shadows_enabled: true,
-    //         ..default()
-    //     },
-    //     Transform::from_rotation(
-    //         Quat::from_rotation_z(-PI / 6.0) * Quat::from_rotation_x(-PI / 4.0),
-    //     ),
-    // ));
+fn spawn_level_impl(
+    cmd: &mut Commands,
+    assets: &AssetServer,
+    preloads: &Preloads,
+    level_handle: &LevelHandle,
+    level_assets: &Assets<SerialLevel>,
+    dyn_assets: bool,
+) {
+    let level = level_assets
+        .get(&level_handle.0)
+        .expect("Level handle invalid");
+    info!("Spawning level: {:?}", level);
+    level.spawn(&mut LevelBuildArgs {
+        dyn_assets,
+        cmd,
+        assets,
+        preloads,
+    });
 }

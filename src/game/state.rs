@@ -6,7 +6,7 @@ pub enum AppState {
     #[default]
     Splash,
     MainMenu,
-    // Loading would go here
+    LoadingLevel,
     Game,
 }
 

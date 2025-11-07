@@ -96,9 +96,12 @@ impl AssetLoader for PreloadsLoader {
                 return Err(PreloadsLoadingError::WrongPreloadType(preload.ty, req_ty));
             }
 
-            let ty = *ASSET_TYPES
-                .get(&preload.ty)
-                .ok_or(PreloadsLoadingError::UnknownAssetType(preload.ty.clone()))?;
+            let ty =
+                *ASSET_TYPES
+                    .get(&preload.ty)
+                    .ok_or(PreloadsLoadingError::UnknownAssetType {
+                        ty: preload.ty.clone(),
+                    })?;
             let preload = Preload {
                 ty: preload.ty,
                 handle: load_context
@@ -121,8 +124,8 @@ impl AssetLoader for PreloadsLoader {
 
 #[derive(Debug, Error)]
 pub enum PreloadsLoadingError {
-    #[error("Unknown asset type '{0}'")]
-    UnknownAssetType(String),
+    #[error("Unknown asset type '{}', known asset types are {:?}", .ty, ASSET_TYPES.keys().collect::<Vec<_>>())]
+    UnknownAssetType { ty: String },
     #[error("Missing required preloads {0:?}")]
     MissingPreloads(Vec<String>),
     #[error("Preload has wrong type '{0}', expected '{1}'")]

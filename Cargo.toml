@@ -12,7 +12,7 @@ directories = "6"
 event-listener = "5"
 knus = { git = "https://github.com/TheLostLambda/knus.git", branch = "kdl-v2" }
 lazy_static = "1"
-miette = "7"
+miette = { version = "7", features = ["fancy"] }
 # Set max log levels. This helps avoid unwanted low-severity log spam, which can affect performance.
 log = { version = "0.4", features = [
     "max_level_debug",

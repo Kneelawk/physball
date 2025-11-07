@@ -1,7 +1,11 @@
-use crate::game::assets::preload::Preloads;
+pub mod kdl;
+pub mod level;
+
 use bevy::asset::io::Reader;
 use bevy::asset::{AssetLoader, AsyncReadExt, LoadContext};
 use bevy::prelude::*;
+use kdl::KdlLevel;
+use level::SerialLevel;
 use thiserror::Error;
 
 #[derive(Debug, Default)]
@@ -20,15 +24,15 @@ impl AssetLoader for SerialLevelLoader {
     ) -> Result<Self::Asset, Self::Error> {
         let mut str = String::new();
         reader.read_to_string(&mut str).await?;
-        let level: SerialLevel = match knus::parse(&load_context.path().to_string_lossy(), &str) {
+        let level: KdlLevel = match knus::parse(load_context.path().to_string_lossy(), &str) {
             Ok(res) => res,
             Err(err) => {
-                error!("{:?}", miette::Report::new(err));
+                error!("{}", miette::Report::new(err));
                 return Err(SerialLevelLoadingError::LevelFormatError);
             }
         };
 
-        Ok(level)
+        Ok(level.bind(load_context))
     }
 }
 
@@ -39,13 +43,3 @@ pub enum SerialLevelLoadingError {
     #[error("IO error {0}")]
     Io(#[from] std::io::Error),
 }
-
-pub struct SerialArgs<'a, 'w, 's> {
-    pub cmd: &'a Commands<'w, 's>,
-    pub assets: &'a AssetServer,
-    pub preloads: &'a Preloads,
-}
-
-#[derive(Debug, Clone, knus::Decode, Asset, Reflect)]
-#[reflect(Debug, Clone)]
-pub struct SerialLevel {}

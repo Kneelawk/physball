@@ -1,3 +1,4 @@
+use crate::game::assets::BuiltinAssetsState;
 use bevy::asset::io::Reader;
 use bevy::asset::{AssetLoader, LoadContext};
 use bevy::prelude::*;
@@ -13,11 +14,19 @@ pub fn load_level_index(cmd: &mut Commands, asset_server: &AssetServer) {
 
 pub fn on_level_index_loaded(
     mut msg: MessageReader<AssetEvent<LevelIndex>>,
+    mut cmd: Commands,
+    mut builtin_state: ResMut<BuiltinAssetsState>,
     handle: Option<Res<LevelIndexAsset>>,
+    asset: Res<Assets<LevelIndex>>,
 ) {
     if let Some(handle) = handle {
         for e in msg.read() {
             if e.is_loaded_with_dependencies(&handle.0) {
+                cmd.insert_resource(asset.get(&handle.0).unwrap().clone());
+                *builtin_state = BuiltinAssetsState {
+                    level_index: true,
+                    ..*builtin_state
+                };
                 info!("Level index loaded.");
             }
         }

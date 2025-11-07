@@ -184,7 +184,7 @@ fn level_select_button(fonts: &BuiltinFonts, level: &LevelRef) -> impl Bundle + 
                     .expect("level select button missing LevelSelectButton component")
                     .0
                     .clone();
-                next_state.set(AppState::Game);
+                next_state.set(AppState::LoadingLevel);
                 cmd.insert_resource(SelectedLevel(name.clone()));
             },
         ),

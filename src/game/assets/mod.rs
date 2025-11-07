@@ -32,10 +32,11 @@ pub fn load_all_builtins(cmd: &mut Commands, asset_server: &AssetServer) {
 pub struct BuiltinAssetsState {
     pub fonts: bool,
     pub preloads: bool,
+    pub level_index: bool,
 }
 
 impl BuiltinAssetsState {
     pub fn is_done(&self) -> bool {
-        self.fonts && self.preloads
+        self.fonts && self.preloads && self.level_index
     }
 }
