@@ -27,7 +27,7 @@ impl AssetLoader for SerialLevelLoader {
         let level: KdlLevel = match knus::parse(load_context.path().to_string_lossy(), &str) {
             Ok(res) => res,
             Err(err) => {
-                error!("{}", miette::Report::new(err));
+                eprintln!("{:?}", miette::Report::new(err));
                 return Err(SerialLevelLoadingError::LevelFormatError);
             }
         };

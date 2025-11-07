@@ -1,6 +1,8 @@
+use std::f32::consts::PI;
 use crate::game::levels::serial::level::{SerialLevel, SerialPlane, SerialText};
 use bevy::asset::LoadContext;
 use bevy::prelude::*;
+use bevy_rich_text3d::TextAlign;
 
 #[derive(Debug, Clone, knus::Decode)]
 pub struct KdlLevel {
@@ -58,6 +60,12 @@ pub struct KdlText {
     #[knus(argument)]
     text: String,
 
+    #[knus(property)]
+    font: Option<String>,
+
+    #[knus(property, default)]
+    align: KdlAlign,
+
     #[knus(child)]
     pos: KdlVec3,
 
@@ -72,9 +80,30 @@ impl KdlText {
     pub fn into_serial_text(self) -> SerialText {
         SerialText {
             text: self.text,
+            font: self.font,
+            align: self.align,
             trans: Transform::from_scale(self.scale.map(KdlScale::into_vec).unwrap_or(Vec3::ONE))
                 .with_rotation(self.rotations.into_quat())
                 .with_translation(self.pos.into_vec()),
+        }
+    }
+}
+
+#[derive(Debug, Default, Copy, Clone, knus::DecodeScalar, Reflect)]
+#[reflect(Debug, Default, Clone)]
+pub enum KdlAlign {
+    #[default]
+    Left,
+    Center,
+    Right,
+}
+
+impl KdlAlign {
+    pub fn to_text_align(self) -> TextAlign {
+        match self {
+            KdlAlign::Left => TextAlign::Left,
+            KdlAlign::Center => TextAlign::Center,
+            KdlAlign::Right => TextAlign::Right,
         }
     }
 }
@@ -126,7 +155,7 @@ impl IntoQuat for KdlRotation {
             KdlAxis::Z => Vec3::Z,
         };
 
-        Quat::from_axis_angle(axis, self.angle)
+        Quat::from_axis_angle(axis, self.angle / 180.0 * PI)
     }
 }
 

@@ -1,6 +1,7 @@
 use crate::game::assets::fonts::BuiltinFonts;
 use crate::game::assets::preload::Preloads;
 use crate::game::levels::finish_point::FinishPoint;
+use crate::game::levels::serial::kdl::KdlAlign;
 use crate::game::levels::{LevelObject, PlayerSpawnPoint};
 use crate::type_expr;
 use avian3d::prelude::*;
@@ -37,6 +38,8 @@ pub struct SerialPlane {
 #[reflect(Debug, Clone)]
 pub struct SerialText {
     pub text: String,
+    pub font: Option<String>,
+    pub align: KdlAlign,
     pub trans: Transform,
 }
 
@@ -80,14 +83,19 @@ impl SerialPlane {
 
 impl SerialText {
     pub fn spawn(&self, args: &mut LevelBuildArgs) {
+        let font = match self.font.as_deref() {
+            Some("title") => args.fonts.title_name.clone(),
+            _ => args.fonts.text_name.clone(),
+        };
         args.cmd.spawn((
             LevelObject,
             self.trans,
             Text3d::new(self.text.clone()),
             Text3dStyling {
-                font: args.fonts.text_name.clone().into(),
+                font: font.into(),
                 size: 64.,
                 world_scale: Some(Vec2::splat(0.25)),
+                align: self.align.to_text_align(),
                 ..Default::default()
             },
             Mesh3d::default(),

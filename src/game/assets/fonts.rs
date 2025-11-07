@@ -2,7 +2,6 @@ use crate::game::assets::BuiltinAssetsState;
 use bevy::asset::io::Reader;
 use bevy::asset::{AssetLoader, LoadContext, LoadDirectError};
 use bevy::prelude::*;
-use bevy::tasks::futures_lite::StreamExt;
 use bevy_rich_text3d::TextRenderer;
 use serde::Deserialize;
 use thiserror::Error;
