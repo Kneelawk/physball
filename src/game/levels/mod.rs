@@ -155,7 +155,6 @@ fn spawn_level_impl(
     let level = level_assets
         .get(&level_handle.0)
         .expect("Level handle invalid");
-    info!("Spawning level: {:?}", level);
     level.spawn(&mut LevelBuildArgs {
         dyn_assets,
         cmd,
