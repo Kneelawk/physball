@@ -17,6 +17,7 @@ use bevy::input_focus::tab_navigation::TabNavigationPlugin;
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy::ui_widgets::UiWidgetsPlugins;
+use bevy_rich_text3d::Text3dPlugin;
 use bevy_svg::SvgPlugin;
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
@@ -70,6 +71,10 @@ pub fn physball_client_main() -> AppExit {
                 }),
             PhysicsPlugins::default(),
             SvgPlugin,
+            Text3dPlugin {
+                load_system_fonts: true,
+                ..default()
+            },
             BallphysClient,
             UiWidgetsPlugins,
             InputDispatchPlugin,

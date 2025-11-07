@@ -1,4 +1,4 @@
-use crate::game::levels::serial::level::{SerialLevel, SerialPlane};
+use crate::game::levels::serial::level::{SerialLevel, SerialPlane, SerialText};
 use bevy::asset::LoadContext;
 use bevy::prelude::*;
 
@@ -12,6 +12,9 @@ pub struct KdlLevel {
 
     #[knus(children(name = "plane"))]
     planes: Vec<KdlPlane>,
+
+    #[knus(children(name = "text"))]
+    texts: Vec<KdlText>,
     // TODO: death planes
 }
 
@@ -47,6 +50,52 @@ impl KdlPlane {
             trans: Transform::from_rotation(self.rotations.into_quat())
                 .with_translation(self.pos.into_vec()),
         }
+    }
+}
+
+#[derive(Debug, Clone, knus::Decode)]
+pub struct KdlText {
+    #[knus(argument)]
+    text: String,
+
+    #[knus(child)]
+    pos: KdlVec3,
+
+    #[knus(children(name = "rot"))]
+    rotations: Vec<KdlRotation>,
+
+    #[knus(child)]
+    scale: Option<KdlScale>,
+}
+
+impl KdlText {
+    pub fn into_serial_text(self) -> SerialText {
+        SerialText {
+            text: self.text,
+            trans: Transform::from_scale(self.scale.map(KdlScale::into_vec).unwrap_or(Vec3::ONE))
+                .with_rotation(self.rotations.into_quat())
+                .with_translation(self.pos.into_vec()),
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, knus::Decode)]
+pub struct KdlScale {
+    #[knus(argument)]
+    scale1: f32,
+    #[knus(argument)]
+    scale2: Option<f32>,
+    #[knus(argument)]
+    scale3: Option<f32>,
+}
+
+impl KdlScale {
+    pub fn into_vec(self) -> Vec3 {
+        Vec3::new(
+            self.scale1,
+            self.scale2.unwrap_or(self.scale1),
+            self.scale3.or(self.scale2).unwrap_or(self.scale1),
+        )
     }
 }
 
@@ -115,6 +164,11 @@ impl KdlLevel {
                 .planes
                 .into_iter()
                 .map(KdlPlane::into_serial_plane)
+                .collect(),
+            texts: self
+                .texts
+                .into_iter()
+                .map(KdlText::into_serial_text)
                 .collect(),
         }
     }
