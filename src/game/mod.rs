@@ -71,10 +71,7 @@ pub fn physball_client_main() -> AppExit {
                 }),
             PhysicsPlugins::default(),
             SvgPlugin,
-            Text3dPlugin {
-                load_system_fonts: true,
-                ..default()
-            },
+            Text3dPlugin::default(),
             BallphysClient,
             UiWidgetsPlugins,
             InputDispatchPlugin,

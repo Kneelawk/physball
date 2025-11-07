@@ -4,7 +4,6 @@ pub mod preload;
 use crate::game::assets::preload::{Preloads, PreloadsLoader, load_preloads, load_preloads_system};
 use crate::game::levels::index::load_level_index;
 use bevy::prelude::*;
-use bevy_rich_text3d::LoadFonts;
 use fonts::{BuiltinFonts, BuiltinFontsLoader, load_fonts, load_fonts_system};
 
 #[derive(Default)]
@@ -17,15 +16,7 @@ impl Plugin for BuiltinAssetsPlugin {
             .init_asset_loader::<BuiltinFontsLoader>()
             .init_asset_loader::<PreloadsLoader>()
             .init_resource::<BuiltinAssetsState>()
-            .add_systems(PreUpdate, (load_fonts_system, load_preloads_system))
-            .insert_resource(LoadFonts {
-                // FIXME: 3d font paths hard coded
-                font_paths: vec![
-                    "assets/fonts/BBHSansBartle-Regular.ttf".to_string(),
-                    "assets/fonts/FiraSans-Regular.ttf".to_string(),
-                ],
-                ..default()
-            });
+            .add_systems(PreUpdate, (load_fonts_system, load_preloads_system));
     }
 }
 

@@ -1,3 +1,4 @@
+use crate::game::assets::fonts::BuiltinFonts;
 use crate::game::assets::preload::Preloads;
 use crate::game::levels::finish_point::FinishPoint;
 use crate::game::levels::{LevelObject, PlayerSpawnPoint};
@@ -12,6 +13,7 @@ pub struct LevelBuildArgs<'a, 'w, 's> {
     pub cmd: &'a mut Commands<'w, 's>,
     pub assets: &'a AssetServer,
     pub preloads: &'a Preloads,
+    pub fonts: &'a BuiltinFonts,
 }
 
 #[derive(Debug, Clone, Asset, Reflect)]
@@ -83,7 +85,7 @@ impl SerialText {
             self.trans,
             Text3d::new(self.text.clone()),
             Text3dStyling {
-                font: "sans-serif".into(),
+                font: args.fonts.text_name.clone().into(),
                 size: 64.,
                 world_scale: Some(Vec2::splat(0.25)),
                 ..Default::default()

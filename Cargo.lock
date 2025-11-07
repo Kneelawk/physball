@@ -4261,6 +4261,7 @@ dependencies = [
  "bevy",
  "bevy_rich_text3d",
  "bevy_svg",
+ "cosmic-text",
  "directories",
  "event-listener",
  "knus",
@@ -4269,6 +4270,7 @@ dependencies = [
  "miette",
  "serde",
  "serde_json",
+ "sys-locale",
  "thiserror 2.0.17",
  "tracing",
 ]
