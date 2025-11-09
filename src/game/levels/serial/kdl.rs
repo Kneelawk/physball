@@ -59,7 +59,9 @@ impl KdlPlane {
     }
 }
 
-#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, knus::DecodeScalar, Reflect)]
+#[derive(
+    Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, knus::DecodeScalar, Reflect,
+)]
 #[reflect(Debug, Default, Clone, PartialEq, Hash)]
 pub enum KdlPlaneType {
     #[default]
@@ -71,6 +73,9 @@ pub enum KdlPlaneType {
 pub struct KdlText {
     #[knus(argument)]
     text: String,
+
+    #[knus(property, default = 64.0)]
+    pt: f32,
 
     #[knus(property)]
     font: Option<String>,
@@ -92,6 +97,7 @@ impl KdlText {
     pub fn into_serial_text(self) -> SerialText {
         SerialText {
             text: self.text,
+            pt: self.pt,
             font: self.font,
             align: self.align,
             trans: Transform::from_scale(self.scale.map(KdlScale::into_vec).unwrap_or(Vec3::ONE))

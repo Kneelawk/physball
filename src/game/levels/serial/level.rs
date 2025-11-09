@@ -40,6 +40,7 @@ pub struct SerialPlane {
 #[reflect(Debug, Clone)]
 pub struct SerialText {
     pub text: String,
+    pub pt: f32,
     pub font: Option<String>,
     pub align: KdlAlign,
     pub trans: Transform,
@@ -110,8 +111,8 @@ impl SerialText {
             Text3d::new(self.text.clone()),
             Text3dStyling {
                 font: font.into(),
-                size: 64.,
-                world_scale: Some(Vec2::splat(0.25)),
+                size: self.pt,
+                world_scale: Some(Vec2::splat(self.pt / 256.0)),
                 align: self.align.to_text_align(),
                 ..Default::default()
             },
