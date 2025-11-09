@@ -1,9 +1,14 @@
 {
   "levels": [
     {
-      "name": "level1",
-      "display": "Level 1",
-      "path": "levels/level1.kdl"
+      "name": "tutorial1",
+      "display": "Tutorial 1",
+      "path": "levels/tutorial1.kdl"
+    },
+    {
+      "name": "tutorial2",
+      "display": "Tutorial 2",
+      "path": "levels/tutorial2.kdl"
     }
   ]
 }

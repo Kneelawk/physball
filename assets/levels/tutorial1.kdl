@@ -1,0 +1,39 @@
+spawn {
+    pos 0.0 1.0 0.0
+}
+
+finish {
+    pos 0.0 0.5 -10.0
+}
+
+plane 5.0 15.0 {
+    pos 0.0 0.0 -5.0
+}
+
+text "Tutorial 1" font=title pt=80.0 {
+    pos 0.0 1.8 -1.5
+}
+
+text "Use the WASD keys to move around" {
+    pos 0.0 1.0 -1.5
+}
+
+text "Use the mouse\nto look around" {
+    pos -2.0 0.5 -0.5
+    rot y 22.5
+}
+
+text "If you fall off, you will die and\nrespawn at the beginning of the level" {
+    pos 2.5 1.0 -5.5
+    rot y -90.0
+}
+
+text "Touching the finish point\nwill finish the level.\n------------------>" {
+    pos -1.5 0.5 -8.5
+    rot y 45.0
+}
+
+// death plane
+plane 100.0 type=death {
+    pos 0.0 -10.0 0.0
+}

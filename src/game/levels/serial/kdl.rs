@@ -110,8 +110,8 @@ impl KdlText {
 #[derive(Debug, Default, Copy, Clone, knus::DecodeScalar, Reflect)]
 #[reflect(Debug, Default, Clone)]
 pub enum KdlAlign {
-    #[default]
     Left,
+    #[default]
     Center,
     Right,
 }
