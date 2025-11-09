@@ -1,8 +1,8 @@
-use std::f32::consts::PI;
 use crate::game::levels::serial::level::{SerialLevel, SerialPlane, SerialText};
 use bevy::asset::LoadContext;
 use bevy::prelude::*;
 use bevy_rich_text3d::TextAlign;
+use std::f32::consts::PI;
 
 #[derive(Debug, Clone, knus::Decode)]
 pub struct KdlLevel {
@@ -42,6 +42,9 @@ pub struct KdlPlane {
 
     #[knus(argument)]
     size2: Option<f32>,
+
+    #[knus(property(name = "type"), default)]
+    ty: KdlPlaneType,
 }
 
 impl KdlPlane {
@@ -51,8 +54,17 @@ impl KdlPlane {
             length: self.size2.unwrap_or(self.size),
             trans: Transform::from_rotation(self.rotations.into_quat())
                 .with_translation(self.pos.into_vec()),
+            ty: self.ty,
         }
     }
+}
+
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, knus::DecodeScalar, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash)]
+pub enum KdlPlaneType {
+    #[default]
+    Static,
+    Death,
 }
 
 #[derive(Debug, Clone, knus::Decode)]

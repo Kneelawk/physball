@@ -1,10 +1,11 @@
 pub mod finish_point;
 pub mod index;
 pub mod serial;
+pub mod death;
 
 use crate::game::assets::fonts::BuiltinFonts;
 use crate::game::assets::preload::Preloads;
-use crate::game::levels::index::{LevelIndex, LevelIndexLoader, on_level_index_loaded};
+use crate::game::levels::index::{on_level_index_loaded, LevelIndex, LevelIndexLoader};
 use crate::game::levels::serial::SerialLevelLoader;
 use crate::game::levels::serial::level::LevelBuildArgs;
 use crate::game::state::AppState;

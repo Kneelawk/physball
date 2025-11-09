@@ -1,7 +1,8 @@
 use crate::game::assets::fonts::BuiltinFonts;
 use crate::game::assets::preload::Preloads;
+use crate::game::levels::death::DeathCollider;
 use crate::game::levels::finish_point::FinishPoint;
-use crate::game::levels::serial::kdl::KdlAlign;
+use crate::game::levels::serial::kdl::{KdlAlign, KdlPlaneType};
 use crate::game::levels::{LevelObject, PlayerSpawnPoint};
 use crate::type_expr;
 use avian3d::prelude::*;
@@ -32,6 +33,7 @@ pub struct SerialPlane {
     pub width: f32,
     pub length: f32,
     pub trans: Transform,
+    pub ty: KdlPlaneType,
 }
 
 #[derive(Debug, Clone, Reflect)]
@@ -60,24 +62,39 @@ impl SerialLevel {
 
 impl SerialPlane {
     pub fn spawn(&self, args: &mut LevelBuildArgs) {
-        args.cmd.spawn((
-            LevelObject,
-            self.trans,
-            Mesh3d(
-                args.assets.add(
-                    Plane3d::new(Vec3::Y, Vec2::new(self.width / 2.0, self.length / 2.0)).into(),
-                ),
-            ),
-            MeshMaterial3d(
-                args.assets
-                    .add(type_expr!(StandardMaterial, Color::WHITE.into())),
-            ),
-            children![(
-                RigidBody::Static,
-                Collider::cuboid(self.width, 0.2, self.length),
-                Transform::from_xyz(0.0, -0.1, 0.0)
-            )],
-        ));
+        match self.ty {
+            KdlPlaneType::Static => {
+                args.cmd.spawn((
+                    LevelObject,
+                    self.trans,
+                    Mesh3d(
+                        args.assets.add(
+                            Plane3d::new(Vec3::Y, Vec2::new(self.width / 2.0, self.length / 2.0))
+                                .into(),
+                        ),
+                    ),
+                    MeshMaterial3d(
+                        args.assets
+                            .add(type_expr!(StandardMaterial, Color::WHITE.into())),
+                    ),
+                    children![(
+                        RigidBody::Static,
+                        Collider::cuboid(self.width, 0.2, self.length),
+                        Transform::from_xyz(0.0, -0.1, 0.0)
+                    )],
+                ));
+            }
+            KdlPlaneType::Death => {
+                args.cmd.spawn((
+                    LevelObject,
+                    self.trans
+                        .with_translation(self.trans.translation + vec3(0.0, -0.1, 0.0)),
+                    RigidBody::Static,
+                    Collider::cuboid(self.width, 0.2, self.length),
+                    DeathCollider,
+                ));
+            }
+        }
     }
 }
 

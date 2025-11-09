@@ -1,5 +1,6 @@
 use crate::game::camera::PlayerCamera;
 use crate::game::game_state::GameState;
+use crate::game::levels::death::{Kill, Killable, PlayerDiedEvent};
 use crate::game::levels::{LevelReadyEvent, LevelRestartEvent, PlayerSpawnPoint};
 use crate::game::state::AppState;
 use crate::type_expr;
@@ -22,7 +23,7 @@ impl Plugin for GamePlugin {
             .add_systems(OnExit(AppState::Game), remove_player)
             .add_systems(
                 Update,
-                (move_player, jump_player).run_if(in_state(GameState::Playing)),
+                (move_player, jump_player, kill_player).run_if(in_state(GameState::Playing)),
             )
             .add_systems(Update, move_camera.run_if(in_state(AppState::Game)));
     }
@@ -70,6 +71,7 @@ fn add_player(
         AngularDamping(0.25),
         LinearDamping(0.25),
         CollisionEventsEnabled,
+        Killable,
         children![PointLight {
             shadows_enabled: true,
             intensity: 20000.0,
@@ -207,4 +209,21 @@ fn calculate_camera_transform(player_pos: Vec3, player_camera: &PlayerCamera) ->
     ) * player_camera.distance;
 
     Transform::from_translation(player_pos + camera_offset).looking_at(player_pos, Vec3::Y)
+}
+
+fn kill_player(
+    mut kill_msg: MessageReader<Kill>,
+    player: Query<(), With<Player>>,
+    mut cmd: Commands,
+) {
+    for kill in kill_msg.read() {
+        if player.contains(kill.to_kill) {
+            info!("Player died.");
+            cmd.trigger(PlayerDiedEvent);
+            cmd.trigger(LevelRestartEvent);
+
+            kill_msg.clear();
+            return;
+        }
+    }
 }

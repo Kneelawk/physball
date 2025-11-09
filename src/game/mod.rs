@@ -94,6 +94,7 @@ plugin_group! {
         menus:::FinishMenuPlugin,
         levels:::LevelsPlugin,
         levels::finish_point:::FinishPointPlugin,
+        levels::death:::DeathPlugin,
         game_state:::GameStatePlugin,
         game:::GamePlugin,
     }
