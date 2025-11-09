@@ -1,18 +1,22 @@
+use crate::game::assets::fonts::BuiltinFonts;
 use crate::game::assets::preload::Preloads;
 use crate::game::game::Player;
 use crate::game::game_state::GameState;
 use crate::game::levels::LevelObject;
 use avian3d::prelude::*;
+use bevy::asset::io::embedded::GetAssetServer;
 use bevy::ecs::lifecycle::HookContext;
 use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::*;
+use bevy_rich_text3d::{Text3d, Text3dStyling, TextAtlas};
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct FinishPointPlugin;
 
 impl Plugin for FinishPointPlugin {
     fn build(&self, app: &mut App) {
-        app.add_observer(detect_level_finish);
+        app.add_observer(detect_level_finish)
+            .add_systems(Update, spin_finish_sign);
     }
 }
 
@@ -28,6 +32,10 @@ impl Plugin for FinishPointPlugin {
 #[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
 pub struct FinishPoint;
 
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
+pub struct FinishLabel;
+
 fn finish_point_on_insert(mut world: DeferredWorld, ctx: HookContext) {
     let level_end = world
         .get_resource::<Preloads>()
@@ -39,10 +47,34 @@ fn finish_point_on_insert(mut world: DeferredWorld, ctx: HookContext) {
         .handle
         .try_typed::<Scene>()
         .expect("required preload with wrong type");
-    world
-        .commands()
-        .entity(ctx.entity)
-        .insert_if_new(SceneRoot(level_end));
+    let material = world.get_asset_server().add(StandardMaterial {
+        base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
+        alpha_mode: AlphaMode::Blend,
+        cull_mode: None,
+        emissive: LinearRgba::new(0.0, 10.0, 12.0, 1.0),
+        ..default()
+    });
+    let font = world
+        .get_resource::<BuiltinFonts>()
+        .unwrap()
+        .title_name
+        .clone();
+    let mut binding = world.commands();
+    let mut commands = binding.entity(ctx.entity);
+    commands.insert_if_new(SceneRoot(level_end));
+    commands.with_child((
+        FinishLabel,
+        Transform::from_xyz(0.0, 0.65, 0.0),
+        Text3d::new("Finish"),
+        Text3dStyling {
+            font: font.into(),
+            size: 64.0,
+            world_scale: Some(Vec2::splat(0.15)),
+            ..default()
+        },
+        Mesh3d::default(),
+        MeshMaterial3d(material),
+    ));
 }
 
 fn detect_level_finish(
@@ -54,5 +86,11 @@ fn detect_level_finish(
     if query.contains(collision.collider1) && player_query.contains(collision.collider2) {
         info!("Level finished");
         state.set(GameState::Finished);
+    }
+}
+
+fn spin_finish_sign(query: Query<&mut Transform, With<FinishLabel>>, time: Res<Time>) {
+    for mut trans in query {
+        trans.rotation = Quat::from_rotation_y(time.elapsed_secs_wrapped());
     }
 }
