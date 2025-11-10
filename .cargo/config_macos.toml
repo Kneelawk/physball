@@ -1,0 +1,9 @@
+# This file is intended to be renamed to config.toml when building on macos to prevent linker errors.
+
+[target.aarch64-apple-darwin]
+linker = "rust-lld"
+rustdocflags = ["-Clink-arg=-fuse-ld=lld"]
+
+[target.x86_64-apple-darwin]
+linker = "rust-lld"
+rustdocflags = ["-Clink-arg=-fuse-ld=lld"]

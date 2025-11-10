@@ -15,6 +15,7 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
     steps:
       - name: Get current date
         id: date
@@ -28,6 +29,9 @@ jobs:
         uses: actions/checkout@v5
       - name: Install Bevy CLI
         run: cargo install --git https://github.com/TheBevyFlock/bevy_cli --rev ${{ env.BEVY_CLI_VERSION }} --locked bevy_cli
+      - name: Fix MacOS Linker
+        if: matrix.os == 'macos-latest'
+        run: mv .cargo/config_macos.toml .cargo/config.toml
       - name: Build
         run: bevy build --release
       - name: Create Dist Directory
@@ -62,6 +66,7 @@ jobs:
           token: ${{ secrets.PUBLISH_TOKEN }}
   release-web:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Get current date
         id: date
@@ -73,7 +78,7 @@ jobs:
       - name: Install Bevy CLI
         run: cargo install --git https://github.com/TheBevyFlock/bevy_cli --rev ${{ env.BEVY_CLI_VERSION }} --locked bevy_cli
       - name: Build
-        run: bevy build --release --yes web --bundle
+        run: bevy build --release --yes --no-default-features web --bundle
       - name: Create Dist Directory
         run: mkdir dist
       - name: Copy Bundle
