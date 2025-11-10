@@ -4261,6 +4261,7 @@ dependencies = [
  "bevy",
  "bevy_rich_text3d",
  "bevy_svg",
+ "console_error_panic_hook",
  "cosmic-text",
  "directories",
  "event-listener",
