@@ -79,6 +79,14 @@ jobs:
         run: cargo install --git https://github.com/TheBevyFlock/bevy_cli --rev ${{ env.BEVY_CLI_VERSION }} --locked bevy_cli
       - name: Build
         run: bevy build --release --yes --no-default-features web --bundle
+      - name: Upload Build as Artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: target/bevy_web/web-release/${{ env.BINARY_NAME }}/
+      - name: Deploy GitHub Pages
+        uses: actions/deploy-pages@v4
+        with:
+          token: ${{ secrets.PUBLISH_TOKEN }}
       - name: Create Dist Directory
         run: mkdir dist
       - name: Copy Bundle
