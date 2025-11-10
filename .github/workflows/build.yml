@@ -49,6 +49,7 @@ jobs:
             target/
           key: ${{ runner.os }}-web-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Install Bevy CLI
+        continue-on-error: true
         run: cargo install --git https://github.com/TheBevyFlock/bevy_cli --rev ${{ env.BEVY_CLI_VERSION }} --locked bevy_cli
       - name: Build
         run: bevy build --yes --no-default-features web
