@@ -29,4 +29,7 @@ macro_rules! or_return {
     ($ret_val:ident => $ret:block : $expr:expr) => {
         $expr
     };
+    ($($tail:tt)*) => {
+        or_return!(_r => {return;} : $($tail)*)
+    };
 }

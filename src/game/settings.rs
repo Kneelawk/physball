@@ -1,4 +1,3 @@
-use crate::or_return;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -84,6 +83,8 @@ impl GamePrefs {
         }
         #[cfg(target_arch = "wasm32")]
         {
+            use crate::or_return;
+
             let window = or_return!(_r => {
                 warn!("Unable to get window");
                 return default();
@@ -144,6 +145,8 @@ impl GamePrefs {
         }
         #[cfg(target_arch = "wasm32")]
         {
+            use crate::or_return;
+
             let window = or_return!(_r => {
                 error!("Unable to get window");
                 return;

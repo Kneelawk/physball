@@ -6,6 +6,9 @@ use crate::game::settings::{DEFAULT_MOUSE_SPEED, GamePrefs};
 use bevy::prelude::*;
 use bevy::ui_widgets::{Activate, SliderValue, ValueChange, observe};
 
+pub const MIN_MOUSE_SPEED: f32 = 0.0;
+pub const MAX_MOUSE_SPEED: f32 = 100.0;
+
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct OptionsMenuPlugin;
 
@@ -98,6 +101,9 @@ fn setup_main_options_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>, prefs: R
 }
 
 fn mouse_sensitivity_section(fonts: &BuiltinFonts, prefs: &GamePrefs) -> impl Bundle {
+    let min_mouse_speed_slider = (MIN_MOUSE_SPEED + 1.0).ln();
+    let max_mouse_speed_slider = (MAX_MOUSE_SPEED + 1.0).ln();
+
     (
         Node {
             width: percent(100),
@@ -152,11 +158,11 @@ fn mouse_sensitivity_section(fonts: &BuiltinFonts, prefs: &GamePrefs) -> impl Bu
                 },
                 children![
                     (
-                        slider(0.0, 10.0, prefs.mouse_speed),
+                        slider(min_mouse_speed_slider, max_mouse_speed_slider, (prefs.mouse_speed + 1.0).ln()),
                         MouseSpeedSlider,
                         observe(
                             |value_change: On<ValueChange<f32>>, mut prefs: ResMut<GamePrefs>| {
-                                prefs.mouse_speed = value_change.value;
+                                prefs.mouse_speed = value_change.value.exp() - 1.0;
                                 prefs.save();
                             }
                         )
@@ -247,7 +253,7 @@ fn update_mouse_speed_slider(
     mut cmd: Commands,
 ) {
     if prefs.is_changed() {
-        cmd.entity(*slider).insert(SliderValue(prefs.mouse_speed));
+        cmd.entity(*slider).insert(SliderValue((prefs.mouse_speed + 1.0).ln()));
     }
 }
 
