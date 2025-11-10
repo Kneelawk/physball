@@ -9,6 +9,12 @@ on:
     tags:
       - '*'
 
+#permissions:
+#  contents: read
+#  pages: write
+#  id-token: write
+#  deployments: write
+
 jobs:
   release-desktop:
     strategy:
@@ -85,8 +91,6 @@ jobs:
           path: target/bevy_web/web-release/${{ env.BINARY_NAME }}/
       - name: Deploy GitHub Pages
         uses: actions/deploy-pages@v4
-        with:
-          token: ${{ secrets.PUBLISH_TOKEN }}
       - name: Create Dist Directory
         run: mkdir dist
       - name: Copy Bundle
