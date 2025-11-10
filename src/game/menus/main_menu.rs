@@ -63,6 +63,18 @@ fn setup_main_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>) {
                     ..default()
                 }
             ),
+            {
+                #[cfg(target_arch = "wasm32")]
+                {
+                    (
+                        Text("Note: web builds of Physball may be buggy and are missing features.\nTry the desktop versions if you encounter issues.".to_string()),
+                        TextLayout {
+                            justify: Justify::Center,
+                            linebreak: default()
+                        },
+                    )
+                }
+            },
             (
                 button(&fonts, "Level Select", default()),
                 observe(
