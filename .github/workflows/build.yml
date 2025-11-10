@@ -28,3 +28,24 @@ jobs:
         run: cargo build --profile=dev
       - name: Test
         run: cargo test --profile=dev
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install WASM toolchain
+        run: rustup target add wasm32-unknown-unknown
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-web-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Bevy CLI
+        run: cargo install --git https://github.com/TheBevyFlock/bevy_cli --rev ${{ env.BEVY_CLI_VERSION }} --locked bevy_cli
+      - name: Build
+        run: bevy build --yes --no-default-features web
