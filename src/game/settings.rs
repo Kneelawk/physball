@@ -136,7 +136,7 @@ impl GamePrefs {
                 }
             };
 
-            match serde_json::to_writer(file, self) {
+            match serde_json::to_writer_pretty(file, self) {
                 Ok(_) => {}
                 Err(err) => {
                     error!("Error writing preferences file {:?}", err);
