@@ -19,13 +19,6 @@ use bevy::prelude::*;
 use bevy::ui_widgets::UiWidgetsPlugins;
 use bevy_rich_text3d::Text3dPlugin;
 use bevy_svg::SvgPlugin;
-use directories::ProjectDirs;
-use lazy_static::lazy_static;
-
-lazy_static! {
-    pub static ref PROJECT_DIRS: ProjectDirs = ProjectDirs::from("com", "kneelawk", "physball")
-        .expect("Unable to find user home directory");
-}
 
 pub fn physball_client_main() -> AppExit {
     let prefs = GamePrefs::load();

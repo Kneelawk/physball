@@ -82,12 +82,17 @@ fn setup_main_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>) {
                     }
                 )
             ),
-            (
-                button(&fonts, "Quit", default()),
-                observe(|_a: On<Activate>, mut exit: MessageWriter<AppExit>| {
-                    exit.write(AppExit::Success);
-                })
-            )
+            {
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    (
+                        button(&fonts, "Quit", default()),
+                        observe(|_a: On<Activate>, mut exit: MessageWriter<AppExit>| {
+                            exit.write(AppExit::Success);
+                        }),
+                    )
+                }
+            }
         ],
     ));
 }

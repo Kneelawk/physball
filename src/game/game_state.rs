@@ -60,6 +60,12 @@ fn pause_play(
     if input.just_pressed(Key::Escape) {
         next_state.set(!*state.get());
     }
+    // #[cfg(target_arch = "wasm32")]
+    // {
+    //     if input.just_pressed(Key::Character("`".into())) {
+    //         next_state.set(!*state.get());
+    //     }
+    // }
 }
 
 fn show_hide_cursor(
