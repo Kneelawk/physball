@@ -9,11 +9,11 @@ on:
     tags:
       - '*'
 
-#permissions:
-#  contents: read
-#  pages: write
-#  id-token: write
-#  deployments: write
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  deployments: write
 
 jobs:
   release-desktop:
