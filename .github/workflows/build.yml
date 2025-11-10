@@ -1,5 +1,8 @@
 name: build
 
+env:
+  BEVY_CLI_VERSION: a3c83153973fec40a4589607caa691a2eff18de9
+
 on:
   - push
   - pull_request
