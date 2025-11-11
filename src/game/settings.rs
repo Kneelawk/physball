@@ -25,8 +25,10 @@ const PREFS_KEY: &str = "com.kneelawk.physball/prefs";
 #[derive(Debug, Copy, Clone, PartialEq, Resource, Reflect, Serialize, Deserialize)]
 #[reflect(Debug, Clone, PartialEq, Resource)]
 pub struct GamePrefs {
+    #[cfg(not(target_arch = "wasm32"))]
     #[serde(default = "default_window_width")]
     pub window_width: u32,
+    #[cfg(not(target_arch = "wasm32"))]
     #[serde(default = "default_window_height")]
     pub window_height: u32,
     #[serde(default = "default_mouse_speed")]
@@ -36,17 +38,21 @@ pub struct GamePrefs {
 impl Default for GamePrefs {
     fn default() -> Self {
         Self {
+            #[cfg(not(target_arch = "wasm32"))]
             window_width: default_window_width(),
+            #[cfg(not(target_arch = "wasm32"))]
             window_height: default_window_height(),
             mouse_speed: default_mouse_speed(),
         }
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn default_window_width() -> u32 {
     1280
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn default_window_height() -> u32 {
     720
 }

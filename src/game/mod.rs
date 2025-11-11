@@ -17,8 +17,11 @@ use bevy::input_focus::tab_navigation::TabNavigationPlugin;
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy::ui_widgets::UiWidgetsPlugins;
+use bevy::window::EnabledButtons;
 use bevy_rich_text3d::Text3dPlugin;
 use bevy_svg::SvgPlugin;
+
+pub const CANVAS_SELECTOR: &str = "#game";
 
 pub fn physball_client_main() -> AppExit {
     let prefs = GamePrefs::load();
@@ -28,8 +31,16 @@ pub fn physball_client_main() -> AppExit {
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
+                        #[cfg(not(target_arch = "wasm32"))]
                         resizable: false,
+                        #[cfg(not(target_arch = "wasm32"))]
                         resolution: (prefs.window_width, prefs.window_height).into(),
+                        enabled_buttons: EnabledButtons {
+                            minimize: true,
+                            maximize: false,
+                            close: true,
+                        },
+                        canvas: Some(CANVAS_SELECTOR.to_string()),
                         ..default()
                     }),
                     ..default()

@@ -78,7 +78,12 @@ fn setup_main_options_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>, prefs: R
                     ..default()
                 },
                 children![
-                    window_resize_section(&fonts),
+                    {
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            window_resize_section(&fonts)
+                        }
+                    },
                     mouse_sensitivity_section(&fonts, &prefs),
                 ]
             ),
@@ -106,7 +111,10 @@ fn mouse_sensitivity_section(fonts: &BuiltinFonts, prefs: &GamePrefs) -> impl Bu
 
     (
         Node {
+            #[cfg(not(target_arch = "wasm32"))]
             width: percent(100),
+            #[cfg(target_arch = "wasm32")]
+            width: px(800),
             align_items: AlignItems::Start,
             justify_content: JustifyContent::Center,
             display: Display::Flex,
@@ -158,7 +166,11 @@ fn mouse_sensitivity_section(fonts: &BuiltinFonts, prefs: &GamePrefs) -> impl Bu
                 },
                 children![
                     (
-                        slider(min_mouse_speed_slider, max_mouse_speed_slider, (prefs.mouse_speed + 1.0).ln()),
+                        slider(
+                            min_mouse_speed_slider,
+                            max_mouse_speed_slider,
+                            (prefs.mouse_speed + 1.0).ln()
+                        ),
                         MouseSpeedSlider,
                         observe(
                             |value_change: On<ValueChange<f32>>, mut prefs: ResMut<GamePrefs>| {
@@ -180,6 +192,7 @@ fn mouse_sensitivity_section(fonts: &BuiltinFonts, prefs: &GamePrefs) -> impl Bu
     )
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn window_resize_section(fonts: &BuiltinFonts) -> impl Bundle {
     (
         Node {
@@ -225,6 +238,7 @@ fn window_resize_section(fonts: &BuiltinFonts) -> impl Bundle {
     )
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn window_resize_button(fonts: &BuiltinFonts, width: u32, height: u32) -> impl Bundle {
     (
         button(
@@ -253,7 +267,8 @@ fn update_mouse_speed_slider(
     mut cmd: Commands,
 ) {
     if prefs.is_changed() {
-        cmd.entity(*slider).insert(SliderValue((prefs.mouse_speed + 1.0).ln()));
+        cmd.entity(*slider)
+            .insert(SliderValue((prefs.mouse_speed + 1.0).ln()));
     }
 }
 
