@@ -1,6 +1,8 @@
 pub mod kdl;
 pub mod level;
+mod error;
 
+use ::kdl::{KdlDocument, KdlError};
 use bevy::asset::io::Reader;
 use bevy::asset::{AssetLoader, AsyncReadExt, LoadContext};
 use bevy::prelude::*;
@@ -24,15 +26,18 @@ impl AssetLoader for SerialLevelLoader {
     ) -> Result<Self::Asset, Self::Error> {
         let mut str = String::new();
         reader.read_to_string(&mut str).await?;
-        let level: KdlLevel = match knus::parse(load_context.path().to_string_lossy(), &str) {
-            Ok(res) => res,
+
+        let doc: KdlDocument = match str.parse::<KdlDocument>() {
+            Ok(doc) => doc,
             Err(err) => {
-                eprintln!("{:?}", miette::Report::new(err));
-                return Err(SerialLevelLoadingError::LevelFormatError);
+                eprintln!("{:?}", miette::Report::new(err.clone()));
+                return Err(err.into());
             }
         };
 
-        Ok(level.bind(load_context))
+        let level = SerialLevel::from_kdl(str, doc, load_context)?;
+
+        Ok(level)
     }
 }
 
@@ -40,6 +45,8 @@ impl AssetLoader for SerialLevelLoader {
 pub enum SerialLevelLoadingError {
     #[error("Level format error")]
     LevelFormatError,
+    #[error("Kdl parse error {0}")]
+    KdlParse(#[from] KdlError),
     #[error("IO error {0}")]
     Io(#[from] std::io::Error),
 }
