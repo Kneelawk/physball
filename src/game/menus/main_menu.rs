@@ -59,7 +59,7 @@ fn setup_main_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>) {
             (
                 title(&fonts, "physball"),
                 Node {
-                    bottom: px(100),
+                    bottom: vh(10),
                     ..default()
                 }
             ),

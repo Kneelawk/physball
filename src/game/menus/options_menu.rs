@@ -63,14 +63,10 @@ fn setup_main_options_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>, prefs: R
         children![
             (
                 title(&fonts, "Options"),
-                Node {
-                    bottom: px(50),
-                    ..default()
-                }
             ),
             (
                 Node {
-                    align_items: AlignItems::Start,
+                    align_items: AlignItems::Stretch,
                     justify_content: JustifyContent::Center,
                     display: Display::Flex,
                     flex_direction: FlexDirection::Column,
@@ -111,11 +107,7 @@ fn mouse_sensitivity_section(fonts: &BuiltinFonts, prefs: &GamePrefs) -> impl Bu
 
     (
         Node {
-            #[cfg(not(target_arch = "wasm32"))]
-            width: percent(100),
-            #[cfg(target_arch = "wasm32")]
-            width: px(800),
-            align_items: AlignItems::Start,
+            align_items: AlignItems::Stretch,
             justify_content: JustifyContent::Center,
             display: Display::Flex,
             flex_direction: FlexDirection::Column,
@@ -125,11 +117,11 @@ fn mouse_sensitivity_section(fonts: &BuiltinFonts, prefs: &GamePrefs) -> impl Bu
         children![
             (
                 Node {
-                    width: percent(100),
-                    align_items: AlignItems::Start,
+                    align_items: AlignItems::Stretch,
                     justify_content: JustifyContent::SpaceBetween,
                     display: Display::Flex,
                     flex_direction: FlexDirection::Row,
+                    flex_grow: 1.0,
                     ..default()
                 },
                 children![
@@ -156,12 +148,12 @@ fn mouse_sensitivity_section(fonts: &BuiltinFonts, prefs: &GamePrefs) -> impl Bu
             ),
             (
                 Node {
-                    width: percent(100),
                     align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
+                    justify_content: JustifyContent::Stretch,
                     display: Display::Flex,
                     flex_direction: FlexDirection::Row,
                     column_gap: px(10),
+                    flex_grow: 1.0,
                     ..default()
                 },
                 children![
@@ -196,7 +188,6 @@ fn mouse_sensitivity_section(fonts: &BuiltinFonts, prefs: &GamePrefs) -> impl Bu
 fn window_resize_section(fonts: &BuiltinFonts) -> impl Bundle {
     (
         Node {
-            width: percent(100),
             align_items: AlignItems::Start,
             justify_content: JustifyContent::Center,
             display: Display::Flex,

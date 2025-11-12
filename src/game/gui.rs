@@ -60,6 +60,7 @@ pub fn menu_root<S: States>(menu_state: S) -> impl Bundle {
             display: Display::Flex,
             flex_direction: FlexDirection::Column,
             row_gap: px(25),
+            padding: px(20).into(),
             ..default()
         },
         TabGroup::default(),
@@ -217,7 +218,7 @@ pub fn slider(min: f32, max: f32, value: f32) -> impl Bundle {
             justify_items: JustifyItems::Center,
             column_gap: px(4),
             height: px(12),
-            width: percent(100),
+            flex_grow: 1.0,
             ..default()
         },
         Name::new("Slider"),
