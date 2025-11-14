@@ -6,7 +6,8 @@ use bevy_rich_text3d::TextRenderer;
 use cosmic_text::fontdb::ID;
 use serde::Deserialize;
 use sha2::digest::array::Array;
-use sha2::digest::consts::U256;
+use sha2::digest::consts::U32;
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use thiserror::Error;
 
@@ -135,7 +136,26 @@ pub struct FontNames(HashMap<AssetId<Font>, String>);
 
 #[derive(Debug, Default, Clone, Deref, Resource, Reflect)]
 #[reflect(Debug, Default, Clone)]
-pub struct LoadedFonts(#[reflect(ignore)] HashMap<Array<u8, U256>, ID>);
+pub struct LoadedFonts(#[reflect(ignore)] HashMap<Array<u8, U32>, ID>);
+
+pub fn insert_fonts(
+    mut msg: MessageReader<AssetEvent<Font>>,
+    fonts: Res<Assets<Font>>,
+    text_renderer: Res<TextRenderer>,
+    mut names: ResMut<FontNames>,
+    mut loaded: ResMut<LoadedFonts>,
+) {
+    for e in msg.read() {
+        if let AssetEvent::LoadedWithDependencies { id } = e {
+            let font = fonts.get(*id).expect("loaded font is missing");
+
+            let digest = Sha256::digest(&font.data[..]);
+            if loaded.0.contains_key(&digest.0) {
+                // TODO
+            }
+        }
+    }
+}
 
 // TODO: System for adding fonts to TextRenderer when each font is loaded
 // probably dont bother trying to unload fonts, just protect against duplicates
