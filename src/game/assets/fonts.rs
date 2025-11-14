@@ -3,7 +3,11 @@ use bevy::asset::io::Reader;
 use bevy::asset::{AssetLoader, LoadContext, LoadDirectError};
 use bevy::prelude::*;
 use bevy_rich_text3d::TextRenderer;
+use cosmic_text::fontdb::ID;
 use serde::Deserialize;
+use sha2::digest::array::Array;
+use sha2::digest::consts::U256;
+use std::collections::HashMap;
 use thiserror::Error;
 
 pub const FONTS_INDEX_PATH: &str = "fonts/index.json";
@@ -124,3 +128,14 @@ pub enum BuiltinFontsLoadingError {
     #[error("Error loading font {0}")]
     Dependency(#[from] LoadDirectError),
 }
+
+#[derive(Debug, Default, Clone, Deref, Resource, Reflect)]
+#[reflect(Debug, Default, Clone, Resource)]
+pub struct FontNames(HashMap<AssetId<Font>, String>);
+
+#[derive(Debug, Default, Clone, Deref, Resource, Reflect)]
+#[reflect(Debug, Default, Clone)]
+pub struct LoadedFonts(#[reflect(ignore)] HashMap<Array<u8, U256>, ID>);
+
+// TODO: System for adding fonts to TextRenderer when each font is loaded
+// probably dont bother trying to unload fonts, just protect against duplicates
