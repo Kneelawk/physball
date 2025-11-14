@@ -2,12 +2,15 @@ use crate::game::assets::fonts::BuiltinFonts;
 use crate::game::assets::preload::Preloads;
 use crate::game::levels::death::DeathCollider;
 use crate::game::levels::finish_point::FinishPoint;
+use crate::game::levels::serial::BindArgs;
+use crate::game::levels::serial::error::{BindArgsErrorExt, KdlBindError};
 use crate::game::levels::serial::kdl::{KdlAlign, KdlPlaneType};
 use crate::game::levels::{LevelObject, PlayerSpawnPoint};
 use crate::type_expr;
 use avian3d::prelude::*;
 use bevy::prelude::*;
 use bevy_rich_text3d::{Text3d, Text3dStyling, TextAtlas};
+use crate::game::levels::serial::kdl_utils::{KdlDocumentExt, KdlNodeExt};
 
 pub struct LevelBuildArgs<'a, 'w, 's> {
     /// Whether to spawn the assets that would otherwise be spawned by a checkpoint load
@@ -47,6 +50,15 @@ pub struct SerialText {
 }
 
 impl SerialLevel {
+    pub fn bind(args: &mut BindArgs) -> Result<Self, KdlBindError> {
+        let spawn = {
+            let spawn_node = args.doc.must_get("spawn", args)?;
+            let spawn_doc = spawn_node.must_children(args)?;
+        };
+
+        todo!()
+    }
+
     pub fn spawn(&self, args: &mut LevelBuildArgs) {
         args.cmd.spawn((LevelObject, PlayerSpawnPoint, self.spawn));
         args.cmd.spawn((LevelObject, FinishPoint, self.finish));

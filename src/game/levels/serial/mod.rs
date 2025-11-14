@@ -1,14 +1,22 @@
+pub mod error;
 pub mod kdl;
 pub mod level;
-mod error;
+pub mod kdl_utils;
 
 use ::kdl::{KdlDocument, KdlError};
 use bevy::asset::io::Reader;
 use bevy::asset::{AssetLoader, AsyncReadExt, LoadContext};
 use bevy::prelude::*;
-use kdl::KdlLevel;
 use level::SerialLevel;
+use std::sync::Arc;
 use thiserror::Error;
+use crate::game::levels::serial::error::KdlBindError;
+
+pub struct BindArgs<'a, 'c> {
+    pub source: Arc<String>,
+    pub doc: KdlDocument,
+    pub load_context: &'a mut LoadContext<'c>,
+}
 
 #[derive(Debug, Default)]
 pub struct SerialLevelLoader;
@@ -35,7 +43,11 @@ impl AssetLoader for SerialLevelLoader {
             }
         };
 
-        let level = SerialLevel::from_kdl(str, doc, load_context)?;
+        let level = SerialLevel::bind(&mut BindArgs {
+            source: Arc::new(str),
+            doc,
+            load_context,
+        })?;
 
         Ok(level)
     }
@@ -45,8 +57,10 @@ impl AssetLoader for SerialLevelLoader {
 pub enum SerialLevelLoadingError {
     #[error("Level format error")]
     LevelFormatError,
-    #[error("Kdl parse error {0}")]
+    #[error("KDL parse error {0}")]
     KdlParse(#[from] KdlError),
+    #[error("KDL bind error {0}")]
+    KdlBind(#[from] KdlBindError),
     #[error("IO error {0}")]
     Io(#[from] std::io::Error),
 }

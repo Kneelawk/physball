@@ -17,7 +17,6 @@ pub struct KdlLevel {
 
     #[knus(children(name = "text"))]
     texts: Vec<KdlText>,
-    // TODO: death planes
 }
 
 #[derive(Debug, Clone, knus::Decode)]
