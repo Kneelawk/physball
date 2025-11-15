@@ -1,4 +1,4 @@
-use crate::game::assets::fonts::BuiltinFonts;
+use crate::game::assets::preload::Preloads;
 use crate::game::game_state::GameState;
 use crate::game::gui::{button, menu_root, title};
 use crate::game::levels::LevelRestartEvent;
@@ -37,7 +37,7 @@ fn disable_pause_menu(mut next_state: ResMut<NextState<PauseMenuState>>) {
     next_state.set(PauseMenuState::Disabled);
 }
 
-fn spawn_pause_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>) {
+fn spawn_pause_menu(mut cmd: Commands, fonts: Res<Preloads>) {
     cmd.spawn((
         menu_root(PauseMenuState::Main),
         children![

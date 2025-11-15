@@ -10,15 +10,31 @@ use thiserror::Error;
 
 pub const PRELOAD_INDEX_PATH: &str = "preload/index.json";
 
+pub const PRELOAD_TYPE_SCENE: &str = "scene";
+pub const PRELOAD_TYPE_FONT: &str = "font";
+
+pub const PRELOAD_SCENE_LEVEL_END: &str = "scene/level-end";
+pub const PRELOAD_FONT_TITLE: &str = "font/title";
+pub const PRELOAD_FONT_TEXT: &str = "font/text";
+
 lazy_static! {
     pub static ref ASSET_TYPES: HashMap<String, TypeId> = {
         let mut tys = HashMap::new();
-        tys.insert("scene".to_string(), TypeId::of::<Scene>());
+        tys.insert(PRELOAD_TYPE_SCENE.to_string(), TypeId::of::<Scene>());
+        tys.insert(PRELOAD_TYPE_FONT.to_string(), TypeId::of::<Font>());
         tys
     };
     pub static ref REQURED_PRELOADS: HashMap<String, String> = {
         let mut reqs = HashMap::new();
-        reqs.insert("level-end".to_string(), "scene".to_string());
+        reqs.insert(
+            PRELOAD_SCENE_LEVEL_END.to_string(),
+            PRELOAD_TYPE_SCENE.to_string(),
+        );
+        reqs.insert(
+            PRELOAD_FONT_TITLE.to_string(),
+            PRELOAD_TYPE_FONT.to_string(),
+        );
+        reqs.insert(PRELOAD_FONT_TEXT.to_string(), PRELOAD_TYPE_FONT.to_string());
         reqs
     };
 }
@@ -58,6 +74,24 @@ pub struct PreloadsAsset(Handle<Preloads>);
 #[derive(Debug, Clone, Asset, Resource, Deref, Reflect)]
 #[reflect(Debug, Clone, Resource)]
 pub struct Preloads(HashMap<String, Preload>);
+
+impl Preloads {
+    pub fn handle<A: Asset>(&self, asset_name: &str) -> Handle<A> {
+        self[asset_name].handle.clone().typed()
+    }
+
+    pub fn level_end(&self) -> Handle<Scene> {
+        self.handle(PRELOAD_SCENE_LEVEL_END)
+    }
+
+    pub fn title_font(&self) -> Handle<Font> {
+        self.handle(PRELOAD_FONT_TITLE)
+    }
+
+    pub fn text_font(&self) -> Handle<Font> {
+        self.handle(PRELOAD_FONT_TEXT)
+    }
+}
 
 #[derive(Debug, Clone, Reflect)]
 #[reflect(Debug, Clone)]

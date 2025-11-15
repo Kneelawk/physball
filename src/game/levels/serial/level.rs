@@ -1,5 +1,5 @@
-use crate::game::assets::fonts::BuiltinFonts;
-use crate::game::assets::preload::Preloads;
+use crate::game::assets::fonts::FontNames;
+use crate::game::assets::preload::{PRELOAD_FONT_TEXT, Preloads};
 use crate::game::levels::death::DeathCollider;
 use crate::game::levels::finish_point::FinishPoint;
 use crate::game::levels::serial::BindArgs;
@@ -21,7 +21,7 @@ pub struct LevelBuildArgs<'a, 'w, 's> {
     pub cmd: &'a mut Commands<'w, 's>,
     pub assets: &'a AssetServer,
     pub preloads: &'a Preloads,
-    pub fonts: &'a BuiltinFonts,
+    pub fonts: &'a FontNames,
 }
 
 #[derive(Debug, Clone, Asset, Reflect)]
@@ -56,7 +56,7 @@ pub enum SerialPlaneType {
 pub struct SerialText {
     pub text: String,
     pub pt: f32,
-    pub font: Option<String>,
+    pub font: String,
     pub align: SerialAlign,
     pub trans: Transform,
 }
@@ -194,7 +194,8 @@ impl SerialText {
 
         let font = node
             .get_string("font", args)
-            .map(|font| font.map(|font| font.to_string()));
+            .map(|font| font.unwrap_or(PRELOAD_FONT_TEXT))
+            .map(str::to_string);
 
         let align = node
             .get_variant("align", SerialAlign::VARIANTS, args)
@@ -217,10 +218,10 @@ impl SerialText {
     }
 
     pub fn spawn(&self, args: &mut LevelBuildArgs) {
-        let font = match self.font.as_deref() {
-            Some("title") => args.fonts.title_name.clone(),
-            _ => args.fonts.text_name.clone(),
-        };
+        let font = args.fonts[&args.preloads.get(&self.font).map(|preload| preload.handle.id().typed()).unwrap_or_else(|| {
+            warn!("Unknown font '{}' using default", &self.font);
+            args.preloads.text_font().id()
+        })].clone();
         args.cmd.spawn((
             LevelObject,
             self.trans,

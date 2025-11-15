@@ -1,4 +1,4 @@
-use crate::game::assets::fonts::BuiltinFonts;
+use crate::game::assets::preload::Preloads;
 use crate::game::gui::{ButtonSettings, TEXT_COLOR, button, menu_root, slider, title};
 use crate::game::menus::main_menu::MenuState;
 use crate::game::menus::pause_menu::PauseMenuState;
@@ -56,14 +56,12 @@ fn disable_options_menu(mut next_state: ResMut<NextState<OptionsMenuState>>) {
     next_state.set(OptionsMenuState::Disabled);
 }
 
-fn setup_main_options_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>, prefs: Res<GamePrefs>) {
+fn setup_main_options_menu(mut cmd: Commands, fonts: Res<Preloads>, prefs: Res<GamePrefs>) {
     info!("mouse speed: {}", prefs.mouse_speed);
     cmd.spawn((
         menu_root(OptionsMenuState::Main),
         children![
-            (
-                title(&fonts, "Options"),
-            ),
+            (title(&fonts, "Options"),),
             (
                 Node {
                     align_items: AlignItems::Stretch,
@@ -101,7 +99,7 @@ fn setup_main_options_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>, prefs: R
     ));
 }
 
-fn mouse_sensitivity_section(fonts: &BuiltinFonts, prefs: &GamePrefs) -> impl Bundle {
+fn mouse_sensitivity_section(fonts: &Preloads, prefs: &GamePrefs) -> impl Bundle {
     let min_mouse_speed_slider = (MIN_MOUSE_SPEED + 1.0).ln();
     let max_mouse_speed_slider = (MAX_MOUSE_SPEED + 1.0).ln();
 
@@ -128,7 +126,7 @@ fn mouse_sensitivity_section(fonts: &BuiltinFonts, prefs: &GamePrefs) -> impl Bu
                     (
                         Text::new("Mouse Sensitivity"),
                         TextFont {
-                            font: fonts.text.clone(),
+                            font: fonts.text_font(),
                             font_size: 32.0,
                             ..default()
                         },
@@ -138,7 +136,7 @@ fn mouse_sensitivity_section(fonts: &BuiltinFonts, prefs: &GamePrefs) -> impl Bu
                         MouseSpeedText,
                         Text::new(format!("{:.2}", prefs.mouse_speed)),
                         TextFont {
-                            font: fonts.text.clone(),
+                            font: fonts.text_font(),
                             font_size: 32.0,
                             ..default()
                         },
@@ -185,7 +183,7 @@ fn mouse_sensitivity_section(fonts: &BuiltinFonts, prefs: &GamePrefs) -> impl Bu
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn window_resize_section(fonts: &BuiltinFonts) -> impl Bundle {
+fn window_resize_section(fonts: &Preloads) -> impl Bundle {
     (
         Node {
             align_items: AlignItems::Start,
@@ -199,7 +197,7 @@ fn window_resize_section(fonts: &BuiltinFonts) -> impl Bundle {
             (
                 Text::new("Window Resolution"),
                 TextFont {
-                    font: fonts.text.clone(),
+                    font: fonts.text_font(),
                     font_size: 32.0,
                     ..default()
                 },
@@ -230,7 +228,7 @@ fn window_resize_section(fonts: &BuiltinFonts) -> impl Bundle {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn window_resize_button(fonts: &BuiltinFonts, width: u32, height: u32) -> impl Bundle {
+fn window_resize_button(fonts: &Preloads, width: u32, height: u32) -> impl Bundle {
     (
         button(
             fonts,

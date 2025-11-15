@@ -1,4 +1,4 @@
-use crate::game::assets::fonts::BuiltinFonts;
+use crate::game::assets::fonts::FontNames;
 use crate::game::assets::preload::Preloads;
 use crate::game::game::Player;
 use crate::game::game_state::GameState;
@@ -37,16 +37,18 @@ pub struct FinishPoint;
 pub struct FinishLabel;
 
 fn finish_point_on_insert(mut world: DeferredWorld, ctx: HookContext) {
-    let level_end = world
+    let preloads = world
         .get_resource::<Preloads>()
-        .unwrap()
-        .get("level-end")
-        .expect("missing required preload");
-    let level_end = level_end
-        .clone()
-        .handle
-        .try_typed::<Scene>()
-        .expect("required preload with wrong type");
+        .expect("missing preloads resource");
+    let font_names = world
+        .get_resource::<FontNames>()
+        .expect("missing font names resource");
+    let level_end = preloads.level_end();
+    let font = preloads.title_font();
+    let font = font_names
+        .get(&font.id())
+        .expect("missing font name for required font")
+        .clone();
     let material = world.get_asset_server().add(StandardMaterial {
         base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
         alpha_mode: AlphaMode::Blend,
@@ -54,11 +56,6 @@ fn finish_point_on_insert(mut world: DeferredWorld, ctx: HookContext) {
         emissive: LinearRgba::new(0.0, 10.0, 12.0, 1.0),
         ..default()
     });
-    let font = world
-        .get_resource::<BuiltinFonts>()
-        .unwrap()
-        .title_name
-        .clone();
     let mut binding = world.commands();
     let mut commands = binding.entity(ctx.entity);
     commands.insert_if_new(SceneRoot(level_end));

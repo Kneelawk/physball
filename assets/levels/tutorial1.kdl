@@ -10,7 +10,7 @@ plane 5.0 15.0 {
     pos 0.0 0.0 -5.0
 }
 
-text "Tutorial 1" font=title pt=80.0 {
+text "Tutorial 1" font="font/title" pt=80.0 {
     pos 0.0 1.8 -1.5
 }
 

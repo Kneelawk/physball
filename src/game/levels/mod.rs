@@ -1,11 +1,11 @@
+pub mod death;
 pub mod finish_point;
 pub mod index;
 pub mod serial;
-pub mod death;
 
-use crate::game::assets::fonts::BuiltinFonts;
+use crate::game::assets::fonts::FontNames;
 use crate::game::assets::preload::Preloads;
-use crate::game::levels::index::{on_level_index_loaded, LevelIndex, LevelIndexLoader};
+use crate::game::levels::index::{LevelIndex, LevelIndexLoader, on_level_index_loaded};
 use crate::game::levels::serial::SerialLevelLoader;
 use crate::game::levels::serial::level::LevelBuildArgs;
 use crate::game::state::AppState;
@@ -95,7 +95,7 @@ fn respawn_level(
     query: Query<Entity, With<LevelObject>>,
     asset_server: Res<AssetServer>,
     preloads: Res<Preloads>,
-    fonts: Res<BuiltinFonts>,
+    fonts: Res<FontNames>,
     level_handle: Res<LevelHandle>,
     level_assets: Res<Assets<SerialLevel>>,
 ) {
@@ -118,7 +118,7 @@ fn spawn_level(
     query: Query<Entity, With<LevelObject>>,
     asset_server: Res<AssetServer>,
     preloads: Res<Preloads>,
-    fonts: Res<BuiltinFonts>,
+    fonts: Res<FontNames>,
     level_handle: Option<Res<LevelHandle>>,
     level_assets: Res<Assets<SerialLevel>>,
     app_state: Res<State<AppState>>,
@@ -154,7 +154,7 @@ fn spawn_level_impl(
     cmd: &mut Commands,
     assets: &AssetServer,
     preloads: &Preloads,
-    fonts: &BuiltinFonts,
+    fonts: &FontNames,
     level_handle: &LevelHandle,
     level_assets: &Assets<SerialLevel>,
     dyn_assets: bool,

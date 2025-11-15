@@ -1,6 +1,14 @@
 {
-  "level-end": {
+  "scene/level-end": {
     "ty": "scene",
     "path": "preload/level-end.glb#Scene0"
+  },
+  "font/title": {
+    "ty": "font",
+    "path": "preload/BBHSansBartle-Regular.ttf"
+  },
+  "font/text": {
+    "ty": "font",
+    "path": "preload/FiraSans-Regular.ttf"
   }
 }
