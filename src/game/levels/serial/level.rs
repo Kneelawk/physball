@@ -1,26 +1,22 @@
 use crate::game::assets::fonts::FontNames;
-use crate::game::assets::preload::{
-    PRELOAD_FONT_TEXT, PreloadType, Preloads,
-};
+use crate::game::assets::preload::{PRELOAD_FONT_TEXT, PreloadType, Preloads};
 use crate::game::levels::death::DeathCollider;
 use crate::game::levels::finish_point::FinishPoint;
+use crate::game::levels::serial::asset_ref::{AssetRef, DEFAULT_FONT};
 use crate::game::levels::serial::error::{KdlBindError, MergeKdlBindError};
-use crate::game::levels::serial::kdl_utils::{FromStrWith, KdlDocumentExt, KdlNodeExt};
+use crate::game::levels::serial::kdl_utils::{KdlDocumentExt, KdlNodeExt};
 use crate::game::levels::{LevelObject, PlayerSpawnPoint};
 use crate::{capture_result, type_expr};
 use avian3d::prelude::*;
-use bevy::asset::{LoadContext, ParseAssetPathError};
+use bevy::asset::LoadContext;
 use bevy::prelude::*;
 use bevy_rich_text3d::{Text3d, Text3dStyling, TextAlign, TextAtlas};
 use kdl::{KdlDocument, KdlNode};
-use std::borrow::Cow;
 use std::string::ToString;
 use std::sync::Arc;
 use strum::VariantArray;
 
 pub const DEFAULT_TEXT_PT: f64 = 64.0;
-
-pub const DEFAULT_FONT: AssetRef<Font> = AssetRef::Preload(Cow::Borrowed(PRELOAD_FONT_TEXT));
 
 pub struct LevelBuildArgs<'a, 'w, 's> {
     /// Whether to spawn the assets that would otherwise be spawned by a checkpoint load
@@ -29,57 +25,6 @@ pub struct LevelBuildArgs<'a, 'w, 's> {
     pub assets: &'a AssetServer,
     pub preloads: &'a Preloads,
     pub fonts: &'a FontNames,
-}
-
-#[derive(Debug, Clone, Reflect)]
-pub enum AssetRef<T: Asset + PreloadType> {
-    Preload(Cow<'static, str>),
-    Handle(Handle<T>),
-}
-
-impl<T: Asset + PreloadType> AssetRef<T> {
-    pub fn parse(
-        path: &str,
-        load_context: &mut LoadContext,
-    ) -> Result<AssetRef<T>, ParseAssetPathError> {
-        if let Some(preload) = path.strip_prefix("preload:") {
-            Ok(Self::Preload(Cow::Owned(preload.to_string())))
-        } else {
-            let current_path = load_context.asset_path();
-            Ok(Self::Handle(
-                load_context.load(current_path.resolve_embed(path)?),
-            ))
-        }
-    }
-
-    pub fn resolve(&self, preloads: &Preloads) -> Option<Handle<T>> {
-        match self {
-            AssetRef::Preload(preload) => preloads.try_handle(preload),
-            AssetRef::Handle(handle) => Some(handle.clone()),
-        }
-    }
-
-    pub fn resolve_or_else(
-        &self,
-        preloads: &Preloads,
-        resolver: impl FnOnce(&str) -> Handle<T>,
-    ) -> Handle<T> {
-        match self {
-            AssetRef::Preload(preload) => preloads
-                .try_handle(preload)
-                .unwrap_or_else(|| resolver(preload)),
-            AssetRef::Handle(handle) => handle.clone(),
-        }
-    }
-}
-
-impl<'a, 'c: 'a, T: Asset + PreloadType> FromStrWith<'a, 'c> for AssetRef<T> {
-    type Args = &'a mut LoadContext<'c>;
-    type Err = ParseAssetPathError;
-
-    fn from_str(s: &str, args: Self::Args) -> Result<Self, Self::Err> {
-        Self::parse(s, args)
-    }
 }
 
 #[derive(Debug, Clone, Asset, Reflect)]
@@ -130,7 +75,11 @@ pub enum SerialAlign {
 }
 
 impl SerialLevel {
-    pub fn bind(doc: &KdlDocument, load_context: &mut LoadContext, source: Arc<String>) -> Result<Self, KdlBindError> {
+    pub fn bind(
+        doc: &KdlDocument,
+        load_context: &mut LoadContext,
+        source: Arc<String>,
+    ) -> Result<Self, KdlBindError> {
         let spawn = capture_result! {
             let doc = doc.must_children("spawn", &source)?;
             doc.get_transform(&source)
@@ -182,7 +131,11 @@ impl SerialLevel {
 }
 
 impl SerialPlane {
-    pub fn bind(node: &KdlNode, _load_context: &mut LoadContext, source: Arc<String>) -> Result<Self, KdlBindError> {
+    pub fn bind(
+        node: &KdlNode,
+        _load_context: &mut LoadContext,
+        source: Arc<String>,
+    ) -> Result<Self, KdlBindError> {
         let size = node.must_get_number(0, &source);
         let size2 = node.get_number(1, &source);
 
@@ -243,7 +196,11 @@ impl SerialPlane {
 }
 
 impl SerialText {
-    pub fn bind(node: KdlNode, load_context: &mut LoadContext, source: Arc<String>) -> Result<Self, KdlBindError> {
+    pub fn bind(
+        node: KdlNode,
+        load_context: &mut LoadContext,
+        source: Arc<String>,
+    ) -> Result<Self, KdlBindError> {
         let text = node
             .must_get_string(0, &source)
             .map(|text| text.to_string());
@@ -253,7 +210,7 @@ impl SerialText {
             .map(|pt| pt.unwrap_or(DEFAULT_TEXT_PT));
 
         let font = node
-            .get_parse_with::<AssetRef<Font>>("font", load_context, &source)
+            .get_asset_ref::<Font>("font", load_context, &source)
             .map(|asset| asset.unwrap_or(DEFAULT_FONT));
 
         let align = node
