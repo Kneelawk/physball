@@ -4,19 +4,31 @@ pub mod preload;
 use crate::game::assets::fonts::{FontNames, LoadedFonts, insert_fonts};
 use crate::game::assets::preload::{Preloads, PreloadsLoader, load_preloads, load_preloads_system};
 use crate::game::levels::index::load_level_index;
+use bevy::app::MainScheduleOrder;
+use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::*;
+
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, ScheduleLabel)]
+pub struct AssetProcess;
 
 #[derive(Default)]
 pub struct BuiltinAssetsPlugin;
 
 impl Plugin for BuiltinAssetsPlugin {
     fn build(&self, app: &mut App) {
+        let asset_process = Schedule::new(AssetProcess);
+
+        app.add_schedule(asset_process)
+            .world_mut()
+            .resource_mut::<MainScheduleOrder>()
+            .insert_after(PreUpdate, AssetProcess);
+
         app.init_asset::<Preloads>()
             .init_asset_loader::<PreloadsLoader>()
             .init_resource::<BuiltinAssetsState>()
             .init_resource::<FontNames>()
             .init_resource::<LoadedFonts>()
-            .add_systems(PreUpdate, (insert_fonts, load_preloads_system));
+            .add_systems(AssetProcess, (insert_fonts, load_preloads_system));
     }
 }
 

@@ -9,6 +9,11 @@
       "name": "tutorial2",
       "display": "Tutorial 2",
       "path": "levels/tutorial2.kdl"
+    },
+    {
+      "name": "test1",
+      "display": "Test 1",
+      "path": "levels/test1.kdl"
     }
   ]
 }

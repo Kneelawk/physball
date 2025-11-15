@@ -30,6 +30,7 @@ pub fn insert_fonts(
                 let font_id = loaded[&digest.0];
                 if let Some(face) = text_renderer.lock().db().face(font_id) {
                     let name = face.families[0].0.clone();
+                    info!("Font already loaded {}", &name);
                     names.insert(*asset_id, name);
                 } else {
                     warn!(
@@ -44,6 +45,7 @@ pub fn insert_fonts(
                     let name = text_renderer.lock().db().face(new_id).unwrap().families[0]
                         .0
                         .clone();
+                    info!("New font name: {}", &name);
                     names.insert(*asset_id, name);
                 }
             } else {
@@ -55,6 +57,7 @@ pub fn insert_fonts(
                 let name = text_renderer.lock().db().face(font_id).unwrap().families[0]
                     .0
                     .clone();
+                info!("Inserted new font with name {}", &name);
                 names.insert(*asset_id, name);
             }
         } else if let AssetEvent::Removed { id } = e {

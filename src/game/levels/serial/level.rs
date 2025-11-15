@@ -1,5 +1,5 @@
 use crate::game::assets::fonts::FontNames;
-use crate::game::assets::preload::{PRELOAD_FONT_TEXT, PreloadType, Preloads};
+use crate::game::assets::preload::Preloads;
 use crate::game::levels::death::DeathCollider;
 use crate::game::levels::finish_point::FinishPoint;
 use crate::game::levels::serial::asset_ref::{AssetRef, DEFAULT_FONT};
@@ -234,13 +234,21 @@ impl SerialText {
     }
 
     pub fn spawn(&self, args: &mut LevelBuildArgs) {
-        let font = args.fonts[&self
-            .font
-            .resolve_or_else(&args.preloads, |preload| {
-                warn!("Unknown font '{}' using default", preload);
-                args.preloads.text_font()
+        let font = args
+            .fonts
+            .get(
+                &self
+                    .font
+                    .resolve_or_else(args.preloads, |preload| {
+                        warn!("Unknown font '{}', using default", preload);
+                        args.preloads.text_font()
+                    })
+                    .id(),
+            )
+            .unwrap_or_else(|| {
+                warn!("Font {:?} has not loaded yet, using default", &self.font);
+                &args.fonts[&args.preloads.text_font().id()]
             })
-            .id()]
             .clone();
         args.cmd.spawn((
             LevelObject,
