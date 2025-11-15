@@ -1,11 +1,11 @@
 #![allow(dead_code)]
 
-use crate::game::levels::serial::BindArgs;
-use crate::game::levels::serial::error::{BindArgsErrorExt, KdlBindError, MergeKdlBindError};
+use crate::game::levels::serial::error::{BindErrorExt, KdlBindError, MergeKdlBindError};
 use bevy::prelude::*;
 use kdl::{KdlDocument, KdlEntry, KdlNode, KdlValue, NodeKey};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+use std::sync::Arc;
 use strum::VariantArray;
 
 #[derive(Debug, Copy, Clone)]
@@ -71,8 +71,15 @@ impl DisplayValueType for &[KdlValueType] {
     }
 }
 
+pub trait FromStrWith<'a, 'b>: Sized {
+    type Args: 'a;
+    type Err;
+
+    fn from_str(s: &str, args: Self::Args) -> Result<Self, Self::Err>;
+}
+
 pub trait KdlDocumentExt {
-    fn must_get(&self, name: &str, args: &BindArgs) -> Result<&KdlNode, KdlBindError>;
+    fn must_get(&self, name: &str, args: &Arc<String>) -> Result<&KdlNode, KdlBindError>;
 
     fn get(&self, name: &str) -> Option<&KdlNode>;
 
@@ -80,9 +87,9 @@ pub trait KdlDocumentExt {
 
     fn children(&self, name: &str) -> Option<&KdlDocument>;
 
-    fn must_children(&self, name: &str, args: &BindArgs) -> Result<&KdlDocument, KdlBindError>;
+    fn must_children(&self, name: &str, args: &Arc<String>) -> Result<&KdlDocument, KdlBindError>;
 
-    fn get_transform(&self, args: &BindArgs) -> Result<Transform, KdlBindError> {
+    fn get_transform(&self, args: &Arc<String>) -> Result<Transform, KdlBindError> {
         let mut trans = Transform::default();
 
         let translation = self
@@ -114,7 +121,7 @@ pub trait KdlDocumentExt {
 }
 
 impl KdlDocumentExt for KdlDocument {
-    fn must_get(&self, name: &str, args: &BindArgs) -> Result<&KdlNode, KdlBindError> {
+    fn must_get(&self, name: &str, args: &Arc<String>) -> Result<&KdlNode, KdlBindError> {
         self.get(name).ok_or(args.missing_element(name))
     }
 
@@ -130,55 +137,58 @@ impl KdlDocumentExt for KdlDocument {
         self.get(name).and_then(|n| n.children())
     }
 
-    fn must_children(&self, name: &str, args: &BindArgs) -> Result<&KdlDocument, KdlBindError> {
+    fn must_children(&self, name: &str, args: &Arc<String>) -> Result<&KdlDocument, KdlBindError> {
         self.must_get(name, args)?.must_children(args)
     }
 }
 
 pub trait KdlNodeExt {
-    fn must_children(&self, args: &BindArgs) -> Result<&KdlDocument, KdlBindError>;
+    fn must_children(&self, args: &Arc<String>) -> Result<&KdlDocument, KdlBindError>;
 
     fn must_entry(
         &self,
         key: impl Into<NodeKey>,
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<&KdlEntry, KdlBindError>;
 
     fn entry(&self, key: impl Into<NodeKey>) -> Option<&KdlEntry>;
 
-    fn must_get(&self, key: impl Into<NodeKey>, args: &BindArgs)
-    -> Result<&KdlValue, KdlBindError>;
+    fn must_get(
+        &self,
+        key: impl Into<NodeKey>,
+        source: &Arc<String>,
+    ) -> Result<&KdlValue, KdlBindError>;
 
     fn get(&self, key: impl Into<NodeKey>) -> Option<&KdlValue>;
 
     fn must_get_number(
         &self,
         key: impl Into<NodeKey>,
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<f64, KdlBindError>;
 
     fn get_number(
         &self,
         key: impl Into<NodeKey>,
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<Option<f64>, KdlBindError>;
 
     fn must_get_string(
         &self,
         key: impl Into<NodeKey>,
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<&str, KdlBindError>;
 
     fn get_string(
         &self,
         key: impl Into<NodeKey>,
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<Option<&str>, KdlBindError>;
 
     fn must_get_parse<T: FromStr>(
         &self,
         key: impl Into<NodeKey>,
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<T, KdlBindError>
     where
         T::Err: Display;
@@ -186,7 +196,25 @@ pub trait KdlNodeExt {
     fn get_parse<T: FromStr>(
         &self,
         key: impl Into<NodeKey>,
-        args: &BindArgs,
+        source: &Arc<String>,
+    ) -> Result<Option<T>, KdlBindError>
+    where
+        T::Err: Display;
+
+    fn must_get_parse_with<'a, 'b, T: FromStrWith<'a, 'b>>(
+        &self,
+        key: impl Into<NodeKey>,
+        args: T::Args,
+        source: &Arc<String>,
+    ) -> Result<T, KdlBindError>
+    where
+        T::Err: Display;
+
+    fn get_parse_with<'a, 'b, T: FromStrWith<'a, 'b>>(
+        &self,
+        key: impl Into<NodeKey>,
+        args: T::Args,
+        source: &Arc<String>,
     ) -> Result<Option<T>, KdlBindError>
     where
         T::Err: Display;
@@ -195,26 +223,30 @@ pub trait KdlNodeExt {
         &self,
         key: impl Into<NodeKey>,
         variants: &'t [T],
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<&'t T, KdlBindError>;
 
     fn get_variant<'t, T: Display>(
         &self,
         key: impl Into<NodeKey>,
         variants: &'t [T],
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<Option<&'t T>, KdlBindError>;
 
-    fn must_get_vec3(&self, arg_offset: usize, args: &BindArgs) -> Result<Vec3, KdlBindError> {
-        let x = self.must_get_number(arg_offset, args);
-        let y = self.must_get_number(arg_offset + 1, args);
-        let z = self.must_get_number(arg_offset + 2, args);
+    fn must_get_vec3(&self, arg_offset: usize, source: &Arc<String>) -> Result<Vec3, KdlBindError> {
+        let x = self.must_get_number(arg_offset, source);
+        let y = self.must_get_number(arg_offset + 1, source);
+        let z = self.must_get_number(arg_offset + 2, source);
         let (x, y, z) = (x, y, z).merge()?;
         Ok(Vec3::new(x as f32, y as f32, z as f32))
     }
 
-    fn must_get_scale(&self, arg_offset: usize, args: &BindArgs) -> Result<Vec3, KdlBindError> {
-        let x = self.must_get_number(arg_offset, args)?;
+    fn must_get_scale(
+        &self,
+        arg_offset: usize,
+        source: &Arc<String>,
+    ) -> Result<Vec3, KdlBindError> {
+        let x = self.must_get_number(arg_offset, source)?;
         let y = self.get(arg_offset + 1).and_then(KdlValue::as_number);
         let z = self.get(arg_offset + 2).and_then(KdlValue::as_number);
         Ok(Vec3::new(
@@ -224,11 +256,15 @@ pub trait KdlNodeExt {
         ))
     }
 
-    fn must_get_rotation(&self, arg_offset: usize, args: &BindArgs) -> Result<Quat, KdlBindError> {
+    fn must_get_rotation(
+        &self,
+        arg_offset: usize,
+        source: &Arc<String>,
+    ) -> Result<Quat, KdlBindError> {
         let axis = self
-            .must_get_variant(arg_offset, KdlAxis::VARIANTS, args)
+            .must_get_variant(arg_offset, KdlAxis::VARIANTS, source)
             .map(|axis| axis.to_vec3());
-        let rotation = self.must_get_number(arg_offset + 1, args);
+        let rotation = self.must_get_number(arg_offset + 1, source);
         let (axis, rotation) = (axis, rotation).merge()?;
         Ok(Quat::from_axis_angle(
             axis,
@@ -238,18 +274,19 @@ pub trait KdlNodeExt {
 }
 
 impl KdlNodeExt for KdlNode {
-    fn must_children(&self, args: &BindArgs) -> Result<&KdlDocument, KdlBindError> {
-        self.children().ok_or_else(|| args.no_children(self.span()))
+    fn must_children(&self, source: &Arc<String>) -> Result<&KdlDocument, KdlBindError> {
+        self.children()
+            .ok_or_else(|| source.no_children(self.span()))
     }
 
     fn must_entry(
         &self,
         key: impl Into<NodeKey>,
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<&KdlEntry, KdlBindError> {
         let key = key.into();
         self.entry(key.clone())
-            .ok_or_else(|| args.no_entry(key, self.span()))
+            .ok_or_else(|| source.no_entry(key, self.span()))
     }
 
     fn entry(&self, key: impl Into<NodeKey>) -> Option<&KdlEntry> {
@@ -259,11 +296,11 @@ impl KdlNodeExt for KdlNode {
     fn must_get(
         &self,
         key: impl Into<NodeKey>,
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<&KdlValue, KdlBindError> {
         let key = key.into();
         self.get(key.clone())
-            .ok_or_else(|| args.no_entry(key, self.span()))
+            .ok_or_else(|| source.no_entry(key, self.span()))
     }
 
     fn get(&self, key: impl Into<NodeKey>) -> Option<&KdlValue> {
@@ -273,95 +310,128 @@ impl KdlNodeExt for KdlNode {
     fn must_get_number(
         &self,
         key: impl Into<NodeKey>,
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<f64, KdlBindError> {
-        self.must_entry(key, args)?.as_number(args)
+        self.must_entry(key, source)?.as_number(source)
     }
 
     fn get_number(
         &self,
         key: impl Into<NodeKey>,
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<Option<f64>, KdlBindError> {
         self.entry(key)
-            .map_or(Ok(None), |e| e.as_number(args).map(Some))
+            .map_or(Ok(None), |e| e.as_number(source).map(Some))
     }
 
     fn must_get_string(
         &self,
         key: impl Into<NodeKey>,
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<&str, KdlBindError> {
-        self.must_entry(key, args)?.as_string(args)
+        self.must_entry(key, source)?.as_string(source)
     }
 
     fn get_string(
         &self,
         key: impl Into<NodeKey>,
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<Option<&str>, KdlBindError> {
         self.entry(key)
-            .map_or(Ok(None), |e| e.as_string(args).map(Some))
+            .map_or(Ok(None), |e| e.as_string(source).map(Some))
     }
 
     fn must_get_parse<T: FromStr>(
         &self,
         key: impl Into<NodeKey>,
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<T, KdlBindError>
     where
         T::Err: Display,
     {
-        self.must_entry(key, args)?.as_parse(args)
+        self.must_entry(key, source)?.as_parse(source)
     }
 
     fn get_parse<T: FromStr>(
         &self,
         key: impl Into<NodeKey>,
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<Option<T>, KdlBindError>
     where
         T::Err: Display,
     {
         self.entry(key)
-            .map_or(Ok(None), |e| e.as_parse(args).map(Some))
+            .map_or(Ok(None), |e| e.as_parse(source).map(Some))
+    }
+
+    fn must_get_parse_with<'a, 'b, T: FromStrWith<'a, 'b>>(
+        &self,
+        key: impl Into<NodeKey>,
+        args: T::Args,
+        source: &Arc<String>,
+    ) -> Result<T, KdlBindError>
+    where
+        T::Err: Display,
+    {
+        self.must_entry(key, source)?.as_parse_with(args, source)
+    }
+
+    fn get_parse_with<'a, 'b, T: FromStrWith<'a, 'b>>(
+        &self,
+        key: impl Into<NodeKey>,
+        args: T::Args,
+        source: &Arc<String>,
+    ) -> Result<Option<T>, KdlBindError>
+    where
+        T::Err: Display,
+    {
+        self.entry(key)
+            .map_or(Ok(None), |e| e.as_parse_with(args, source).map(Some))
     }
 
     fn must_get_variant<'t, T: Display>(
         &self,
         key: impl Into<NodeKey>,
         variants: &'t [T],
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<&'t T, KdlBindError> {
-        self.must_entry(key, args)?.as_variant(variants, args)
+        self.must_entry(key, source)?.as_variant(variants, source)
     }
 
     fn get_variant<'t, T: Display>(
         &self,
         key: impl Into<NodeKey>,
         variants: &'t [T],
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<Option<&'t T>, KdlBindError> {
         self.entry(key)
-            .map_or(Ok(None), |e| e.as_variant(variants, args).map(Some))
+            .map_or(Ok(None), |e| e.as_variant(variants, source).map(Some))
     }
 }
 
 pub trait KdlEntryExt {
     fn value_type(&self) -> KdlValueType;
 
-    fn as_number(&self, args: &BindArgs) -> Result<f64, KdlBindError>;
+    fn as_number(&self, source: &Arc<String>) -> Result<f64, KdlBindError>;
 
-    fn as_string(&self, args: &BindArgs) -> Result<&str, KdlBindError>;
+    fn as_string(&self, source: &Arc<String>) -> Result<&str, KdlBindError>;
 
-    fn as_parse<T: FromStr>(&self, args: &BindArgs) -> Result<T, KdlBindError>
+    fn as_parse<T: FromStr>(&self, source: &Arc<String>) -> Result<T, KdlBindError>
+    where
+        T::Err: Display;
+
+    fn as_parse_with<'a, 'b, T: FromStrWith<'a, 'b>>(
+        &self,
+        args: T::Args,
+        source: &Arc<String>,
+    ) -> Result<T, KdlBindError>
     where
         T::Err: Display;
 
     fn as_variant<'t, T: Display>(
         &self,
         variants: &'t [T],
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<&'t T, KdlBindError>;
 }
 
@@ -370,9 +440,9 @@ impl KdlEntryExt for KdlEntry {
         self.value().value_type()
     }
 
-    fn as_number(&self, args: &BindArgs) -> Result<f64, KdlBindError> {
+    fn as_number(&self, source: &Arc<String>) -> Result<f64, KdlBindError> {
         self.value().as_number().ok_or_else(|| {
-            args.wrong_value_type(
+            source.wrong_value_type(
                 self.value().value_type(),
                 &[KdlValueType::Integer, KdlValueType::Float],
                 self.span(),
@@ -380,9 +450,9 @@ impl KdlEntryExt for KdlEntry {
         })
     }
 
-    fn as_string(&self, args: &BindArgs) -> Result<&str, KdlBindError> {
+    fn as_string(&self, source: &Arc<String>) -> Result<&str, KdlBindError> {
         self.value().as_string().ok_or_else(|| {
-            args.wrong_value_type(
+            source.wrong_value_type(
                 self.value().value_type(),
                 &[KdlValueType::String],
                 self.span(),
@@ -390,27 +460,39 @@ impl KdlEntryExt for KdlEntry {
         })
     }
 
-    fn as_parse<T: FromStr>(&self, args: &BindArgs) -> Result<T, KdlBindError>
+    fn as_parse<T: FromStr>(&self, source: &Arc<String>) -> Result<T, KdlBindError>
     where
         T::Err: Display,
     {
-        self.as_string(args)?
+        self.as_string(source)?
             .parse()
-            .map_err(|err| args.parse_error(err, self.span()))
+            .map_err(|err| source.parse_error(err, self.span()))
+    }
+
+    fn as_parse_with<'a, 'b, T: FromStrWith<'a, 'b>>(
+        &self,
+        args: T::Args,
+        source: &Arc<String>,
+    ) -> Result<T, KdlBindError>
+    where
+        T::Err: Display,
+    {
+        T::from_str(self.as_string(source)?, args)
+            .map_err(|err| source.parse_error(err, self.span()))
     }
 
     fn as_variant<'t, T: Display>(
         &self,
         variants: &'t [T],
-        args: &BindArgs,
+        source: &Arc<String>,
     ) -> Result<&'t T, KdlBindError> {
-        let str = self.as_string(args)?;
+        let str = self.as_string(source)?;
         for var in variants {
             if var.to_string() == str {
                 return Ok(var);
             }
         }
-        Err(args.not_a_variant(str, variants, self.span()))
+        Err(source.not_a_variant(str, variants, self.span()))
     }
 }
 
