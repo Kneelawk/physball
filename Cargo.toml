@@ -8,16 +8,13 @@ hot-reload = ["bevy/file_watcher"]
 default = ["hot-reload"]
 
 [dependencies]
-anyhow = "1.0"
 avian3d = "0.4"
 bevy = { version = "0.17", features = ["experimental_bevy_ui_widgets"] }
 bevy_rich_text3d = "0.5"
 bevy_svg = "0.17"
 cosmic-text = "0.14.2"
 directories = "6"
-event-listener = "5"
 kdl = "6"
-knus = { git = "https://github.com/TheLostLambda/knus.git", branch = "kdl-v2" }
 lazy_static = "1"
 miette = { version = "7", features = ["fancy"] }
 # Set max log levels. This helps avoid unwanted low-severity log spam, which can affect performance.

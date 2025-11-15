@@ -1883,15 +1883,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 
 [[package]]
-name = "chumsky"
-version = "0.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8eebd66744a15ded14960ab4ccdbfb51ad3b81f51f3f04a80adac98c985396c9"
-dependencies = [
- "hashbrown 0.14.5",
-]
-
-[[package]]
 name = "clang-sys"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3005,16 +2996,6 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
-version = "0.14.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
-dependencies = [
- "ahash",
- "allocator-api2",
-]
-
-[[package]]
-name = "hashbrown"
 version = "0.15.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9229cfe53dfd69f0609a49f65461bd93001ea1ef889cd5529dd176593f5338a1"
@@ -3259,31 +3240,6 @@ name = "khronos_api"
 version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2db585e1d738fc771bf08a151420d3ed193d9d895a36df7f6f8a9456b911ddc"
-
-[[package]]
-name = "knus"
-version = "3.2.0"
-source = "git+https://github.com/TheLostLambda/knus.git?branch=kdl-v2#eb3dc65f3a870f6b8169666b7406b079a0f3a78e"
-dependencies = [
- "base64",
- "chumsky",
- "knus-derive",
- "miette",
- "thiserror 1.0.69",
- "unicode-width 0.2.2",
-]
-
-[[package]]
-name = "knus-derive"
-version = "3.2.0"
-source = "git+https://github.com/TheLostLambda/knus.git?branch=kdl-v2#eb3dc65f3a870f6b8169666b7406b079a0f3a78e"
-dependencies = [
- "heck",
- "proc-macro-error2",
- "proc-macro2",
- "quote",
- "syn",
-]
 
 [[package]]
 name = "kqueue"
@@ -4375,7 +4331,6 @@ dependencies = [
 name = "physball"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "avian3d",
  "bevy",
  "bevy_rich_text3d",
@@ -4383,9 +4338,7 @@ dependencies = [
  "console_error_panic_hook",
  "cosmic-text",
  "directories",
- "event-listener",
  "kdl",
- "knus",
  "lazy_static",
  "log",
  "miette",
