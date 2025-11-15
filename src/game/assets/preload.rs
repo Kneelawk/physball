@@ -13,9 +13,9 @@ pub const PRELOAD_INDEX_PATH: &str = "preload/index.json";
 pub const PRELOAD_TYPE_SCENE: &str = "scene";
 pub const PRELOAD_TYPE_FONT: &str = "font";
 
-pub const PRELOAD_SCENE_LEVEL_END: &str = "scene/level-end";
-pub const PRELOAD_FONT_TITLE: &str = "font/title";
-pub const PRELOAD_FONT_TEXT: &str = "font/text";
+pub const PRELOAD_SCENE_LEVEL_END: &str = "level-end";
+pub const PRELOAD_FONT_TITLE: &str = "title";
+pub const PRELOAD_FONT_TEXT: &str = "text";
 
 lazy_static! {
     pub static ref ASSET_TYPES: HashMap<String, TypeId> = {
@@ -64,6 +64,18 @@ pub fn load_preloads_system(
     }
 }
 
+pub trait PreloadType {
+    const PRELOAD_TYPE_NAME: &'static str;
+}
+
+impl PreloadType for Scene {
+    const PRELOAD_TYPE_NAME: &'static str = PRELOAD_TYPE_SCENE;
+}
+
+impl PreloadType for Font {
+    const PRELOAD_TYPE_NAME: &'static str = PRELOAD_TYPE_FONT;
+}
+
 #[derive(Default)]
 pub struct PreloadsLoader;
 
@@ -73,11 +85,20 @@ pub struct PreloadsAsset(Handle<Preloads>);
 
 #[derive(Debug, Clone, Asset, Resource, Deref, Reflect)]
 #[reflect(Debug, Clone, Resource)]
-pub struct Preloads(HashMap<String, Preload>);
+pub struct Preloads(HashMap<String, HashMap<String, Preload>>);
 
 impl Preloads {
-    pub fn handle<A: Asset>(&self, asset_name: &str) -> Handle<A> {
-        self[asset_name].handle.clone().typed()
+    pub fn handle<A: Asset + PreloadType>(&self, asset_name: &str) -> Handle<A> {
+        self[A::PRELOAD_TYPE_NAME][asset_name]
+            .handle
+            .clone()
+            .typed()
+    }
+
+    pub fn try_handle<A: Asset + PreloadType>(&self, asset_name: &str) -> Option<Handle<A>> {
+        self[A::PRELOAD_TYPE_NAME]
+            .get(asset_name)
+            .map(|preload| preload.handle.clone().typed())
     }
 
     pub fn level_end(&self) -> Handle<Scene> {
@@ -123,6 +144,10 @@ impl AssetLoader for PreloadsLoader {
 
         let mut reqs = REQURED_PRELOADS.clone();
         let mut preloads = HashMap::new();
+        for asset_type in ASSET_TYPES.keys() {
+            preloads.insert(asset_type.clone(), HashMap::new());
+        }
+
         for (key, preload) in index {
             if let Some(req_ty) = reqs.remove(&key)
                 && preload.ty != req_ty
@@ -137,13 +162,13 @@ impl AssetLoader for PreloadsLoader {
                         ty: preload.ty.clone(),
                     })?;
             let preload = Preload {
-                ty: preload.ty,
+                ty: preload.ty.clone(),
                 handle: load_context
                     .loader()
                     .with_dynamic_type(ty)
                     .load(preload.path),
             };
-            preloads.insert(key, preload);
+            preloads.get_mut(&preload.ty).unwrap().insert(key, preload);
         }
 
         if !reqs.is_empty() {

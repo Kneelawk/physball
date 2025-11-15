@@ -218,10 +218,15 @@ impl SerialText {
     }
 
     pub fn spawn(&self, args: &mut LevelBuildArgs) {
-        let font = args.fonts[&args.preloads.get(&self.font).map(|preload| preload.handle.id().typed()).unwrap_or_else(|| {
-            warn!("Unknown font '{}' using default", &self.font);
-            args.preloads.text_font().id()
-        })].clone();
+        let font = args.fonts[&args
+            .preloads
+            .try_handle(&self.font)
+            .unwrap_or_else(|| {
+                warn!("Unknown font '{}' using default", &self.font);
+                args.preloads.text_font()
+            })
+            .id()]
+            .clone();
         args.cmd.spawn((
             LevelObject,
             self.trans,
