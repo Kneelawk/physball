@@ -1,3 +1,5 @@
+//! Old unused level parsing module
+
 use crate::game::levels::serial::level::{SerialLevel, SerialPlane, SerialText};
 use bevy::asset::LoadContext;
 use bevy::prelude::*;
@@ -47,15 +49,15 @@ pub struct KdlPlane {
 }
 
 impl KdlPlane {
-    pub fn into_serial_plane(self) -> SerialPlane {
-        SerialPlane {
-            width: self.size,
-            length: self.size2.unwrap_or(self.size),
-            trans: Transform::from_rotation(self.rotations.into_quat())
-                .with_translation(self.pos.into_vec()),
-            ty: self.ty,
-        }
-    }
+    // pub fn into_serial_plane(self) -> SerialPlane {
+    //     SerialPlane {
+    //         width: self.size,
+    //         length: self.size2.unwrap_or(self.size),
+    //         trans: Transform::from_rotation(self.rotations.into_quat())
+    //             .with_translation(self.pos.into_vec()),
+    //         ty: self.ty,
+    //     }
+    // }
 }
 
 #[derive(
@@ -93,17 +95,17 @@ pub struct KdlText {
 }
 
 impl KdlText {
-    pub fn into_serial_text(self) -> SerialText {
-        SerialText {
-            text: self.text,
-            pt: self.pt,
-            font: self.font,
-            align: self.align,
-            trans: Transform::from_scale(self.scale.map(KdlScale::into_vec).unwrap_or(Vec3::ONE))
-                .with_rotation(self.rotations.into_quat())
-                .with_translation(self.pos.into_vec()),
-        }
-    }
+    // pub fn into_serial_text(self) -> SerialText {
+    //     SerialText {
+    //         text: self.text,
+    //         pt: self.pt,
+    //         font: self.font,
+    //         align: self.align,
+    //         trans: Transform::from_scale(self.scale.map(KdlScale::into_vec).unwrap_or(Vec3::ONE))
+    //             .with_rotation(self.rotations.into_quat())
+    //             .with_translation(self.pos.into_vec()),
+    //     }
+    // }
 }
 
 #[derive(Debug, Default, Copy, Clone, knus::DecodeScalar, Reflect)]
@@ -140,7 +142,7 @@ impl KdlScale {
         Vec3::new(
             self.scale1,
             self.scale2.unwrap_or(self.scale1),
-            self.scale3.or(self.scale2).unwrap_or(self.scale1),
+            self.scale3.unwrap_or(self.scale1),
         )
     }
 }
@@ -200,22 +202,22 @@ impl KdlVec3 {
 }
 
 impl KdlLevel {
-    pub fn bind(self, _load_context: &mut LoadContext<'_>) -> SerialLevel {
-        SerialLevel {
-            spawn: Transform::from_rotation(self.spawn.rotations.into_quat())
-                .with_translation(self.spawn.pos.into_vec()),
-            finish: Transform::from_rotation(self.finish.rotations.into_quat())
-                .with_translation(self.finish.pos.into_vec()),
-            planes: self
-                .planes
-                .into_iter()
-                .map(KdlPlane::into_serial_plane)
-                .collect(),
-            texts: self
-                .texts
-                .into_iter()
-                .map(KdlText::into_serial_text)
-                .collect(),
-        }
-    }
+    // pub fn bind(self, _load_context: &mut LoadContext<'_>) -> SerialLevel {
+    //     SerialLevel {
+    //         spawn: Transform::from_rotation(self.spawn.rotations.into_quat())
+    //             .with_translation(self.spawn.pos.into_vec()),
+    //         finish: Transform::from_rotation(self.finish.rotations.into_quat())
+    //             .with_translation(self.finish.pos.into_vec()),
+    //         planes: self
+    //             .planes
+    //             .into_iter()
+    //             .map(KdlPlane::into_serial_plane)
+    //             .collect(),
+    //         texts: self
+    //             .texts
+    //             .into_iter()
+    //             .map(KdlText::into_serial_text)
+    //             .collect(),
+    //     }
+    // }
 }

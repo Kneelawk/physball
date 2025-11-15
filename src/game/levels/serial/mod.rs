@@ -1,5 +1,5 @@
 pub mod error;
-pub mod kdl;
+// pub mod kdl;
 pub mod level;
 pub mod kdl_utils;
 
@@ -14,7 +14,6 @@ use crate::game::levels::serial::error::KdlBindError;
 
 pub struct BindArgs<'a, 'c> {
     pub source: Arc<String>,
-    pub doc: KdlDocument,
     pub load_context: &'a mut LoadContext<'c>,
 }
 
@@ -43,9 +42,8 @@ impl AssetLoader for SerialLevelLoader {
             }
         };
 
-        let level = SerialLevel::bind(&mut BindArgs {
+        let level = SerialLevel::bind(&doc, &mut BindArgs {
             source: Arc::new(str),
-            doc,
             load_context,
         })?;
 
@@ -55,8 +53,6 @@ impl AssetLoader for SerialLevelLoader {
 
 #[derive(Debug, Error)]
 pub enum SerialLevelLoadingError {
-    #[error("Level format error")]
-    LevelFormatError,
     #[error("KDL parse error {0}")]
     KdlParse(#[from] KdlError),
     #[error("KDL bind error {0}")]

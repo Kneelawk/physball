@@ -3,14 +3,17 @@ use crate::game::assets::preload::Preloads;
 use crate::game::levels::death::DeathCollider;
 use crate::game::levels::finish_point::FinishPoint;
 use crate::game::levels::serial::BindArgs;
-use crate::game::levels::serial::error::{BindArgsErrorExt, KdlBindError};
-use crate::game::levels::serial::kdl::{KdlAlign, KdlPlaneType};
+use crate::game::levels::serial::error::{KdlBindError, MergeKdlBindError};
+use crate::game::levels::serial::kdl_utils::{KdlDocumentExt, KdlNodeExt};
 use crate::game::levels::{LevelObject, PlayerSpawnPoint};
-use crate::type_expr;
+use crate::{capture_result, type_expr};
 use avian3d::prelude::*;
 use bevy::prelude::*;
-use bevy_rich_text3d::{Text3d, Text3dStyling, TextAtlas};
-use crate::game::levels::serial::kdl_utils::{KdlDocumentExt, KdlNodeExt};
+use bevy_rich_text3d::{Text3d, Text3dStyling, TextAlign, TextAtlas};
+use kdl::{KdlDocument, KdlNode};
+use strum::VariantArray;
+
+pub const DEFAULT_TEXT_PT: f64 = 64.0;
 
 pub struct LevelBuildArgs<'a, 'w, 's> {
     /// Whether to spawn the assets that would otherwise be spawned by a checkpoint load
@@ -36,7 +39,16 @@ pub struct SerialPlane {
     pub width: f32,
     pub length: f32,
     pub trans: Transform,
-    pub ty: KdlPlaneType,
+    pub ty: SerialPlaneType,
+}
+
+#[derive(Debug, Default, Copy, Clone, Reflect, strum::VariantArray, strum::Display)]
+#[reflect(Debug, Default, Clone)]
+#[strum(serialize_all = "snake_case")]
+pub enum SerialPlaneType {
+    #[default]
+    Static,
+    Death,
 }
 
 #[derive(Debug, Clone, Reflect)]
@@ -45,18 +57,56 @@ pub struct SerialText {
     pub text: String,
     pub pt: f32,
     pub font: Option<String>,
-    pub align: KdlAlign,
+    pub align: SerialAlign,
     pub trans: Transform,
 }
 
+#[derive(Debug, Default, Copy, Clone, Reflect, strum::VariantArray, strum::Display)]
+#[reflect(Debug, Default, Clone)]
+#[strum(serialize_all = "snake_case")]
+pub enum SerialAlign {
+    Left,
+    #[default]
+    Center,
+    Right,
+}
+
 impl SerialLevel {
-    pub fn bind(args: &mut BindArgs) -> Result<Self, KdlBindError> {
-        let spawn = {
-            let spawn_node = args.doc.must_get("spawn", args)?;
-            let spawn_doc = spawn_node.must_children(args)?;
+    pub fn bind(doc: &KdlDocument, args: &mut BindArgs) -> Result<Self, KdlBindError> {
+        let spawn = capture_result! {
+            let doc = doc.must_children("spawn", args)?;
+            doc.get_transform(args)
         };
 
-        todo!()
+        let finish = capture_result! {
+            let doc = doc.must_children("finish", args)?;
+            doc.get_transform(args)
+        };
+
+        let planes = doc
+            .nodes()
+            .iter()
+            .filter(|node| node.name().value() == "plane")
+            .map(|node| SerialPlane::bind(node, args))
+            .collect::<Vec<_>>()
+            .merge();
+
+        let texts = doc
+            .nodes()
+            .iter()
+            .filter(|node| node.name().value() == "text")
+            .map(|node| SerialText::bind(node, args))
+            .collect::<Vec<_>>()
+            .merge();
+
+        let (spawn, finish, planes, texts) = (spawn, finish, planes, texts).merge()?;
+
+        Ok(Self {
+            spawn,
+            finish,
+            planes,
+            texts,
+        })
     }
 
     pub fn spawn(&self, args: &mut LevelBuildArgs) {
@@ -74,9 +124,32 @@ impl SerialLevel {
 }
 
 impl SerialPlane {
+    pub fn bind(node: &KdlNode, args: &mut BindArgs) -> Result<Self, KdlBindError> {
+        let size = node.must_get_number(0, args);
+        let size2 = node.get_number(1, args);
+
+        let ty = node
+            .get_variant("type", SerialPlaneType::VARIANTS, args)
+            .map(|ty| ty.copied().unwrap_or_default());
+
+        let trans = node
+            .children()
+            .map_or(Ok(None), |doc| doc.get_transform(args).map(Some))
+            .map(|trans| trans.unwrap_or_default());
+
+        let (size, size2, ty, trans) = (size, size2, ty, trans).merge()?;
+
+        Ok(SerialPlane {
+            width: size as f32,
+            length: size2.unwrap_or(size) as f32,
+            trans,
+            ty,
+        })
+    }
+
     pub fn spawn(&self, args: &mut LevelBuildArgs) {
         match self.ty {
-            KdlPlaneType::Static => {
+            SerialPlaneType::Static => {
                 args.cmd.spawn((
                     LevelObject,
                     self.trans,
@@ -97,7 +170,7 @@ impl SerialPlane {
                     )],
                 ));
             }
-            KdlPlaneType::Death => {
+            SerialPlaneType::Death => {
                 args.cmd.spawn((
                     LevelObject,
                     self.trans
@@ -112,6 +185,37 @@ impl SerialPlane {
 }
 
 impl SerialText {
+    pub fn bind(node: &KdlNode, args: &mut BindArgs) -> Result<Self, KdlBindError> {
+        let text = node.must_get_string(0, args).map(|text| text.to_string());
+
+        let pt = node
+            .get_number("pt", args)
+            .map(|pt| pt.unwrap_or(DEFAULT_TEXT_PT));
+
+        let font = node
+            .get_string("font", args)
+            .map(|font| font.map(|font| font.to_string()));
+
+        let align = node
+            .get_variant("align", SerialAlign::VARIANTS, args)
+            .map(|align| align.copied().unwrap_or_default());
+
+        let trans = node
+            .children()
+            .map_or(Ok(None), |doc| doc.get_transform(args).map(Some))
+            .map(|trans| trans.unwrap_or_default());
+
+        let (text, pt, font, align, trans) = (text, pt, font, align, trans).merge()?;
+
+        Ok(Self {
+            text,
+            pt: pt as f32,
+            font,
+            align,
+            trans,
+        })
+    }
+
     pub fn spawn(&self, args: &mut LevelBuildArgs) {
         let font = match self.font.as_deref() {
             Some("title") => args.fonts.title_name.clone(),
@@ -137,5 +241,15 @@ impl SerialText {
                 ..default()
             })),
         ));
+    }
+}
+
+impl SerialAlign {
+    pub fn to_text_align(self) -> TextAlign {
+        match self {
+            SerialAlign::Left => TextAlign::Left,
+            SerialAlign::Center => TextAlign::Center,
+            SerialAlign::Right => TextAlign::Right,
+        }
     }
 }

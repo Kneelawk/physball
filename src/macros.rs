@@ -33,3 +33,15 @@ macro_rules! or_return {
         or_return!(_r => {return;} : $($tail)*)
     };
 }
+
+#[macro_export]
+macro_rules! capture_result {
+    {$($block:tt)*} => {
+        {
+            let res = || {
+                $($block)*
+            };
+            res()
+        }
+    }
+}
