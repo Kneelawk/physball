@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-use crate::game::levels::serial::BindArgs;
 use crate::game::levels::serial::kdl_utils::{DisplayValueType, KdlValueType};
 use kdl::NodeKey;
 use miette::{Diagnostic, LabeledSpan, Severity, SourceCode, SourceSpan};
@@ -263,7 +262,7 @@ impl Diagnostic for KdlBindDiagnostic {
     }
 }
 
-pub trait BindArgsErrorExt {
+pub trait BindErrorExt {
     fn err(&self, message: String, span: Option<SourceSpan>) -> KdlBindError;
 
     fn missing_element(&self, name: impl Display) -> KdlBindError;
@@ -289,15 +288,15 @@ pub trait BindArgsErrorExt {
     ) -> KdlBindError;
 }
 
-impl BindArgsErrorExt for BindArgs<'_, '_> {
+impl BindErrorExt for Arc<String> {
     fn err(&self, message: String, span: Option<SourceSpan>) -> KdlBindError {
         KdlBindError {
             diagnostics: vec![KdlBindDiagnostic {
                 message: Some(message),
                 span,
-                ..KdlBindDiagnostic::new(self.source.clone(), Severity::Error)
+                ..KdlBindDiagnostic::new(self.clone(), Severity::Error)
             }],
-            ..KdlBindError::new(self.source.clone())
+            ..KdlBindError::new(self.clone())
         }
     }
 

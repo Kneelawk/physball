@@ -1,4 +1,4 @@
-use crate::game::assets::fonts::BuiltinFonts;
+use crate::game::assets::preload::Preloads;
 use bevy::input_focus::tab_navigation::{TabGroup, TabIndex};
 use bevy::input_focus::{InputFocus, IsFocused, IsFocusedHelper};
 use bevy::picking::hover::Hovered;
@@ -68,11 +68,11 @@ pub fn menu_root<S: States>(menu_state: S) -> impl Bundle {
     )
 }
 
-pub fn title(fonts: &BuiltinFonts, text: impl ToString) -> impl Bundle {
+pub fn title(fonts: &Preloads, text: impl ToString) -> impl Bundle {
     (
         Text::new(text.to_string()),
         TextFont {
-            font: fonts.title.clone(),
+            font: fonts.title_font(),
             font_size: 45.0,
             ..default()
         },
@@ -104,7 +104,7 @@ impl ButtonSettings {
 }
 
 pub fn button<T: ToString>(
-    fonts: &BuiltinFonts,
+    fonts: &Preloads,
     text: T,
     settings: ButtonSettings,
 ) -> impl Bundle + use<T> {
@@ -127,7 +127,7 @@ pub fn button<T: ToString>(
         children![(
             Text::new(text.to_string()),
             TextFont {
-                font: fonts.text.clone(),
+                font: fonts.text_font(),
                 font_size: 30.0,
                 ..default()
             },

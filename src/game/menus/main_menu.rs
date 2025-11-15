@@ -1,4 +1,3 @@
-use crate::game::assets::fonts::BuiltinFonts;
 use crate::game::gui::{ButtonSettings, button, menu_root, title};
 use crate::game::levels::SelectedLevel;
 use crate::game::levels::index::{LevelIndex, LevelIndexAsset, LevelRef};
@@ -6,6 +5,7 @@ use crate::game::menus::options_menu::OptionsReturn;
 use crate::game::state::AppState;
 use bevy::prelude::*;
 use bevy::ui_widgets::*;
+use crate::game::assets::preload::Preloads;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct MainMenuPlugin;
@@ -52,7 +52,7 @@ fn disable_main_menu(mut next_menu: ResMut<NextState<MenuState>>) {
     next_menu.set(MenuState::Disabled);
 }
 
-fn setup_main_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>) {
+fn setup_main_menu(mut cmd: Commands, fonts: Res<Preloads>) {
     cmd.spawn((
         menu_root(MenuState::Main),
         children![
@@ -101,7 +101,7 @@ fn on_level_index_change(
     mut msg: MessageReader<AssetEvent<LevelIndex>>,
     mut cmd: Commands,
     menu: Query<Entity, With<LevelSelectMenu>>,
-    fonts: Res<BuiltinFonts>,
+    fonts: Res<Preloads>,
     index_handle: Res<LevelIndexAsset>,
     index: Res<Assets<LevelIndex>>,
 ) {
@@ -122,7 +122,7 @@ fn on_level_index_change(
 
 fn setup_level_select(
     mut cmd: Commands,
-    fonts: Res<BuiltinFonts>,
+    fonts: Res<Preloads>,
     index_handle: Res<LevelIndexAsset>,
     index: Res<Assets<LevelIndex>>,
 ) {
@@ -170,7 +170,7 @@ fn setup_level_select(
     ));
 }
 
-fn level_select_button(fonts: &BuiltinFonts, level: &LevelRef) -> impl Bundle + use<> {
+fn level_select_button(fonts: &Preloads, level: &LevelRef) -> impl Bundle + use<> {
     let display = level.display.clone();
     let name = level.name.clone();
 

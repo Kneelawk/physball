@@ -1,16 +1,19 @@
-use crate::game::assets::fonts::BuiltinFonts;
+use crate::game::assets::fonts::FontNames;
 use crate::game::assets::preload::Preloads;
 use crate::game::levels::death::DeathCollider;
 use crate::game::levels::finish_point::FinishPoint;
-use crate::game::levels::serial::BindArgs;
+use crate::game::levels::serial::asset_ref::{AssetRef, DEFAULT_FONT};
 use crate::game::levels::serial::error::{KdlBindError, MergeKdlBindError};
 use crate::game::levels::serial::kdl_utils::{KdlDocumentExt, KdlNodeExt};
 use crate::game::levels::{LevelObject, PlayerSpawnPoint};
 use crate::{capture_result, type_expr};
 use avian3d::prelude::*;
+use bevy::asset::LoadContext;
 use bevy::prelude::*;
 use bevy_rich_text3d::{Text3d, Text3dStyling, TextAlign, TextAtlas};
 use kdl::{KdlDocument, KdlNode};
+use std::string::ToString;
+use std::sync::Arc;
 use strum::VariantArray;
 
 pub const DEFAULT_TEXT_PT: f64 = 64.0;
@@ -21,7 +24,7 @@ pub struct LevelBuildArgs<'a, 'w, 's> {
     pub cmd: &'a mut Commands<'w, 's>,
     pub assets: &'a AssetServer,
     pub preloads: &'a Preloads,
-    pub fonts: &'a BuiltinFonts,
+    pub fonts: &'a FontNames,
 }
 
 #[derive(Debug, Clone, Asset, Reflect)]
@@ -56,7 +59,7 @@ pub enum SerialPlaneType {
 pub struct SerialText {
     pub text: String,
     pub pt: f32,
-    pub font: Option<String>,
+    pub font: AssetRef<Font>,
     pub align: SerialAlign,
     pub trans: Transform,
 }
@@ -72,22 +75,26 @@ pub enum SerialAlign {
 }
 
 impl SerialLevel {
-    pub fn bind(doc: &KdlDocument, args: &mut BindArgs) -> Result<Self, KdlBindError> {
+    pub fn bind(
+        doc: &KdlDocument,
+        load_context: &mut LoadContext,
+        source: Arc<String>,
+    ) -> Result<Self, KdlBindError> {
         let spawn = capture_result! {
-            let doc = doc.must_children("spawn", args)?;
-            doc.get_transform(args)
+            let doc = doc.must_children("spawn", &source)?;
+            doc.get_transform(&source)
         };
 
         let finish = capture_result! {
-            let doc = doc.must_children("finish", args)?;
-            doc.get_transform(args)
+            let doc = doc.must_children("finish", &source)?;
+            doc.get_transform(&source)
         };
 
         let planes = doc
             .nodes()
             .iter()
             .filter(|node| node.name().value() == "plane")
-            .map(|node| SerialPlane::bind(node, args))
+            .map(|node| SerialPlane::bind(node, load_context, source.clone()))
             .collect::<Vec<_>>()
             .merge();
 
@@ -95,7 +102,7 @@ impl SerialLevel {
             .nodes()
             .iter()
             .filter(|node| node.name().value() == "text")
-            .map(|node| SerialText::bind(node, args))
+            .map(|node| SerialText::bind(node.clone(), load_context, source.clone()))
             .collect::<Vec<_>>()
             .merge();
 
@@ -124,17 +131,21 @@ impl SerialLevel {
 }
 
 impl SerialPlane {
-    pub fn bind(node: &KdlNode, args: &mut BindArgs) -> Result<Self, KdlBindError> {
-        let size = node.must_get_number(0, args);
-        let size2 = node.get_number(1, args);
+    pub fn bind(
+        node: &KdlNode,
+        _load_context: &mut LoadContext,
+        source: Arc<String>,
+    ) -> Result<Self, KdlBindError> {
+        let size = node.must_get_number(0, &source);
+        let size2 = node.get_number(1, &source);
 
         let ty = node
-            .get_variant("type", SerialPlaneType::VARIANTS, args)
+            .get_variant("type", SerialPlaneType::VARIANTS, &source)
             .map(|ty| ty.copied().unwrap_or_default());
 
         let trans = node
             .children()
-            .map_or(Ok(None), |doc| doc.get_transform(args).map(Some))
+            .map_or(Ok(None), |doc| doc.get_transform(&source).map(Some))
             .map(|trans| trans.unwrap_or_default());
 
         let (size, size2, ty, trans) = (size, size2, ty, trans).merge()?;
@@ -185,24 +196,30 @@ impl SerialPlane {
 }
 
 impl SerialText {
-    pub fn bind(node: &KdlNode, args: &mut BindArgs) -> Result<Self, KdlBindError> {
-        let text = node.must_get_string(0, args).map(|text| text.to_string());
+    pub fn bind(
+        node: KdlNode,
+        load_context: &mut LoadContext,
+        source: Arc<String>,
+    ) -> Result<Self, KdlBindError> {
+        let text = node
+            .must_get_string(0, &source)
+            .map(|text| text.to_string());
 
         let pt = node
-            .get_number("pt", args)
+            .get_number("pt", &source)
             .map(|pt| pt.unwrap_or(DEFAULT_TEXT_PT));
 
         let font = node
-            .get_string("font", args)
-            .map(|font| font.map(|font| font.to_string()));
+            .get_asset_ref::<Font>("font", load_context, &source)
+            .map(|asset| asset.unwrap_or(DEFAULT_FONT));
 
         let align = node
-            .get_variant("align", SerialAlign::VARIANTS, args)
+            .get_variant("align", SerialAlign::VARIANTS, &source)
             .map(|align| align.copied().unwrap_or_default());
 
         let trans = node
             .children()
-            .map_or(Ok(None), |doc| doc.get_transform(args).map(Some))
+            .map_or(Ok(None), |doc| doc.get_transform(&source).map(Some))
             .map(|trans| trans.unwrap_or_default());
 
         let (text, pt, font, align, trans) = (text, pt, font, align, trans).merge()?;
@@ -217,10 +234,22 @@ impl SerialText {
     }
 
     pub fn spawn(&self, args: &mut LevelBuildArgs) {
-        let font = match self.font.as_deref() {
-            Some("title") => args.fonts.title_name.clone(),
-            _ => args.fonts.text_name.clone(),
-        };
+        let font = args
+            .fonts
+            .get(
+                &self
+                    .font
+                    .resolve_or_else(args.preloads, |preload| {
+                        warn!("Unknown font '{}', using default", preload);
+                        args.preloads.text_font()
+                    })
+                    .id(),
+            )
+            .unwrap_or_else(|| {
+                warn!("Font {:?} has not loaded yet, using default", &self.font);
+                &args.fonts[&args.preloads.text_font().id()]
+            })
+            .clone();
         args.cmd.spawn((
             LevelObject,
             self.trans,

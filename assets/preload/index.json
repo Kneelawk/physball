@@ -2,5 +2,13 @@
   "level-end": {
     "ty": "scene",
     "path": "preload/level-end.glb#Scene0"
+  },
+  "title": {
+    "ty": "font",
+    "path": "preload/BBHSansBartle-Regular.ttf"
+  },
+  "text": {
+    "ty": "font",
+    "path": "preload/FiraSans-Regular.ttf"
   }
 }

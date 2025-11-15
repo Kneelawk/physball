@@ -1,4 +1,4 @@
-use crate::game::assets::fonts::BuiltinFonts;
+use crate::game::assets::preload::Preloads;
 use crate::game::game_state::GameState;
 use crate::game::gui::{button, menu_root, title};
 use crate::game::menus::main_menu::MenuState;
@@ -34,7 +34,7 @@ fn disable_finish_menu(mut next_state: ResMut<NextState<FinishMenuState>>) {
     next_state.set(FinishMenuState::Disabled);
 }
 
-fn setup_finish_menu(mut cmd: Commands, fonts: Res<BuiltinFonts>) {
+fn setup_finish_menu(mut cmd: Commands, fonts: Res<Preloads>) {
     cmd.spawn((
         menu_root(FinishMenuState::Main),
         children![
