@@ -13,6 +13,7 @@ pub const PRELOAD_INDEX_PATH: &str = "preload/index.json";
 pub const PRELOAD_TYPE_SCENE: &str = "scene";
 pub const PRELOAD_TYPE_FONT: &str = "font";
 
+pub const PRELOAD_SCENE_PHYSBALL: &str = "physball";
 pub const PRELOAD_SCENE_LEVEL_END: &str = "level-end";
 pub const PRELOAD_FONT_TITLE: &str = "title";
 pub const PRELOAD_FONT_TEXT: &str = "text";
@@ -26,6 +27,10 @@ lazy_static! {
     };
     pub static ref REQURED_PRELOADS: HashMap<String, String> = {
         let mut reqs = HashMap::new();
+        reqs.insert(
+            PRELOAD_SCENE_PHYSBALL.to_string(),
+            PRELOAD_TYPE_SCENE.to_string(),
+        );
         reqs.insert(
             PRELOAD_SCENE_LEVEL_END.to_string(),
             PRELOAD_TYPE_SCENE.to_string(),
@@ -99,6 +104,10 @@ impl Preloads {
         self[A::PRELOAD_TYPE_NAME]
             .get(asset_name)
             .map(|preload| preload.handle.clone().typed())
+    }
+
+    pub fn physball(&self) -> Handle<Scene> {
+        self.handle(PRELOAD_SCENE_PHYSBALL)
     }
 
     pub fn level_end(&self) -> Handle<Scene> {

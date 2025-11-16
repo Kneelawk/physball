@@ -1,9 +1,9 @@
+use crate::game::assets::preload::Preloads;
 use crate::game::camera::PlayerCamera;
 use crate::game::game_state::GameState;
 use crate::game::levels::death::{Kill, Killable, PlayerDiedEvent};
 use crate::game::levels::{LevelReadyEvent, LevelRestartEvent, PlayerSpawnPoint};
 use crate::game::state::AppState;
-use crate::type_expr;
 use avian3d::prelude::*;
 use bevy::prelude::*;
 use std::f32::consts::PI;
@@ -52,7 +52,7 @@ fn add_player(
     _event: On<LevelReadyEvent>,
     mut cmd: Commands,
     spawn_point: Query<&Transform, (With<PlayerSpawnPoint>, Without<Player>)>,
-    asset_server: Res<AssetServer>,
+    preloads: Res<Preloads>,
 ) {
     let spawn_transform = spawn_transform(spawn_point);
 
@@ -60,11 +60,6 @@ fn add_player(
 
     cmd.spawn((
         Player,
-        Mesh3d(asset_server.add(Sphere::new(0.25).mesh().build())),
-        MeshMaterial3d(asset_server.add(type_expr!(
-            StandardMaterial,
-            Color::linear_rgb(0.0, 200.0, 240.0).into()
-        ))),
         spawn_transform,
         RigidBody::Dynamic,
         collider,
@@ -72,12 +67,7 @@ fn add_player(
         LinearDamping(0.25),
         CollisionEventsEnabled,
         Killable,
-        children![PointLight {
-            shadows_enabled: true,
-            intensity: 20000.0,
-            color: Color::linear_rgb(0.0, 0.833, 1.0),
-            ..default()
-        }],
+        children![SceneRoot(preloads.physball()),],
     ));
 }
 
