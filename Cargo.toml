@@ -5,9 +5,10 @@ edition = "2024"
 
 [features]
 hot-reload = ["bevy/file_watcher"]
+window-resize = []
 
 webgpu = ["bevy/webgpu"]
-default = ["hot-reload"]
+default = ["hot-reload", "window-resize"]
 
 [package.metadata.bevy_cli.web]
 # Disable default features for web builds

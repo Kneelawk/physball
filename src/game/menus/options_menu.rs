@@ -73,7 +73,7 @@ fn setup_main_options_menu(mut cmd: Commands, fonts: Res<Preloads>, prefs: Res<G
                 },
                 children![
                     {
-                        #[cfg(not(target_arch = "wasm32"))]
+                        #[cfg(feature = "hot-reload")]
                         {
                             window_resize_section(&fonts)
                         }
@@ -182,7 +182,7 @@ fn mouse_sensitivity_section(fonts: &Preloads, prefs: &GamePrefs) -> impl Bundle
     )
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "window-resize")]
 fn window_resize_section(fonts: &Preloads) -> impl Bundle {
     (
         Node {
@@ -227,7 +227,7 @@ fn window_resize_section(fonts: &Preloads) -> impl Bundle {
     )
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "window-resize")]
 fn window_resize_button(fonts: &Preloads, width: u32, height: u32) -> impl Bundle {
     (
         button(
