@@ -84,7 +84,7 @@ jobs:
       - name: Install Bevy CLI
         run: cargo install --git https://github.com/TheBevyFlock/bevy_cli --rev ${{ env.BEVY_CLI_VERSION }} --locked bevy_cli
       - name: Build
-        run: bevy build --release --yes --no-default-features web --bundle
+        run: bevy build --release --yes web --bundle
       - name: Upload Build as Artifact
         uses: actions/upload-pages-artifact@v4
         with:
