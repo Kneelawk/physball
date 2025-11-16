@@ -1,4 +1,8 @@
 {
+  "physball": {
+    "ty": "scene",
+    "path": "preload/physball.glb#Scene0"
+  },
   "level-end": {
     "ty": "scene",
     "path": "preload/level-end.glb#Scene0"
