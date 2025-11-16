@@ -5,6 +5,8 @@ edition = "2024"
 
 [features]
 hot-reload = ["bevy/file_watcher"]
+
+webgpu = ["bevy/webgpu"]
 default = ["hot-reload"]
 
 [package.metadata.bevy_cli.web]
