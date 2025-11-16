@@ -3,6 +3,10 @@
     "ty": "scene",
     "path": "preload/physball.glb#Scene0"
   },
+  "physball-light": {
+    "ty": "image",
+    "path": "preload/physball-light.png"
+  },
   "level-end": {
     "ty": "scene",
     "path": "preload/level-end.glb#Scene0"

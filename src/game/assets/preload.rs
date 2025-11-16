@@ -10,19 +10,22 @@ use thiserror::Error;
 
 pub const PRELOAD_INDEX_PATH: &str = "preload/index.json";
 
-pub const PRELOAD_TYPE_SCENE: &str = "scene";
 pub const PRELOAD_TYPE_FONT: &str = "font";
+pub const PRELOAD_TYPE_IMAGE: &str = "image";
+pub const PRELOAD_TYPE_SCENE: &str = "scene";
 
 pub const PRELOAD_SCENE_PHYSBALL: &str = "physball";
 pub const PRELOAD_SCENE_LEVEL_END: &str = "level-end";
 pub const PRELOAD_FONT_TITLE: &str = "title";
 pub const PRELOAD_FONT_TEXT: &str = "text";
+pub const PRELOAD_IMAGE_PHYSBALL_LIGHT: &str = "physball-light";
 
 lazy_static! {
     pub static ref ASSET_TYPES: HashMap<String, TypeId> = {
         let mut tys = HashMap::new();
-        tys.insert(PRELOAD_TYPE_SCENE.to_string(), TypeId::of::<Scene>());
         tys.insert(PRELOAD_TYPE_FONT.to_string(), TypeId::of::<Font>());
+        tys.insert(PRELOAD_TYPE_IMAGE.to_string(), TypeId::of::<Image>());
+        tys.insert(PRELOAD_TYPE_SCENE.to_string(), TypeId::of::<Scene>());
         tys
     };
     pub static ref REQURED_PRELOADS: HashMap<String, String> = {
@@ -30,6 +33,10 @@ lazy_static! {
         reqs.insert(
             PRELOAD_SCENE_PHYSBALL.to_string(),
             PRELOAD_TYPE_SCENE.to_string(),
+        );
+        reqs.insert(
+            PRELOAD_IMAGE_PHYSBALL_LIGHT.to_string(),
+            PRELOAD_TYPE_IMAGE.to_string(),
         );
         reqs.insert(
             PRELOAD_SCENE_LEVEL_END.to_string(),
@@ -73,12 +80,16 @@ pub trait PreloadType {
     const PRELOAD_TYPE_NAME: &'static str;
 }
 
-impl PreloadType for Scene {
-    const PRELOAD_TYPE_NAME: &'static str = PRELOAD_TYPE_SCENE;
-}
-
 impl PreloadType for Font {
     const PRELOAD_TYPE_NAME: &'static str = PRELOAD_TYPE_FONT;
+}
+
+impl PreloadType for Image {
+    const PRELOAD_TYPE_NAME: &'static str = PRELOAD_TYPE_IMAGE;
+}
+
+impl PreloadType for Scene {
+    const PRELOAD_TYPE_NAME: &'static str = PRELOAD_TYPE_SCENE;
 }
 
 #[derive(Default)]
@@ -108,6 +119,10 @@ impl Preloads {
 
     pub fn physball(&self) -> Handle<Scene> {
         self.handle(PRELOAD_SCENE_PHYSBALL)
+    }
+
+    pub fn physball_light(&self) -> Handle<Image> {
+        self.handle(PRELOAD_IMAGE_PHYSBALL_LIGHT)
     }
 
     pub fn level_end(&self) -> Handle<Scene> {

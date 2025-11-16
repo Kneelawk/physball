@@ -5,6 +5,8 @@ use crate::game::levels::death::{Kill, Killable, PlayerDiedEvent};
 use crate::game::levels::{LevelReadyEvent, LevelRestartEvent, PlayerSpawnPoint};
 use crate::game::state::AppState;
 use avian3d::prelude::*;
+use bevy::camera::primitives::CubemapLayout;
+use bevy::light::PointLightTexture;
 use bevy::prelude::*;
 use std::f32::consts::PI;
 
@@ -42,7 +44,7 @@ pub fn spawn_transform(
     spawn_point: Query<&Transform, (With<PlayerSpawnPoint>, Without<Player>)>,
 ) -> Transform {
     let spawn_point = spawn_point.iter().copied().collect::<Vec<_>>();
-    match spawn_point.iter().next() {
+    match spawn_point.first() {
         None => Transform::from_translation(Vec3::new(0.0, 0.5, 0.0)),
         Some(trans) => *trans,
     }
@@ -56,18 +58,32 @@ fn add_player(
 ) {
     let spawn_transform = spawn_transform(spawn_point);
 
-    let collider = Collider::sphere(0.25);
-
     cmd.spawn((
         Player,
         spawn_transform,
         RigidBody::Dynamic,
-        collider,
+        Collider::sphere(0.251),
         AngularDamping(0.25),
         LinearDamping(0.25),
         CollisionEventsEnabled,
         Killable,
-        children![SceneRoot(preloads.physball()),],
+        InheritedVisibility::default(),
+        children![
+            (
+                PointLight {
+                    color: Color::linear_rgb(0.0, 0.8333, 1.0),
+                    shadows_enabled: true,
+                    intensity: 20000.0,
+                    radius: 0.25,
+                    ..default()
+                },
+                PointLightTexture {
+                    image: preloads.physball_light(),
+                    cubemap_layout: CubemapLayout::CrossVertical,
+                }
+            ),
+            SceneRoot(preloads.physball()),
+        ],
     ));
 }
 
