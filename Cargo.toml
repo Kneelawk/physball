@@ -4,15 +4,24 @@ version = "0.1.0"
 edition = "2024"
 
 [features]
+# Physball features
 hot-reload = ["bevy/file_watcher"]
+quit-button = []
 window-resize = []
 
-webgpu = ["bevy/webgpu"]
-default = ["hot-reload", "window-resize"]
+web-inputs = ["web-sys"]
+web-panic-hook = ["console_error_panic_hook"]
+web-storage = ["web-sys", "web-sys/Storage"]
+
+# Physball Platforms
+web = ["web-inputs", "web-panic-hook", "web-storage"]
+webgpu = ["web", "bevy/webgpu"]
+default = ["hot-reload", "quit-button", "window-resize"]
 
 [package.metadata.bevy_cli.web]
 # Disable default features for web builds
 default-features = false
+features = ["web"]
 
 [dependencies]
 avian3d = "0.4"
@@ -40,9 +49,9 @@ tracing = { version = "0.1", features = [
     "release_max_level_info",
 ] }
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-console_error_panic_hook = "0.1.7"
-web-sys = { version = "0.3.81", features = ["Storage"] }
+# web dependencies
+console_error_panic_hook = { version = "0.1.7", optional = true }
+web-sys = { version = "0.3.81", optional = true }
 
 # Idiomatic Bevy code often triggers these lints, and the CI workflow treats them as errors.
 # In some cases they may still signal poor code quality however, so consider commenting out these lines.

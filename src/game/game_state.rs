@@ -19,9 +19,9 @@ impl Plugin for GameStatePlugin {
             )
             .add_systems(Update, show_hide_cursor);
 
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(feature = "web-inputs")]
         {
-            wasm::wasm_build(app);
+            web_inputs::web_inputs_build(app);
         }
     }
 }
@@ -49,8 +49,17 @@ impl Not for GameState {
     }
 }
 
+#[allow(unused_mut)]
 fn game_started(mut state: ResMut<NextState<GameState>>) {
-    state.set(GameState::Playing);
+    #[cfg(not(feature = "web-inputs"))]
+    {
+        state.set(GameState::Playing);
+    }
+
+    #[cfg(feature = "web-inputs")]
+    {
+        web_inputs::web_inputs_game_started(state);
+    }
 }
 
 fn game_stopped(mut state: ResMut<NextState<GameState>>) {
@@ -62,14 +71,18 @@ fn pause_play(
     mut next_state: ResMut<NextState<GameState>>,
     input: Res<ButtonInput<Key>>,
 ) {
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(feature = "web-inputs"))]
     {
         if input.just_pressed(Key::Escape) {
             next_state.set(!*state.get());
         }
     }
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(feature = "web-inputs")]
     {
+        if input.just_pressed(Key::Escape) {
+            // in case the game thinks it grabbed the cursor but didn't actually
+            next_state.set(GameState::Paused);
+        }
         if input.just_pressed(Key::Character("`".into())) {
             next_state.set(!*state.get());
         }
@@ -94,8 +107,8 @@ fn show_hide_cursor(
     }
 }
 
-#[cfg(target_arch = "wasm32")]
-mod wasm {
+#[cfg(feature = "web-inputs")]
+mod web_inputs {
     use crate::game::game_state::GameState;
     use crate::or_return;
     use bevy::prelude::*;
@@ -103,8 +116,9 @@ mod wasm {
     use std::sync::atomic::{AtomicU32, Ordering};
     use web_sys::wasm_bindgen::JsCast;
     use web_sys::wasm_bindgen::closure::Closure;
+    use crate::game::CANVAS_ID;
 
-    pub fn wasm_build(app: &mut App) {
+    pub fn web_inputs_build(app: &mut App) {
         app.init_resource::<WasmEscapeListener>()
             .add_systems(Startup, add_wasm_escape_listener)
             .add_systems(
@@ -112,6 +126,27 @@ mod wasm {
                 wasm_pause_play
                     .run_if(in_state(GameState::Playing).or(in_state(GameState::Paused))),
             );
+    }
+
+    pub fn web_inputs_game_started(mut state: ResMut<NextState<GameState>>) {
+        let window = or_return!(_r => {
+            state.set(GameState::Paused);
+            return;
+        } : Option(web_sys::window()));
+        let document = or_return!(_r => {
+            state.set(GameState::Paused);
+            return;
+        } : Option(window.document()));
+        let active_element = or_return!(_r => {
+            state.set(GameState::Paused);
+            return;
+        } : Option(document.active_element()));
+
+        if active_element.id() == CANVAS_ID {
+            state.set(GameState::Playing);
+        } else {
+            state.set(GameState::Paused);
+        }
     }
 
     #[derive(Debug, Default, Clone, Resource, Reflect)]
@@ -131,7 +166,7 @@ mod wasm {
             let window = or_return!(Option(web_sys::window()));
             let document = or_return!(Option(window.document()));
             let id = if let Some(element) = document.pointer_lock_element()
-                && element.tag_name() == "CANVAS"
+                && element.id() == CANVAS_ID
             {
                 1
             } else {

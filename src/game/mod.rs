@@ -21,7 +21,7 @@ use bevy::window::EnabledButtons;
 use bevy_rich_text3d::Text3dPlugin;
 use bevy_svg::SvgPlugin;
 
-pub const CANVAS_SELECTOR: &str = "#game";
+pub const CANVAS_ID: &str = "game";
 
 pub fn physball_client_main() -> AppExit {
     let prefs = GamePrefs::load();
@@ -31,16 +31,16 @@ pub fn physball_client_main() -> AppExit {
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
-                        #[cfg(not(target_arch = "wasm32"))]
+                        #[cfg(feature = "window-resize")]
                         resizable: false,
-                        #[cfg(not(target_arch = "wasm32"))]
+                        #[cfg(feature = "window-resize")]
                         resolution: (prefs.window_width, prefs.window_height).into(),
                         enabled_buttons: EnabledButtons {
                             minimize: true,
                             maximize: false,
                             close: true,
                         },
-                        canvas: Some(CANVAS_SELECTOR.to_string()),
+                        canvas: Some(format!("#{CANVAS_ID}")),
                         ..default()
                     }),
                     ..default()

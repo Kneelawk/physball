@@ -83,7 +83,7 @@ fn setup_main_menu(mut cmd: Commands, fonts: Res<Preloads>) {
                 )
             ),
             {
-                #[cfg(not(target_arch = "wasm32"))]
+                #[cfg(feature = "quit-button")]
                 {
                     (
                         button(&fonts, "Quit", default()),

@@ -4,7 +4,7 @@ mod game;
 mod macros;
 
 fn main() -> ExitCode {
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(feature = "web-panic-hook")]
     {
         console_error_panic_hook::set_once();
     }

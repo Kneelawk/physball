@@ -1,14 +1,14 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(feature = "web-storage"))]
 use directories::ProjectDirs;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(feature = "web-storage"))]
 use lazy_static::lazy_static;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(feature = "web-storage"))]
 use std::fs::{OpenOptions, create_dir_all};
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(feature = "web-storage"))]
 lazy_static! {
     pub static ref PROJECT_DIRS: ProjectDirs = ProjectDirs::from("com", "kneelawk", "physball")
         .expect("Unable to find user home directory");
@@ -16,19 +16,19 @@ lazy_static! {
 
 pub const DEFAULT_MOUSE_SPEED: f32 = 2.5;
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(feature = "web-storage"))]
 const PREFS_FILENAME: &str = "prefs.json";
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(feature = "web-storage")]
 const PREFS_KEY: &str = "com.kneelawk.physball/prefs";
 
 #[derive(Debug, Copy, Clone, PartialEq, Resource, Reflect, Serialize, Deserialize)]
 #[reflect(Debug, Clone, PartialEq, Resource)]
 pub struct GamePrefs {
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(feature = "web-storage"))]
     #[serde(default = "default_window_width")]
     pub window_width: u32,
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(feature = "web-storage"))]
     #[serde(default = "default_window_height")]
     pub window_height: u32,
     #[serde(default = "default_mouse_speed")]
@@ -38,21 +38,21 @@ pub struct GamePrefs {
 impl Default for GamePrefs {
     fn default() -> Self {
         Self {
-            #[cfg(not(target_arch = "wasm32"))]
+            #[cfg(not(feature = "web-storage"))]
             window_width: default_window_width(),
-            #[cfg(not(target_arch = "wasm32"))]
+            #[cfg(not(feature = "web-storage"))]
             window_height: default_window_height(),
             mouse_speed: default_mouse_speed(),
         }
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(feature = "web-storage"))]
 fn default_window_width() -> u32 {
     1280
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(feature = "web-storage"))]
 fn default_window_height() -> u32 {
     720
 }
@@ -63,7 +63,7 @@ fn default_mouse_speed() -> f32 {
 
 impl GamePrefs {
     pub fn load() -> GamePrefs {
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(not(feature = "web-storage"))]
         {
             let path = PROJECT_DIRS.preference_dir().join(PREFS_FILENAME);
 
@@ -87,7 +87,7 @@ impl GamePrefs {
                 default()
             })
         }
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(feature = "web-storage")]
         {
             use crate::or_return;
 
@@ -113,7 +113,7 @@ impl GamePrefs {
     }
 
     pub fn save(&self) {
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(not(feature = "web-storage"))]
         {
             let path = PROJECT_DIRS.preference_dir().join(PREFS_FILENAME);
 
@@ -149,7 +149,7 @@ impl GamePrefs {
                 }
             }
         }
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(feature = "web-storage")]
         {
             use crate::or_return;
 
