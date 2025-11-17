@@ -94,6 +94,7 @@ plugin_group! {
         gui:::GuiPlugin,
         menus:::MainMenuPlugin,
         menus:::OptionsMenuPlugin,
+        menus:::LoadingScreenPlugin,
         menus:::PauseMenuPlugin,
         menus:::FinishMenuPlugin,
         levels:::LevelsPlugin,

@@ -21,6 +21,7 @@ impl Plugin for LevelsPlugin {
             .init_asset::<SerialLevel>()
             .init_asset_loader::<LevelIndexLoader>()
             .init_asset_loader::<SerialLevelLoader>()
+            .init_resource::<LevelLoadingLock>()
             .add_systems(Update, on_level_index_loaded)
             .add_systems(OnEnter(AppState::LoadingLevel), start_loading_level)
             .add_systems(
@@ -56,12 +57,22 @@ pub struct LevelObject;
 #[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
 pub struct PlayerSpawnPoint;
 
+/// Mutable Resource to prevent level cancellation race condition
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Resource, Reflect)]
+#[reflect(Debug, Default, Clone, Hash, Resource)]
+pub enum LevelLoadingLock {
+    #[default]
+    NotLoading,
+    Loading,
+}
+
 fn start_loading_level(
     mut cmd: Commands,
     level: Res<SelectedLevel>,
     assets: Res<AssetServer>,
     index: Res<LevelIndex>,
     mut broken_state: ResMut<NextState<AppState>>,
+    mut level_lock: ResMut<LevelLoadingLock>,
 ) {
     let level = if let Some(level) = index.levels.get(&level.0) {
         level
@@ -72,6 +83,7 @@ fn start_loading_level(
     };
     info!("Loading level '{}'", &level.name);
     cmd.insert_resource(LevelHandle(assets.load(&level.path)));
+    *level_lock = LevelLoadingLock::Loading;
 }
 
 fn unselect_level(mut cmd: Commands) {
@@ -123,8 +135,11 @@ fn spawn_level(
     level_assets: Res<Assets<SerialLevel>>,
     app_state: Res<State<AppState>>,
     mut next_state: ResMut<NextState<AppState>>,
+    mut level_lock: ResMut<LevelLoadingLock>,
 ) {
-    if let Some(level_handle) = level_handle {
+    if let Some(level_handle) = level_handle
+        && *level_lock == LevelLoadingLock::Loading
+    {
         for e in msg.read() {
             if e.is_loaded_with_dependencies(&level_handle.0) {
                 despawn_level_impl(&mut cmd, query);
@@ -142,6 +157,8 @@ fn spawn_level(
                     next_state.set(AppState::Game);
                     cmd.trigger(LevelReadyEvent);
                 }
+
+                *level_lock = LevelLoadingLock::NotLoading;
 
                 msg.clear();
                 return;
