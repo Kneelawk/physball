@@ -23,7 +23,10 @@ pub fn insert_fonts(
 ) {
     for e in msg.read() {
         if let AssetEvent::LoadedWithDependencies { id: asset_id } = e {
-            let font = fonts.get(*asset_id).expect("loaded font is missing");
+            let Some(font) = fonts.get(*asset_id) else {
+                warn!("Loaded font is missing. An asset likely failed to load or was canceled.");
+                continue;
+            };
 
             let digest = Sha256::digest(&font.data[..]);
             if loaded.contains_key(&digest.0) {
