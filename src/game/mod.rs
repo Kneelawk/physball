@@ -8,6 +8,7 @@ mod menus;
 mod settings;
 mod startup;
 mod state;
+mod input;
 
 use crate::game::settings::GamePrefs;
 use avian3d::PhysicsPlugins;
