@@ -69,6 +69,7 @@ fn setup_main_options_menu(mut cmd: Commands, fonts: Res<Preloads>, prefs: Res<G
                     display: Display::Flex,
                     flex_direction: FlexDirection::Column,
                     row_gap: px(20),
+                    min_width: vw(50),
                     ..default()
                 },
                 children![
