@@ -28,7 +28,7 @@ fn show_loading_screen(
 ) {
     let level_name = selected_level
         .and_then(|level| level_index.levels.get(&level.0))
-        .map(|level| &level.name as &str)
+        .map(|level| &level.display as &str)
         .unwrap_or("null");
 
     cmd.spawn((
