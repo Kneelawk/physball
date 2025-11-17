@@ -1,4 +1,4 @@
-use crate::game::game::{Player, spawn_transform};
+use crate::game::logic::{Player, spawn_transform};
 use crate::game::game_state::GameState;
 use crate::game::levels::{LevelReadyEvent, LevelRestartEvent, PlayerSpawnPoint};
 use crate::game::settings::GamePrefs;

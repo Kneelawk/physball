@@ -1,6 +1,6 @@
 use crate::game::assets::fonts::FontNames;
 use crate::game::assets::preload::Preloads;
-use crate::game::game::Player;
+use crate::game::logic::Player;
 use crate::game::game_state::GameState;
 use crate::game::levels::LevelObject;
 use avian3d::prelude::*;

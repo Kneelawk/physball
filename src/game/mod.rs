@@ -1,6 +1,6 @@
 mod assets;
 mod camera;
-mod game;
+mod logic;
 mod game_state;
 mod gui;
 mod levels;
@@ -101,6 +101,6 @@ plugin_group! {
         levels::finish_point:::FinishPointPlugin,
         levels::death:::DeathPlugin,
         game_state:::GameStatePlugin,
-        game:::GamePlugin,
+        logic:::GamePlugin,
     }
 }
