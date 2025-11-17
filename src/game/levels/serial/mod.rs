@@ -38,7 +38,13 @@ impl AssetLoader for SerialLevelLoader {
             }
         };
 
-        let level = SerialLevel::bind(&doc, load_context, Arc::new(str))?;
+        let level = match SerialLevel::bind(&doc, load_context, Arc::new(str)) {
+            Ok(level) => level,
+            Err(err) => {
+                eprintln!("{:?}", miette::Report::new(err.clone()));
+                return Err(err.into());
+            }
+        };
 
         Ok(level)
     }

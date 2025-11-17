@@ -7,6 +7,7 @@ pub enum AppState {
     Splash,
     MainMenu,
     LoadingLevel,
+    LevelLoadingError,
     Game,
 }
 

@@ -81,14 +81,16 @@ pub fn title(fonts: &Preloads, text: impl ToString) -> impl Bundle {
 }
 
 pub struct ButtonSettings {
-    width: Val,
-    height: Val,
+    pub width: Val,
+    pub min_width: Val,
+    pub height: Val,
 }
 
 impl Default for ButtonSettings {
     fn default() -> Self {
         Self {
-            width: px(300),
+            width: auto(),
+            min_width: px(300),
             height: px(65),
         }
     }
@@ -98,6 +100,7 @@ impl ButtonSettings {
     pub fn small() -> Self {
         Self {
             width: auto(),
+            min_width: auto(),
             height: px(65),
         }
     }
@@ -111,6 +114,7 @@ pub fn button<T: ToString>(
     (
         Node {
             width: settings.width,
+            min_width: settings.min_width,
             height: settings.height,
             border: UiRect::all(px(1)),
             justify_content: JustifyContent::Center,

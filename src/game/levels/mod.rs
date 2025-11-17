@@ -9,6 +9,7 @@ use crate::game::levels::index::{LevelIndex, LevelIndexLoader, on_level_index_lo
 use crate::game::levels::serial::SerialLevelLoader;
 use crate::game::levels::serial::level::LevelBuildArgs;
 use crate::game::state::AppState;
+use bevy::asset::AssetLoadFailedEvent;
 use bevy::prelude::*;
 use serial::level::SerialLevel;
 
@@ -27,6 +28,10 @@ impl Plugin for LevelsPlugin {
             .add_systems(
                 Update,
                 spawn_level.run_if(in_state(AppState::LoadingLevel).or(in_state(AppState::Game))),
+            )
+            .add_systems(
+                Update,
+                level_loading_error.run_if(in_state(AppState::LoadingLevel)),
             )
             .add_observer(respawn_level)
             .add_systems(OnExit(AppState::Game), (unselect_level, despawn_level));
@@ -186,4 +191,18 @@ fn spawn_level_impl(
         preloads,
         fonts,
     });
+}
+
+fn level_loading_error(
+    mut msg: MessageReader<AssetLoadFailedEvent<SerialLevel>>,
+    handle: Option<Res<LevelHandle>>,
+    mut next_state: ResMut<NextState<AppState>>,
+) {
+    if let Some(handle) = handle {
+        for error in msg.read() {
+            if error.id == handle.0.id() {
+                next_state.set(AppState::LevelLoadingError);
+            }
+        }
+    }
 }
