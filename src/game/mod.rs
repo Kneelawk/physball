@@ -1,14 +1,14 @@
 mod assets;
 mod camera;
-mod logic;
 mod game_state;
 mod gui;
+mod input;
 mod levels;
+mod logic;
 mod menus;
 mod settings;
 mod startup;
 mod state;
-mod input;
 
 use crate::game::settings::GamePrefs;
 use avian3d::PhysicsPlugins;
@@ -92,6 +92,7 @@ plugin_group! {
         assets:::BuiltinAssetsPlugin,
         startup:::BallphysStartup,
         camera:::CameraPlugin,
+        input:::InputPlugin,
         gui:::GuiPlugin,
         menus:::MainMenuPlugin,
         menus:::OptionsMenuPlugin,

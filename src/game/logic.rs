@@ -1,6 +1,7 @@
 use crate::game::assets::preload::Preloads;
 use crate::game::camera::PlayerCamera;
 use crate::game::game_state::GameState;
+use crate::game::input::PlayerInput;
 use crate::game::levels::death::{Kill, Killable, PlayerDiedEvent};
 use crate::game::levels::{LevelReadyEvent, LevelRestartEvent, PlayerSpawnPoint};
 use crate::game::state::AppState;
@@ -97,21 +98,19 @@ fn remove_player(mut cmd: Commands, players: Query<Entity, With<Player>>) {
 fn move_player(
     forces: Query<&mut AngularVelocity, With<Player>>,
     camera: Single<&PlayerCamera>,
-    key: Res<ButtonInput<KeyCode>>,
+    mut inputs: MessageReader<PlayerInput>,
     time: Res<Time>,
 ) {
+    // build a frame matrix
+    let y = camera.get_looking();
+    let x = y.cross(Vec3::Y);
+
     let mut movement = Vec3::default();
-    if key.pressed(KeyCode::KeyW) {
-        movement += camera.get_looking();
-    }
-    if key.pressed(KeyCode::KeyS) {
-        movement -= camera.get_looking();
-    }
-    if key.pressed(KeyCode::KeyA) {
-        movement -= camera.get_looking().cross(Vec3::Y);
-    }
-    if key.pressed(KeyCode::KeyD) {
-        movement += camera.get_looking().cross(Vec3::Y);
+    for input in inputs.read() {
+        if let PlayerInput::Movement(force) = input {
+            // multiply that matrix by the force vector
+            movement += force.x * x + force.y * y;
+        }
     }
 
     let torque = Vec3::Y.cross(movement.normalize_or_zero());
@@ -171,9 +170,20 @@ fn update_grounded(mut cmd: Commands, player: Entity, collisions: Collisions) {
 // Copied from Avian3d example
 fn jump_player(
     forces: Query<(&mut LinearVelocity, Has<Grounded>), With<Player>>,
-    key: Res<ButtonInput<KeyCode>>,
+    mut inputs: MessageReader<PlayerInput>,
 ) {
-    if key.just_pressed(KeyCode::Space) {
+    let mut input_it = inputs.read();
+    let jumping = loop {
+        let Some(input) = input_it.next() else {
+            break false;
+        };
+        if let PlayerInput::Jump = input {
+            break true;
+        }
+    };
+    inputs.clear();
+
+    if jumping {
         for (mut vel, grounded) in forces {
             if grounded {
                 vel.y = JUMP_VELOCITY;

@@ -9,14 +9,18 @@ hot-reload = ["bevy/file_watcher"]
 quit-button = []
 window-resize = []
 
-web-inputs = ["web-sys"]
+input_desktop = []
+input_web = ["web-sys"]
+
 web-panic-hook = ["console_error_panic_hook"]
 web-storage = ["web-sys", "web-sys/Storage"]
 
 # Physball Platforms
-web = ["web-inputs", "web-panic-hook", "web-storage"]
+web = ["input_web", "web-panic-hook", "web-storage"]
 webgpu = ["web", "bevy/webgpu"]
-default = ["hot-reload", "quit-button", "window-resize"]
+desktop = ["input_desktop", "hot-reload", "quit-button", "window-resize"]
+
+default = ["desktop"]
 
 [package.metadata.bevy_cli.web]
 # Disable default features for web builds
