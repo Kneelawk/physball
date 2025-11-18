@@ -58,6 +58,7 @@ pub fn physball_client_main() -> AppExit {
                             "symphonia_format_riff::demuxer=warn,",
                             "symphonia_format_wav::demuxer=warn,",
                             "calloop::loop_logic=error,",
+                            "bevy_asset::server::info=error,",
                             "avian3d::dynamics::solver::islands::sleeping=error,",
                         ),
                         default = bevy::log::DEFAULT_FILTER
