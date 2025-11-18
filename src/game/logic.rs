@@ -68,6 +68,7 @@ fn add_player(
         LinearDamping(0.25),
         CollisionEventsEnabled,
         Killable,
+        InheritedVisibility::default(),
         children![SceneRoot(preloads.physball()),],
     ));
 }
