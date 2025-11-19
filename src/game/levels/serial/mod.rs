@@ -48,6 +48,10 @@ impl AssetLoader for SerialLevelLoader {
 
         Ok(level)
     }
+
+    fn extensions(&self) -> &[&str] {
+        &["level.kdl"]
+    }
 }
 
 #[derive(Debug, Error)]
