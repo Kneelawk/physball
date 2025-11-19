@@ -1,5 +1,6 @@
 pub mod fonts;
 pub mod preload;
+mod materials;
 
 use crate::game::assets::fonts::{FontNames, LoadedFonts, insert_fonts};
 use crate::game::assets::preload::{Preloads, PreloadsLoader, load_preloads, load_preloads_system};
