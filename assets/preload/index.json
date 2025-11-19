@@ -1,18 +1,24 @@
 {
-  "physball": {
-    "ty": "scene",
-    "path": "preload/physball.glb#Scene0"
-  },
-  "level-end": {
-    "ty": "scene",
-    "path": "preload/level-end.glb#Scene0"
-  },
-  "title": {
-    "ty": "font",
-    "path": "preload/BBHSansBartle-Regular.ttf"
-  },
-  "text": {
-    "ty": "font",
-    "path": "preload/FiraSans-Regular.ttf"
-  }
+  "preloads": [
+    {
+      "name": "physball",
+      "type": "scene",
+      "path": "preload/physball.glb#Scene0"
+    },
+    {
+      "name": "level-end",
+      "type": "scene",
+      "path": "preload/level-end.glb#Scene0"
+    },
+    {
+      "name": "title",
+      "type": "font",
+      "path": "preload/BBHSansBartle-Regular.ttf"
+    },
+    {
+      "name": "text",
+      "type": "font",
+      "path": "preload/FiraSans-Regular.ttf"
+    }
+  ]
 }

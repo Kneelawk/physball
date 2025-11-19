@@ -131,7 +131,14 @@ pub struct Preload {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+struct PreloadsJson {
+    preloads: Vec<PreloadJson>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 struct PreloadJson {
+    name: String,
+    #[serde(rename = "type")]
     ty: String,
     path: String,
 }
@@ -149,7 +156,7 @@ impl AssetLoader for PreloadsLoader {
     ) -> Result<Self::Asset, Self::Error> {
         let mut vec = vec![];
         reader.read_to_end(&mut vec).await?;
-        let index: HashMap<String, PreloadJson> = serde_json::from_slice(&vec)?;
+        let index: PreloadsJson = serde_json::from_slice(&vec)?;
 
         let mut reqs = REQURED_PRELOADS.clone();
         let mut preloads = HashMap::new();
@@ -157,27 +164,27 @@ impl AssetLoader for PreloadsLoader {
             preloads.insert(asset_type.clone(), HashMap::new());
         }
 
-        for (key, preload) in index {
-            if let Some(req_ty) = reqs.remove(&key)
-                && preload.ty != req_ty
+        for preload_json in index.preloads {
+            if let Some(req_ty) = reqs.remove(&preload_json.name)
+                && preload_json.ty != req_ty
             {
-                return Err(PreloadsLoadingError::WrongPreloadType(preload.ty, req_ty));
+                return Err(PreloadsLoadingError::WrongPreloadType(preload_json.ty, req_ty));
             }
 
             let ty =
                 *ASSET_TYPES
-                    .get(&preload.ty)
+                    .get(&preload_json.ty)
                     .ok_or(PreloadsLoadingError::UnknownAssetType {
-                        ty: preload.ty.clone(),
+                        ty: preload_json.ty.clone(),
                     })?;
             let preload = Preload {
-                ty: preload.ty.clone(),
+                ty: preload_json.ty.clone(),
                 handle: load_context
                     .loader()
                     .with_dynamic_type(ty)
-                    .load(preload.path),
+                    .load(preload_json.path),
             };
-            preloads.get_mut(&preload.ty).unwrap().insert(key, preload);
+            preloads.get_mut(&preload.ty).unwrap().insert(preload_json.name, preload);
         }
 
         if !reqs.is_empty() {
