@@ -19,6 +19,11 @@
       "name": "text",
       "type": "font",
       "path": "preload/FiraSans-Regular.ttf"
+    },
+    {
+      "name": "glow-text",
+      "type": "material",
+      "path": "preload/glow-text.material.json"
     }
   ]
 }

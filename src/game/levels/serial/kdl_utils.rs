@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::game::levels::serial::asset_ref::AssetRef;
+use crate::game::assets::asset_ref::AssetRef;
 use crate::game::levels::serial::error::{BindErrorExt, KdlBindError, MergeKdlBindError};
 use bevy::asset::LoadContext;
 use bevy::prelude::*;
@@ -9,6 +9,7 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use std::sync::Arc;
 use strum::VariantArray;
+use crate::game::assets::AssetType;
 
 #[derive(Debug, Copy, Clone)]
 pub enum KdlValueType {
@@ -196,14 +197,14 @@ pub trait KdlNodeExt {
     where
         T::Err: Display;
 
-    fn must_get_asset_ref<A: Asset>(
+    fn must_get_asset_ref<A: Asset + AssetType>(
         &self,
         key: impl Into<NodeKey>,
         load_context: &mut LoadContext,
         source: &Arc<String>,
     ) -> Result<AssetRef<A>, KdlBindError>;
 
-    fn get_asset_ref<A: Asset>(
+    fn get_asset_ref<A: Asset + AssetType>(
         &self,
         key: impl Into<NodeKey>,
         load_context: &mut LoadContext,
@@ -355,7 +356,7 @@ impl KdlNodeExt for KdlNode {
             .map_or(Ok(None), |e| e.as_parse(source).map(Some))
     }
 
-    fn must_get_asset_ref<A: Asset>(
+    fn must_get_asset_ref<A: Asset + AssetType>(
         &self,
         key: impl Into<NodeKey>,
         load_context: &mut LoadContext,
@@ -365,7 +366,7 @@ impl KdlNodeExt for KdlNode {
             .as_asset_ref(load_context, source)
     }
 
-    fn get_asset_ref<A: Asset>(
+    fn get_asset_ref<A: Asset + AssetType>(
         &self,
         key: impl Into<NodeKey>,
         load_context: &mut LoadContext,
@@ -406,7 +407,7 @@ pub trait KdlEntryExt {
     where
         T::Err: Display;
 
-    fn as_asset_ref<A: Asset>(
+    fn as_asset_ref<A: Asset + AssetType>(
         &self,
         load_context: &mut LoadContext,
         source: &Arc<String>,
@@ -453,7 +454,7 @@ impl KdlEntryExt for KdlEntry {
             .map_err(|err| source.parse_error(err, self.span()))
     }
 
-    fn as_asset_ref<A: Asset>(
+    fn as_asset_ref<A: Asset + AssetType>(
         &self,
         load_context: &mut LoadContext,
         source: &Arc<String>,

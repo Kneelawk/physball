@@ -1,0 +1,11 @@
+{
+  "base_color_texture": "builtin:text-atlas",
+  "alpha_mode": "blend",
+  "cull_mode": "none",
+  "emissive": {
+    "red": 0.0,
+    "green": 10.0,
+    "blue": 12.0,
+    "alpha": 1.0
+  }
+}

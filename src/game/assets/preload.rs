@@ -1,17 +1,17 @@
-use crate::game::assets::BuiltinAssetsState;
+use crate::game::assets::{AssetType, BuiltinAssetsState, asset_types};
 use bevy::asset::io::Reader;
-use bevy::asset::{AssetLoader, LoadContext};
+use bevy::asset::{AssetLoader, AssetPath, LoadContext};
 use bevy::prelude::*;
 use lazy_static::lazy_static;
 use serde::Deserialize;
 use std::any::TypeId;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, Mutex};
 use thiserror::Error;
 
-pub const PRELOAD_INDEX_PATH: &str = "preload/index.json";
+pub const PRELOAD_PREFIX: &str = "preload:";
 
-pub const PRELOAD_TYPE_SCENE: &str = "scene";
-pub const PRELOAD_TYPE_FONT: &str = "font";
+pub const PRELOAD_INDEX_PATH: &str = "preload/index.json";
 
 pub const PRELOAD_SCENE_PHYSBALL: &str = "physball";
 pub const PRELOAD_SCENE_LEVEL_END: &str = "level-end";
@@ -21,27 +21,27 @@ pub const PRELOAD_FONT_TEXT: &str = "text";
 lazy_static! {
     pub static ref ASSET_TYPES: HashMap<String, TypeId> = {
         let mut tys = HashMap::new();
-        tys.insert(PRELOAD_TYPE_SCENE.to_string(), TypeId::of::<Scene>());
-        tys.insert(PRELOAD_TYPE_FONT.to_string(), TypeId::of::<Font>());
+        asset_types!(
+            _Asset,
+            tys.insert(_Asset::TYPE_NAME.to_string(), TypeId::of::<_Asset>())
+        );
         tys
     };
-    pub static ref REQURED_PRELOADS: HashMap<String, String> = {
-        let mut reqs = HashMap::new();
-        reqs.insert(
+    pub static ref REQURED_PRELOADS: HashSet<(String, String)> = {
+        let mut reqs = HashSet::new();
+        reqs.insert((
             PRELOAD_SCENE_PHYSBALL.to_string(),
-            PRELOAD_TYPE_SCENE.to_string(),
-        );
-        reqs.insert(
+            Scene::TYPE_NAME.to_string(),
+        ));
+        reqs.insert((
             PRELOAD_SCENE_LEVEL_END.to_string(),
-            PRELOAD_TYPE_SCENE.to_string(),
-        );
-        reqs.insert(
-            PRELOAD_FONT_TITLE.to_string(),
-            PRELOAD_TYPE_FONT.to_string(),
-        );
-        reqs.insert(PRELOAD_FONT_TEXT.to_string(), PRELOAD_TYPE_FONT.to_string());
+            Scene::TYPE_NAME.to_string(),
+        ));
+        reqs.insert((PRELOAD_FONT_TITLE.to_string(), Font::TYPE_NAME.to_string()));
+        reqs.insert((PRELOAD_FONT_TEXT.to_string(), Font::TYPE_NAME.to_string()));
         reqs
     };
+    pub static ref PRELOAD_PARTIALS: Arc<Mutex<PreloadPartials>> = Arc::new(Mutex::new(default()));
 }
 
 pub fn load_preloads(cmd: &mut Commands, asset_server: &AssetServer) {
@@ -69,39 +69,45 @@ pub fn load_preloads_system(
     }
 }
 
-pub trait PreloadType {
-    const PRELOAD_TYPE_NAME: &'static str;
-}
-
-impl PreloadType for Scene {
-    const PRELOAD_TYPE_NAME: &'static str = PRELOAD_TYPE_SCENE;
-}
-
-impl PreloadType for Font {
-    const PRELOAD_TYPE_NAME: &'static str = PRELOAD_TYPE_FONT;
-}
-
 #[derive(Default)]
 pub struct PreloadsLoader;
+
+#[derive(Debug, Default, Clone, Deref, DerefMut)]
+pub struct PreloadPartials(HashMap<String, HashMap<String, PreloadPartial>>);
+
+impl PreloadPartials {
+    pub fn try_lookup<A: Asset + AssetType>(
+        &self,
+        asset_name: &str,
+    ) -> Option<&AssetPath<'static>> {
+        self.get(A::TYPE_NAME)
+            .and_then(|of_type| of_type.get(asset_name))
+            .map(|preload| &preload.path)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PreloadPartial {
+    pub ty: String,
+    pub name: String,
+    pub path: AssetPath<'static>,
+}
 
 #[derive(Debug, Clone, Resource, Reflect)]
 #[reflect(Debug, Clone, Resource)]
 pub struct PreloadsAsset(Handle<Preloads>);
 
-#[derive(Debug, Clone, Asset, Resource, Deref, Reflect)]
+#[derive(Debug, Clone, Asset, Resource, Deref, DerefMut, Reflect)]
 #[reflect(Debug, Clone, Resource)]
 pub struct Preloads(HashMap<String, HashMap<String, Preload>>);
 
 impl Preloads {
-    pub fn handle<A: Asset + PreloadType>(&self, asset_name: &str) -> Handle<A> {
-        self[A::PRELOAD_TYPE_NAME][asset_name]
-            .handle
-            .clone()
-            .typed()
+    pub fn handle<A: Asset + AssetType>(&self, asset_name: &str) -> Handle<A> {
+        self[A::TYPE_NAME][asset_name].handle.clone().typed()
     }
 
-    pub fn try_handle<A: Asset + PreloadType>(&self, asset_name: &str) -> Option<Handle<A>> {
-        self[A::PRELOAD_TYPE_NAME]
+    pub fn try_handle<A: Asset + AssetType>(&self, asset_name: &str) -> Option<Handle<A>> {
+        self[A::TYPE_NAME]
             .get(asset_name)
             .map(|preload| preload.handle.clone().typed())
     }
@@ -127,6 +133,7 @@ impl Preloads {
 #[reflect(Debug, Clone)]
 pub struct Preload {
     pub ty: String,
+    pub name: String,
     pub handle: UntypedHandle,
 }
 
@@ -160,36 +167,52 @@ impl AssetLoader for PreloadsLoader {
 
         let mut reqs = REQURED_PRELOADS.clone();
         let mut preloads = HashMap::new();
+        let mut preload_partials = HashMap::new();
         for asset_type in ASSET_TYPES.keys() {
             preloads.insert(asset_type.clone(), HashMap::new());
+            preload_partials.insert(asset_type.clone(), HashMap::new());
         }
 
-        for preload_json in index.preloads {
-            if let Some(req_ty) = reqs.remove(&preload_json.name)
-                && preload_json.ty != req_ty
-            {
-                return Err(PreloadsLoadingError::WrongPreloadType(preload_json.ty, req_ty));
-            }
+        for preload_json in index.preloads.iter() {
+            reqs.remove(&(preload_json.name.clone(), preload_json.ty.clone()));
 
-            let ty =
-                *ASSET_TYPES
-                    .get(&preload_json.ty)
-                    .ok_or(PreloadsLoadingError::UnknownAssetType {
-                        ty: preload_json.ty.clone(),
-                    })?;
+            let preload = PreloadPartial {
+                ty: preload_json.ty.clone(),
+                name: preload_json.name.clone(),
+                path: preload_json.path.clone().into(),
+            };
+
+            preload_partials
+                .get_mut(&preload.ty)
+                .unwrap()
+                .insert(preload.name.clone(), preload);
+        }
+
+        *PRELOAD_PARTIALS.lock().unwrap() = PreloadPartials(preload_partials);
+
+        for preload_json in index.preloads {
+            let ty = *ASSET_TYPES.get(&preload_json.ty).ok_or(
+                PreloadsLoadingError::UnknownAssetType {
+                    ty: preload_json.ty.clone(),
+                },
+            )?;
             let preload = Preload {
                 ty: preload_json.ty.clone(),
+                name: preload_json.name.clone(),
                 handle: load_context
                     .loader()
                     .with_dynamic_type(ty)
                     .load(preload_json.path),
             };
-            preloads.get_mut(&preload.ty).unwrap().insert(preload_json.name, preload);
+            preloads
+                .get_mut(&preload.ty)
+                .unwrap()
+                .insert(preload_json.name, preload);
         }
 
         if !reqs.is_empty() {
             return Err(PreloadsLoadingError::MissingPreloads(
-                reqs.keys().cloned().collect(),
+                reqs.iter().cloned().collect(),
             ));
         }
 
@@ -202,9 +225,7 @@ pub enum PreloadsLoadingError {
     #[error("Unknown asset type '{}', known asset types are {:?}", .ty, ASSET_TYPES.keys().collect::<Vec<_>>())]
     UnknownAssetType { ty: String },
     #[error("Missing required preloads {0:?}")]
-    MissingPreloads(Vec<String>),
-    #[error("Preload has wrong type '{0}', expected '{1}'")]
-    WrongPreloadType(String, String),
+    MissingPreloads(Vec<(String, String)>),
     #[error("IO error {0}")]
     Io(#[from] std::io::Error),
     #[error("JSON parse error {0}")]
