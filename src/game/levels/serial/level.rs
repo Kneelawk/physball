@@ -1,4 +1,4 @@
-use crate::game::assets::asset_ref::{AssetRef, DEFAULT_FONT};
+use crate::game::assets::asset_ref;
 use crate::game::assets::fonts::FontNames;
 use crate::game::assets::preload::Preloads;
 use crate::game::levels::death::DeathCollider;
@@ -59,7 +59,7 @@ pub enum SerialPlaneType {
 pub struct SerialText {
     pub text: String,
     pub pt: f32,
-    pub font: AssetRef<Font>,
+    pub font: Handle<Font>,
     pub align: SerialAlign,
     pub trans: Transform,
 }
@@ -210,8 +210,8 @@ impl SerialText {
             .map(|pt| pt.unwrap_or(DEFAULT_TEXT_PT));
 
         let font = node
-            .get_asset_ref::<Font>("font", load_context, &source)
-            .map(|asset| asset.unwrap_or(DEFAULT_FONT));
+            .get_handle::<Font>("font", load_context, &source)
+            .map(|asset| asset.unwrap_or(asset_ref::default_font(load_context)));
 
         let align = node
             .get_variant("align", SerialAlign::VARIANTS, &source)
@@ -236,15 +236,7 @@ impl SerialText {
     pub fn spawn(&self, args: &mut LevelBuildArgs) {
         let font = args
             .fonts
-            .get(
-                &self
-                    .font
-                    .resolve_or_else(args.preloads, |preload| {
-                        warn!("Unknown font '{}', using default", preload);
-                        args.preloads.text_font()
-                    })
-                    .id(),
-            )
+            .get(&self.font.id())
             .unwrap_or_else(|| {
                 warn!("Font {:?} has not loaded yet, using default", &self.font);
                 &args.fonts[&args.preloads.text_font().id()]

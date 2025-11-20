@@ -181,9 +181,8 @@ fn bind_handle(
 ) -> Result<Option<Handle<Image>>, MaterialLoadError> {
     Ok(to_bind
         .as_ref()
-        .map(|tex| asset_ref::load_in_loader(tex, load_context))
-        .map_or(Ok(None), |res| res.map(Some))?
-        .flatten())
+        .map(|tex| asset_ref::load(tex, load_context))
+        .map_or(Ok(None), |res| res.map(Some))?)
 }
 
 #[cfg(test)]
