@@ -1,3 +1,4 @@
+pub mod button;
 pub mod death;
 pub mod finish_point;
 pub mod index;
@@ -10,6 +11,7 @@ use crate::game::levels::serial::SerialLevelLoader;
 use crate::game::levels::serial::level::LevelBuildArgs;
 use crate::game::state::AppState;
 use bevy::asset::AssetLoadFailedEvent;
+use bevy::ecs::system::entity_command;
 use bevy::prelude::*;
 use serial::level::SerialLevel;
 
@@ -102,7 +104,8 @@ fn despawn_level(mut cmd: Commands, query: Query<Entity, With<LevelObject>>) {
 
 fn despawn_level_impl(cmd: &mut Commands, query: Query<Entity, With<LevelObject>>) {
     for level in query {
-        cmd.entity(level).despawn();
+        // ignore if we try to despawn something twice
+        cmd.entity(level).queue_silenced(entity_command::despawn());
     }
 }
 

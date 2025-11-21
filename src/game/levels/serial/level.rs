@@ -3,6 +3,7 @@ use crate::game::assets::asset_ref;
 use crate::game::assets::asset_ref::default_plane_material;
 use crate::game::assets::fonts::FontNames;
 use crate::game::assets::preload::Preloads;
+use crate::game::levels::button::{LevelButton, LevelButtonPlate};
 use crate::game::levels::death::DeathCollider;
 use crate::game::levels::finish_point::FinishPoint;
 use crate::game::levels::serial::error::{KdlBindError, MergeKdlBindError};
@@ -35,6 +36,7 @@ pub struct SerialLevel {
     pub finish: Transform,
     pub planes: Vec<SerialPlane>,
     pub texts: Vec<SerialText>,
+    pub buttons: Vec<SerialButton>,
 }
 
 #[derive(Debug, Clone, Reflect)]
@@ -77,6 +79,15 @@ pub enum SerialAlign {
     Right,
 }
 
+#[derive(Debug, Clone, Reflect)]
+#[reflect(Debug, Clone)]
+pub struct SerialButton {
+    pub name: String,
+    pub trans: Transform,
+}
+
+pub struct SerialButtonDoor {}
+
 impl SerialLevel {
     pub fn bind(
         doc: &KdlDocument,
@@ -105,17 +116,27 @@ impl SerialLevel {
             .nodes()
             .iter()
             .filter(|node| node.name().value() == "text")
-            .map(|node| SerialText::bind(node.clone(), load_context, source.clone()))
+            .map(|node| SerialText::bind(node, load_context, source.clone()))
             .collect::<Vec<_>>()
             .merge();
 
-        let (spawn, finish, planes, texts) = (spawn, finish, planes, texts).merge()?;
+        let buttons = doc
+            .nodes()
+            .iter()
+            .filter(|node| node.name().value() == "button")
+            .map(|node| SerialButton::bind(node, load_context, source.clone()))
+            .collect::<Vec<_>>()
+            .merge();
+
+        let (spawn, finish, planes, texts, buttons) =
+            (spawn, finish, planes, texts, buttons).merge()?;
 
         Ok(Self {
             spawn,
             finish,
             planes,
             texts,
+            buttons,
         })
     }
 
@@ -129,6 +150,10 @@ impl SerialLevel {
 
         for text in self.texts.iter() {
             text.spawn(args);
+        }
+
+        for button in self.buttons.iter() {
+            button.spawn(args);
         }
     }
 }
@@ -202,7 +227,7 @@ impl SerialPlane {
 
 impl SerialText {
     pub fn bind(
-        node: KdlNode,
+        node: &KdlNode,
         load_context: &mut LoadContext,
         source: Arc<String>,
     ) -> Result<Self, KdlBindError> {
@@ -277,5 +302,40 @@ impl SerialAlign {
             SerialAlign::Center => TextAlign::Center,
             SerialAlign::Right => TextAlign::Right,
         }
+    }
+}
+
+impl SerialButton {
+    pub fn bind(
+        node: &KdlNode,
+        _load_context: &mut LoadContext,
+        source: Arc<String>,
+    ) -> Result<Self, KdlBindError> {
+        let name = node
+            .must_get_string(0, &source)
+            .map(|name| name.to_string());
+
+        let trans = node
+            .children()
+            .map_or(Ok(None), |doc| doc.get_transform(&source).map(Some))
+            .map(|trans| trans.unwrap_or_default());
+
+        let (name, trans) = (name, trans).merge()?;
+
+        Ok(Self { name, trans })
+    }
+
+    pub fn spawn(&self, args: &mut LevelBuildArgs) {
+        args.cmd.spawn((
+            LevelButton,
+            self.trans,
+            children![(
+                LevelButtonPlate {
+                    name: self.name.clone(),
+                    ..default()
+                },
+                Transform::from_xyz(0.0, 0.05, 0.0)
+            )],
+        ));
     }
 }

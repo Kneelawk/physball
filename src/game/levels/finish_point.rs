@@ -1,14 +1,13 @@
 use crate::game::assets::fonts::FontNames;
 use crate::game::assets::preload::Preloads;
-use crate::game::logic::Player;
 use crate::game::game_state::GameState;
 use crate::game::levels::LevelObject;
+use crate::game::logic::Player;
 use avian3d::prelude::*;
-use bevy::asset::io::embedded::GetAssetServer;
 use bevy::ecs::lifecycle::HookContext;
 use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::*;
-use bevy_rich_text3d::{Text3d, Text3dStyling, TextAtlas};
+use bevy_rich_text3d::{Text3d, Text3dStyling};
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct FinishPointPlugin;
@@ -49,13 +48,7 @@ fn finish_point_on_insert(mut world: DeferredWorld, ctx: HookContext) {
         .get(&font.id())
         .expect("missing font name for required font")
         .clone();
-    let material = world.get_asset_server().add(StandardMaterial {
-        base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
-        alpha_mode: AlphaMode::Blend,
-        cull_mode: None,
-        emissive: LinearRgba::new(0.0, 10.0, 12.0, 1.0),
-        ..default()
-    });
+    let material = preloads.glow_text_material();
     let mut binding = world.commands();
     let mut commands = binding.entity(ctx.entity);
     commands.insert_if_new(SceneRoot(level_end));

@@ -15,6 +15,8 @@ pub const PRELOAD_INDEX_PATH: &str = "preload/index.json";
 
 pub const PRELOAD_SCENE_PHYSBALL: &str = "physball";
 pub const PRELOAD_SCENE_LEVEL_END: &str = "level-end";
+pub const PRELOAD_SCENE_BUTTON_HOLDER: &str = "button-holder";
+pub const PRELOAD_SCENE_BUTTON_PLATE: &str = "button-plate";
 pub const PRELOAD_FONT_TITLE: &str = "title";
 pub const PRELOAD_FONT_TEXT: &str = "text";
 pub const PRELOAD_MATERIAL_GLOW_TEXT: &str = "glow-text";
@@ -37,6 +39,14 @@ lazy_static! {
         ));
         reqs.insert((
             PRELOAD_SCENE_LEVEL_END.to_string(),
+            Scene::TYPE_NAME.to_string(),
+        ));
+        reqs.insert((
+            PRELOAD_SCENE_BUTTON_HOLDER.to_string(),
+            Scene::TYPE_NAME.to_string(),
+        ));
+        reqs.insert((
+            PRELOAD_SCENE_BUTTON_PLATE.to_string(),
             Scene::TYPE_NAME.to_string(),
         ));
         reqs.insert((PRELOAD_FONT_TITLE.to_string(), Font::TYPE_NAME.to_string()));
@@ -130,12 +140,24 @@ impl Preloads {
         self.handle(PRELOAD_SCENE_LEVEL_END)
     }
 
+    pub fn button_holder(&self) -> Handle<Scene> {
+        self.handle(PRELOAD_SCENE_BUTTON_HOLDER)
+    }
+
+    pub fn button_plate(&self) -> Handle<Scene> {
+        self.handle(PRELOAD_SCENE_BUTTON_PLATE)
+    }
+
     pub fn title_font(&self) -> Handle<Font> {
         self.handle(PRELOAD_FONT_TITLE)
     }
 
     pub fn text_font(&self) -> Handle<Font> {
         self.handle(PRELOAD_FONT_TEXT)
+    }
+
+    pub fn glow_text_material(&self) -> Handle<StandardMaterial> {
+        self.handle(PRELOAD_MATERIAL_GLOW_TEXT)
     }
 }
 

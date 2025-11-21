@@ -102,6 +102,7 @@ plugin_group! {
         menus:::FinishMenuPlugin,
         levels:::LevelsPlugin,
         levels::finish_point:::FinishPointPlugin,
+        levels::button:::ButtonPlugin,
         levels::death:::DeathPlugin,
         game_state:::GameStatePlugin,
         logic:::GamePlugin,

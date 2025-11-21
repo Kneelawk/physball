@@ -11,6 +11,16 @@
       "path": "preload/level-end.glb#Scene0"
     },
     {
+      "name": "button-holder",
+      "type": "scene",
+      "path": "preload/button-holder.glb#Scene0"
+    },
+    {
+      "name": "button-plate",
+      "type": "scene",
+      "path": "preload/button-plate.glb#Scene0"
+    },
+    {
       "name": "title",
       "type": "font",
       "path": "preload/BBHSansBartle-Regular.ttf"
