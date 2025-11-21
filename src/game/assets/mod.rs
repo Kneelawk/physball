@@ -1,8 +1,11 @@
+pub mod asset_ref;
+pub mod builtin;
 pub mod fonts;
+pub mod materials;
 pub mod preload;
-mod materials;
 
 use crate::game::assets::fonts::{FontNames, LoadedFonts, insert_fonts};
+use crate::game::assets::materials::MaterialLoader;
 use crate::game::assets::preload::{Preloads, PreloadsLoader, load_preloads, load_preloads_system};
 use crate::game::levels::index::load_level_index;
 use bevy::app::MainScheduleOrder;
@@ -26,6 +29,7 @@ impl Plugin for BuiltinAssetsPlugin {
 
         app.init_asset::<Preloads>()
             .init_asset_loader::<PreloadsLoader>()
+            .init_asset_loader::<MaterialLoader>()
             .init_resource::<BuiltinAssetsState>()
             .init_resource::<FontNames>()
             .init_resource::<LoadedFonts>()
@@ -51,3 +55,39 @@ impl BuiltinAssetsState {
         self.preloads && self.level_index
     }
 }
+
+pub trait AssetType {
+    const TYPE_NAME: &'static str;
+}
+
+impl AssetType for Font {
+    const TYPE_NAME: &'static str = "font";
+}
+
+impl AssetType for Image {
+    const TYPE_NAME: &'static str = "image";
+}
+
+impl AssetType for Scene {
+    const TYPE_NAME: &'static str = "scene";
+}
+
+impl AssetType for StandardMaterial {
+    const TYPE_NAME: &'static str = "material";
+}
+
+macro_rules! define_asset_type_macro {
+    ($($at:ident),*) => {
+        macro_rules! asset_types {
+            ($ty:ident, $action:stmt) => {
+                {$({
+                    type $ty = $at;
+                    $action
+                };)*}
+            };
+        }
+        pub(crate) use asset_types;
+    };
+}
+
+define_asset_type_macro!(Font, Image, Scene, StandardMaterial);

@@ -2,7 +2,6 @@ pub mod error;
 // pub mod kdl;
 pub mod kdl_utils;
 pub mod level;
-pub mod asset_ref;
 
 use crate::game::levels::serial::error::KdlBindError;
 use ::kdl::{KdlDocument, KdlError};

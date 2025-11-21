@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::game::levels::serial::asset_ref::AssetRef;
+use crate::game::assets::{AssetType, asset_ref};
 use crate::game::levels::serial::error::{BindErrorExt, KdlBindError, MergeKdlBindError};
 use bevy::asset::LoadContext;
 use bevy::prelude::*;
@@ -196,19 +196,19 @@ pub trait KdlNodeExt {
     where
         T::Err: Display;
 
-    fn must_get_asset_ref<A: Asset>(
+    fn must_get_handle<A: Asset + AssetType>(
         &self,
         key: impl Into<NodeKey>,
         load_context: &mut LoadContext,
         source: &Arc<String>,
-    ) -> Result<AssetRef<A>, KdlBindError>;
+    ) -> Result<Handle<A>, KdlBindError>;
 
-    fn get_asset_ref<A: Asset>(
+    fn get_handle<A: Asset + AssetType>(
         &self,
         key: impl Into<NodeKey>,
         load_context: &mut LoadContext,
         source: &Arc<String>,
-    ) -> Result<Option<AssetRef<A>>, KdlBindError>;
+    ) -> Result<Option<Handle<A>>, KdlBindError>;
 
     fn must_get_variant<'t, T: Display>(
         &self,
@@ -355,24 +355,24 @@ impl KdlNodeExt for KdlNode {
             .map_or(Ok(None), |e| e.as_parse(source).map(Some))
     }
 
-    fn must_get_asset_ref<A: Asset>(
+    fn must_get_handle<A: Asset + AssetType>(
         &self,
         key: impl Into<NodeKey>,
         load_context: &mut LoadContext,
         source: &Arc<String>,
-    ) -> Result<AssetRef<A>, KdlBindError> {
+    ) -> Result<Handle<A>, KdlBindError> {
         self.must_entry(key, source)?
-            .as_asset_ref(load_context, source)
+            .as_handle(load_context, source)
     }
 
-    fn get_asset_ref<A: Asset>(
+    fn get_handle<A: Asset + AssetType>(
         &self,
         key: impl Into<NodeKey>,
         load_context: &mut LoadContext,
         source: &Arc<String>,
-    ) -> Result<Option<AssetRef<A>>, KdlBindError> {
+    ) -> Result<Option<Handle<A>>, KdlBindError> {
         self.entry(key)
-            .map_or(Ok(None), |e| e.as_asset_ref(load_context, source).map(Some))
+            .map_or(Ok(None), |e| e.as_handle(load_context, source).map(Some))
     }
 
     fn must_get_variant<'t, T: Display>(
@@ -406,11 +406,11 @@ pub trait KdlEntryExt {
     where
         T::Err: Display;
 
-    fn as_asset_ref<A: Asset>(
+    fn as_handle<A: Asset + AssetType>(
         &self,
         load_context: &mut LoadContext,
         source: &Arc<String>,
-    ) -> Result<AssetRef<A>, KdlBindError>;
+    ) -> Result<Handle<A>, KdlBindError>;
 
     fn as_variant<'t, T: Display>(
         &self,
@@ -453,12 +453,12 @@ impl KdlEntryExt for KdlEntry {
             .map_err(|err| source.parse_error(err, self.span()))
     }
 
-    fn as_asset_ref<A: Asset>(
+    fn as_handle<A: Asset + AssetType>(
         &self,
         load_context: &mut LoadContext,
         source: &Arc<String>,
-    ) -> Result<AssetRef<A>, KdlBindError> {
-        AssetRef::parse(self.as_string(source)?, load_context)
+    ) -> Result<Handle<A>, KdlBindError> {
+        asset_ref::load(self.as_string(source)?, load_context)
             .map_err(|err| source.parse_error(err, self.span()))
     }
 
