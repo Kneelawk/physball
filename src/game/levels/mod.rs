@@ -66,9 +66,9 @@ pub struct PlayerSpawnPoint;
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Resource, Reflect)]
 #[reflect(Debug, Default, Clone, Hash, Resource)]
 pub enum LevelLoadingLock {
+    Canceled,
     #[default]
-    NotLoading,
-    Loading,
+    NotCanceled,
 }
 
 fn start_loading_level(
@@ -88,7 +88,7 @@ fn start_loading_level(
     };
     info!("Loading level '{}'", &level.name);
     cmd.insert_resource(LevelHandle(assets.load(&level.path)));
-    *level_lock = LevelLoadingLock::Loading;
+    *level_lock = LevelLoadingLock::NotCanceled;
 }
 
 fn unselect_level(mut cmd: Commands) {
@@ -140,10 +140,10 @@ fn spawn_level(
     level_assets: Res<Assets<SerialLevel>>,
     app_state: Res<State<AppState>>,
     mut next_state: ResMut<NextState<AppState>>,
-    mut level_lock: ResMut<LevelLoadingLock>,
+    level_lock: ResMut<LevelLoadingLock>,
 ) {
     if let Some(level_handle) = level_handle
-        && *level_lock == LevelLoadingLock::Loading
+        && *level_lock == LevelLoadingLock::NotCanceled
     {
         for e in msg.read() {
             if e.is_loaded_with_dependencies(&level_handle.0) {
@@ -162,8 +162,6 @@ fn spawn_level(
                     next_state.set(AppState::Game);
                     cmd.trigger(LevelReadyEvent);
                 }
-
-                *level_lock = LevelLoadingLock::NotLoading;
 
                 msg.clear();
                 return;

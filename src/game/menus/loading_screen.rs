@@ -98,12 +98,12 @@ fn build_loading_screen(
                               mut next_state: ResMut<NextState<AppState>>,
                               mut next_menu: ResMut<NextState<MenuState>>,
                               mut level_lock: ResMut<LevelLoadingLock>| {
-                            if ignore_loading_lock || *level_lock == LevelLoadingLock::Loading {
+                            if ignore_loading_lock || *level_lock == LevelLoadingLock::NotCanceled {
                                 cmd.remove_resource::<SelectedLevel>();
                                 cmd.remove_resource::<LevelHandle>();
                                 next_state.set(AppState::MainMenu);
                                 next_menu.set(MenuState::LevelSelect);
-                                *level_lock = LevelLoadingLock::NotLoading;
+                                *level_lock = LevelLoadingLock::Canceled;
                             }
                         }
                     )
