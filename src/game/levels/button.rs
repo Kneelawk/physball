@@ -19,7 +19,7 @@ impl Plugin for ButtonPlugin {
     }
 }
 
-#[derive(Debug, Default, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
 #[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
 #[require(LevelObject, Transform, InheritedVisibility)]
 #[component(on_insert = level_button_on_insert)]
@@ -35,15 +35,25 @@ pub struct LevelButton;
 )]
 #[component(on_insert = level_button_plate_on_insert)]
 pub struct LevelButtonPlate {
-    pub name: String,
     pub depression: f32,
 }
+
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
+#[require(
+    LevelObject,
+    Transform,
+    RigidBody::Static,
+    Sensor,
+    Collider::cuboid(0.54, 0.06, 0.54),
+    CollisionEventsEnabled
+)]
+pub struct LevelButtonSensor;
 
 #[derive(Debug, Default, Clone, PartialEq, Component, Reflect)]
 #[reflect(Debug, Default, Clone, PartialEq, Component)]
 #[require(LevelObject, Transform)]
 pub struct LevelButtonDoor {
-    pub name: String,
     pub level: f32,
 }
 
@@ -56,6 +66,9 @@ fn level_button_on_insert(mut world: DeferredWorld, ctx: HookContext) {
     let mut commands = binding.entity(ctx.entity);
     commands.insert_if_new(SceneRoot(button_holder));
     commands.observe(level_button_on_scene_load);
+    commands.with_children(|b| {
+        b.spawn(LevelButtonPlate::default());
+    });
 }
 
 fn level_button_on_scene_load(
@@ -96,7 +109,7 @@ fn detect_button_press(
             total_pressure += contact_pair.total_normal_impulse_magnitude();
         }
 
-        info!("total_impulse: {total_pressure}");
+        // info!("total_impulse: {total_pressure}");
 
         // if total_impulse > 1.0 {
         //     let depression = (1.0 - (total_impulse - 1.0) / 4.0).max(0.0);

@@ -14,6 +14,7 @@ use bevy::asset::LoadContext;
 use bevy::prelude::*;
 use bevy_rich_text3d::{Text3d, Text3dStyling, TextAlign};
 use kdl::{KdlDocument, KdlNode};
+use std::collections::HashMap;
 use std::string::ToString;
 use std::sync::Arc;
 use strum::VariantArray;
@@ -152,8 +153,9 @@ impl SerialLevel {
             text.spawn(args);
         }
 
+        let mut button_names = HashMap::new();
         for button in self.buttons.iter() {
-            button.spawn(args);
+            button_names.insert(button.name.clone(), button.spawn(args));
         }
     }
 }
@@ -325,17 +327,7 @@ impl SerialButton {
         Ok(Self { name, trans })
     }
 
-    pub fn spawn(&self, args: &mut LevelBuildArgs) {
-        args.cmd.spawn((
-            LevelButton,
-            self.trans,
-            children![(
-                LevelButtonPlate {
-                    name: self.name.clone(),
-                    ..default()
-                },
-                Transform::from_xyz(0.0, 0.05, 0.0)
-            )],
-        ));
+    pub fn spawn(&self, args: &mut LevelBuildArgs) -> Entity {
+        args.cmd.spawn((LevelButton, self.trans)).id()
     }
 }

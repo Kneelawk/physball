@@ -17,7 +17,10 @@ impl Plugin for CameraPlugin {
         app.add_observer(on_start_level)
             .add_observer(on_restart_level)
             .add_systems(OnExit(AppState::Splash), setup_camera)
-            .add_systems(Update, rotate_camera.run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Update,
+                (rotate_camera, zoom_camera).run_if(in_state(GameState::Playing)),
+            )
             .add_systems(OnExit(AppState::Game), reset_camera);
     }
 }
@@ -71,6 +74,14 @@ fn rotate_camera(
             camera.yaw += -delta.x * mouse_speed;
             camera.pitch =
                 (camera.pitch - delta.y * mouse_speed).clamp(-PI / 2.0 + 0.001, PI / 2.0 - 0.001);
+        }
+    }
+}
+
+fn zoom_camera(mut camera: Single<&mut PlayerCamera>, mut mouse: MessageReader<PlayerInput>) {
+    for mouse in mouse.read() {
+        if let PlayerInput::Zoom(delta) = mouse {
+            camera.distance = (camera.distance - delta).clamp(0.05, 10.0);
         }
     }
 }

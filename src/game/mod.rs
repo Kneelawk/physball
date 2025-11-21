@@ -1,6 +1,7 @@
 mod assets;
 mod camera;
 mod game_state;
+mod gizmos;
 mod gui;
 mod input;
 mod levels;
@@ -12,6 +13,7 @@ mod state;
 
 use crate::game::settings::GamePrefs;
 use avian3d::PhysicsPlugins;
+use avian3d::prelude::PhysicsDebugPlugin;
 use bevy::app::plugin_group;
 use bevy::input_focus::InputDispatchPlugin;
 use bevy::input_focus::tab_navigation::TabNavigationPlugin;
@@ -82,6 +84,7 @@ pub fn physball_client_main() -> AppExit {
             UiWidgetsPlugins,
             InputDispatchPlugin,
             TabNavigationPlugin,
+            PhysicsDebugPlugin,
         ))
         .insert_resource(prefs)
         .run()
@@ -106,5 +109,6 @@ plugin_group! {
         levels::death:::DeathPlugin,
         game_state:::GameStatePlugin,
         logic:::GamePlugin,
+        gizmos:::GizmosPlugin,
     }
 }
