@@ -1,15 +1,35 @@
 use crate::game::assets::AssetType;
 use crate::game::assets::builtin::{BUILTIN_HANDLES, BUILTIN_PREFIX};
-use crate::game::assets::preload::{PRELOAD_FONT_TEXT, PRELOAD_PARTIALS, PRELOAD_PREFIX, Preloads};
+use crate::game::assets::preload::{
+    PRELOAD_FONT_TEXT, PRELOAD_MATERIAL_DEFAULT_PLANE, PRELOAD_MATERIAL_GLOW_TEXT,
+    PRELOAD_PARTIALS, PRELOAD_PREFIX,
+};
 use bevy::asset::{Asset, Handle, LoadContext, ParseAssetPathError};
+use bevy::prelude::*;
 use thiserror::Error;
 
-pub fn default_font<A: Asset + AssetType>(load_context: &mut LoadContext) -> Handle<A> {
-    load(
-        &format!("{PRELOAD_PREFIX}{PRELOAD_FONT_TEXT}"),
-        load_context,
-    )
-    .expect("error loading default font")
+pub fn default_preload<A: Asset + AssetType>(
+    key: &str,
+    load_context: &mut LoadContext,
+) -> Handle<A> {
+    load(&format!("{PRELOAD_PREFIX}{key}"), load_context).unwrap_or_else(|err| {
+        panic!(
+            "error finding default preload '{}' (internal error): {}",
+            key, err
+        )
+    })
+}
+
+pub fn default_font(load_context: &mut LoadContext) -> Handle<Font> {
+    default_preload(PRELOAD_FONT_TEXT, load_context)
+}
+
+pub fn default_text_material(load_context: &mut LoadContext) -> Handle<StandardMaterial> {
+    default_preload(PRELOAD_MATERIAL_GLOW_TEXT, load_context)
+}
+
+pub fn default_plane_material(load_context: &mut LoadContext) -> Handle<StandardMaterial> {
+    default_preload(PRELOAD_MATERIAL_DEFAULT_PLANE, load_context)
 }
 
 pub fn load<A: Asset + AssetType>(

@@ -24,6 +24,11 @@
       "name": "glow-text",
       "type": "material",
       "path": "preload/glow-text.material.json"
+    },
+    {
+      "name": "default-plane",
+      "type": "material",
+      "path": "preload/default-plane.material.json"
     }
   ]
 }

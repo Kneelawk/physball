@@ -17,6 +17,8 @@ pub const PRELOAD_SCENE_PHYSBALL: &str = "physball";
 pub const PRELOAD_SCENE_LEVEL_END: &str = "level-end";
 pub const PRELOAD_FONT_TITLE: &str = "title";
 pub const PRELOAD_FONT_TEXT: &str = "text";
+pub const PRELOAD_MATERIAL_GLOW_TEXT: &str = "glow-text";
+pub const PRELOAD_MATERIAL_DEFAULT_PLANE: &str = "default-plane";
 
 lazy_static! {
     pub static ref ASSET_TYPES: HashMap<String, TypeId> = {
@@ -39,6 +41,14 @@ lazy_static! {
         ));
         reqs.insert((PRELOAD_FONT_TITLE.to_string(), Font::TYPE_NAME.to_string()));
         reqs.insert((PRELOAD_FONT_TEXT.to_string(), Font::TYPE_NAME.to_string()));
+        reqs.insert((
+            PRELOAD_MATERIAL_GLOW_TEXT.to_string(),
+            StandardMaterial::TYPE_NAME.to_string(),
+        ));
+        reqs.insert((
+            PRELOAD_MATERIAL_DEFAULT_PLANE.to_string(),
+            StandardMaterial::TYPE_NAME.to_string(),
+        ));
         reqs
     };
     pub static ref PRELOAD_PARTIALS: Arc<Mutex<PreloadPartials>> = Arc::new(Mutex::new(default()));

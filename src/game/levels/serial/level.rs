@@ -1,4 +1,6 @@
+use crate::capture_result;
 use crate::game::assets::asset_ref;
+use crate::game::assets::asset_ref::default_plane_material;
 use crate::game::assets::fonts::FontNames;
 use crate::game::assets::preload::Preloads;
 use crate::game::levels::death::DeathCollider;
@@ -6,11 +8,10 @@ use crate::game::levels::finish_point::FinishPoint;
 use crate::game::levels::serial::error::{KdlBindError, MergeKdlBindError};
 use crate::game::levels::serial::kdl_utils::{KdlDocumentExt, KdlNodeExt};
 use crate::game::levels::{LevelObject, PlayerSpawnPoint};
-use crate::{capture_result, type_expr};
 use avian3d::prelude::*;
 use bevy::asset::LoadContext;
 use bevy::prelude::*;
-use bevy_rich_text3d::{Text3d, Text3dStyling, TextAlign, TextAtlas};
+use bevy_rich_text3d::{Text3d, Text3dStyling, TextAlign};
 use kdl::{KdlDocument, KdlNode};
 use std::string::ToString;
 use std::sync::Arc;
@@ -42,6 +43,7 @@ pub struct SerialPlane {
     pub width: f32,
     pub length: f32,
     pub trans: Transform,
+    pub material: Handle<StandardMaterial>,
     pub ty: SerialPlaneType,
 }
 
@@ -58,10 +60,11 @@ pub enum SerialPlaneType {
 #[reflect(Debug, Clone)]
 pub struct SerialText {
     pub text: String,
+    pub trans: Transform,
+    pub material: Handle<StandardMaterial>,
     pub pt: f32,
     pub font: Handle<Font>,
     pub align: SerialAlign,
-    pub trans: Transform,
 }
 
 #[derive(Debug, Default, Copy, Clone, Reflect, strum::VariantArray, strum::Display)]
@@ -133,7 +136,7 @@ impl SerialLevel {
 impl SerialPlane {
     pub fn bind(
         node: &KdlNode,
-        _load_context: &mut LoadContext,
+        load_context: &mut LoadContext,
         source: Arc<String>,
     ) -> Result<Self, KdlBindError> {
         let size = node.must_get_number(0, &source);
@@ -143,17 +146,22 @@ impl SerialPlane {
             .get_variant("type", SerialPlaneType::VARIANTS, &source)
             .map(|ty| ty.copied().unwrap_or_default());
 
+        let material = node
+            .get_handle("material", load_context, &source)
+            .map(|handle| handle.unwrap_or_else(|| default_plane_material(load_context)));
+
         let trans = node
             .children()
             .map_or(Ok(None), |doc| doc.get_transform(&source).map(Some))
             .map(|trans| trans.unwrap_or_default());
 
-        let (size, size2, ty, trans) = (size, size2, ty, trans).merge()?;
+        let (size, size2, ty, material, trans) = (size, size2, ty, material, trans).merge()?;
 
         Ok(SerialPlane {
             width: size as f32,
             length: size2.unwrap_or(size) as f32,
             trans,
+            material,
             ty,
         })
     }
@@ -170,10 +178,7 @@ impl SerialPlane {
                                 .into(),
                         ),
                     ),
-                    MeshMaterial3d(
-                        args.assets
-                            .add(type_expr!(StandardMaterial, Color::WHITE.into())),
-                    ),
+                    MeshMaterial3d(self.material.clone()),
                     children![(
                         RigidBody::Static,
                         Collider::cuboid(self.width, 0.2, self.length),
@@ -211,25 +216,31 @@ impl SerialText {
 
         let font = node
             .get_handle::<Font>("font", load_context, &source)
-            .map(|asset| asset.unwrap_or(asset_ref::default_font(load_context)));
+            .map(|asset| asset.unwrap_or_else(|| asset_ref::default_font(load_context)));
 
         let align = node
             .get_variant("align", SerialAlign::VARIANTS, &source)
             .map(|align| align.copied().unwrap_or_default());
+
+        let material = node
+            .get_handle("material", load_context, &source)
+            .map(|asset| asset.unwrap_or_else(|| asset_ref::default_text_material(load_context)));
 
         let trans = node
             .children()
             .map_or(Ok(None), |doc| doc.get_transform(&source).map(Some))
             .map(|trans| trans.unwrap_or_default());
 
-        let (text, pt, font, align, trans) = (text, pt, font, align, trans).merge()?;
+        let (text, pt, font, align, material, trans) =
+            (text, pt, font, align, material, trans).merge()?;
 
         Ok(Self {
             text,
+            trans,
+            material,
             pt: pt as f32,
             font,
             align,
-            trans,
         })
     }
 
@@ -254,13 +265,7 @@ impl SerialText {
                 ..Default::default()
             },
             Mesh3d::default(),
-            MeshMaterial3d(args.assets.add(StandardMaterial {
-                base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
-                alpha_mode: AlphaMode::Blend,
-                cull_mode: None,
-                emissive: LinearRgba::new(0.0, 10.0, 12.0, 1.0),
-                ..default()
-            })),
+            MeshMaterial3d(self.material.clone()),
         ));
     }
 }
