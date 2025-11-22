@@ -60,6 +60,7 @@ fn setup_camera(mut cmd: Commands) {
             ..Bloom::NATURAL
         },
         DespawnOnEnter(AppState::Splash),
+        SpatialListener::default(),
     ));
 }
 

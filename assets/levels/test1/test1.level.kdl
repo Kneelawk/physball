@@ -6,7 +6,7 @@ finish {
     pos 0.0 0.5 -10.0
 }
 
-plane 50.0 15.0 material=checker-plane.material.json {
+plane 5.0 15.0 material=checker-plane.material.json {
     pos 0.0 0.0 -5.0
 }
 
@@ -20,7 +20,7 @@ plane 100.0 type=death {
 }
 
 button "test" {
-    pos 20.0 0.0 -5.0
+    pos 1.0 0.0 -5.0
 }
 
 button_door "test" {

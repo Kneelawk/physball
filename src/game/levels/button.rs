@@ -15,6 +15,8 @@ use bevy::scene::SceneInstanceReady;
 pub const BUTTON_DEPRESSION_SPEED: f32 = 8.0;
 pub const DOOR_SLIDE_SPEED: f32 = 1.25;
 
+const PLAYBACK_SETTINGS: PlaybackSettings = PlaybackSettings::REMOVE.with_spatial(true);
+
 #[derive(Debug, Default)]
 pub struct ButtonPlugin;
 
@@ -75,11 +77,7 @@ pub struct LevelButtonSensor {
 
 #[derive(Debug, Default, Clone, PartialEq, Component, Reflect)]
 #[reflect(Debug, Default, Clone, PartialEq, Component)]
-#[require(
-    LevelObject,
-    Transform,
-    PlaybackSettings = PlaybackSettings::REMOVE.with_spatial(true)
-)]
+#[require(LevelObject, Transform)]
 pub struct LevelButtonDoor {
     pub default_trans: Transform,
     pub open_trans: Transform,
@@ -213,12 +211,12 @@ fn detect_button_press(
 
         if button_sensor.prev_sensor_pressed != sensor_pressed {
             let mut commands = cmd.entity(button);
-            commands.remove::<(AudioPlayer, AudioSink)>();
+            commands.remove::<(AudioPlayer, SpatialAudioSink, PlaybackSettings)>();
 
             if sensor_pressed {
-                commands.insert(AudioPlayer::new(preloads.button_on()));
+                commands.insert((AudioPlayer::new(preloads.button_on()), PLAYBACK_SETTINGS));
             } else {
-                commands.insert(AudioPlayer::new(preloads.button_off()));
+                commands.insert((AudioPlayer::new(preloads.button_off()), PLAYBACK_SETTINGS));
             }
         }
 
@@ -240,12 +238,14 @@ fn detect_button_press(
 
                 if button_sensor.prev_sensor_pressed != sensor_pressed {
                     let mut commands = cmd.entity(door_entity);
-                    commands.remove::<(AudioPlayer, AudioSink)>();
+                    commands.remove::<(AudioPlayer, SpatialAudioSink, PlaybackSettings)>();
 
                     if sensor_pressed {
-                        commands.insert(AudioPlayer::new(preloads.door_open()));
+                        commands
+                            .insert((AudioPlayer::new(preloads.door_open()), PLAYBACK_SETTINGS));
                     } else {
-                        commands.insert(AudioPlayer::new(preloads.door_close()));
+                        commands
+                            .insert((AudioPlayer::new(preloads.door_close()), PLAYBACK_SETTINGS));
                     }
                 }
             }
