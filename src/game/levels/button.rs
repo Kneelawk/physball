@@ -10,6 +10,9 @@ use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::*;
 use bevy::scene::SceneInstanceReady;
 
+// needs to be less than gravity so we don't have oscillations
+pub const BUTTON_DEPRESSION_SPEED: f32 = 8.0;
+
 #[derive(Debug, Default)]
 pub struct ButtonPlugin;
 
@@ -18,6 +21,15 @@ impl Plugin for ButtonPlugin {
         app.add_systems(Update, detect_button_press);
     }
 }
+
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
+pub struct ButtonPresser;
+
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
+#[component(storage = "SparseSet")]
+pub struct PressedButton;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
 #[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
@@ -31,24 +43,15 @@ pub struct LevelButton;
     LevelObject,
     Transform,
     RigidBody::Kinematic,
-    Collider::cuboid(0.54, 0.05, 0.54)
+    Collider::cuboid(0.54, 0.05, 0.54),
+    CollidingEntities::default()
 )]
 #[component(on_insert = level_button_plate_on_insert)]
 pub struct LevelButtonPlate {
+    pub default_trans: Transform,
+    pub depressed_trans: Transform,
     pub depression: f32,
 }
-
-#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
-#[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
-#[require(
-    LevelObject,
-    Transform,
-    RigidBody::Static,
-    Sensor,
-    Collider::cuboid(0.54, 0.06, 0.54),
-    CollisionEventsEnabled
-)]
-pub struct LevelButtonSensor;
 
 #[derive(Debug, Default, Clone, PartialEq, Component, Reflect)]
 #[reflect(Debug, Default, Clone, PartialEq, Component)]
@@ -67,7 +70,14 @@ fn level_button_on_insert(mut world: DeferredWorld, ctx: HookContext) {
     commands.insert_if_new(SceneRoot(button_holder));
     commands.observe(level_button_on_scene_load);
     commands.with_children(|b| {
-        b.spawn(LevelButtonPlate::default());
+        b.spawn((
+            LevelButtonPlate {
+                default_trans: Transform::from_xyz(0.0, 0.035, 0.0),
+                depressed_trans: Transform::from_xyz(0.0, -0.005, 0.0),
+                ..default()
+            },
+            Transform::from_xyz(0.0, 0.035, 0.0),
+        ));
     });
 }
 
@@ -99,22 +109,30 @@ fn level_button_plate_on_insert(mut world: DeferredWorld, ctx: HookContext) {
 }
 
 fn detect_button_press(
-    button_plates: Query<(Entity, &mut LevelButtonPlate, &mut Transform)>,
-    contact_graph: Res<ContactGraph>,
+    button_plates: Query<(&CollidingEntities, &mut LevelButtonPlate, &mut Transform)>,
+    button_pressers: Query<(&Collider, &ColliderDensity), With<ButtonPresser>>,
+    time: Res<Time>,
 ) {
-    for (plate_entity, mut button_plate, mut plate_transform) in button_plates {
+    for (colliding_entities, mut button_plate, mut plate_transform) in button_plates {
         let mut total_pressure = 0.0;
-        // FIXME: contacts don't generate impulses on non-dynamic bodies
-        for contact_pair in contact_graph.contact_pairs_with(plate_entity) {
-            total_pressure += contact_pair.total_normal_impulse_magnitude();
+        for entity in colliding_entities.iter() {
+            if let Ok((collider, density)) = button_pressers.get(*entity) {
+                total_pressure += collider.mass(density.0);
+            }
         }
 
-        // info!("total_impulse: {total_pressure}");
+        if total_pressure > 0.01 {
+            button_plate.depression =
+                (button_plate.depression + time.delta_secs() * BUTTON_DEPRESSION_SPEED).min(1.0);
+        } else {
+            button_plate.depression =
+                (button_plate.depression - time.delta_secs() * BUTTON_DEPRESSION_SPEED).max(0.0);
+        }
 
-        // if total_impulse > 1.0 {
-        //     let depression = (1.0 - (total_impulse - 1.0) / 4.0).max(0.0);
-        //     button_plate.depression = depression;
-        //     plate_transform.translation = vec3(0.0, -0.04 * depression, 0.0);
-        // }
+        *plate_transform = Transform::interpolate(
+            &button_plate.default_trans,
+            &button_plate.depressed_trans,
+            button_plate.depression,
+        );
     }
 }

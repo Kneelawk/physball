@@ -2,6 +2,7 @@ use crate::game::assets::preload::Preloads;
 use crate::game::camera::PlayerCamera;
 use crate::game::game_state::GameState;
 use crate::game::input::PlayerInput;
+use crate::game::levels::button::ButtonPresser;
 use crate::game::levels::death::{Kill, Killable, PlayerDiedEvent};
 use crate::game::levels::{LevelReadyEvent, LevelRestartEvent, PlayerSpawnPoint};
 use crate::game::state::AppState;
@@ -69,6 +70,7 @@ fn add_player(
         CollisionEventsEnabled,
         Killable,
         InheritedVisibility::default(),
+        ButtonPresser,
         children![SceneRoot(preloads.physball()),],
     ));
 }
