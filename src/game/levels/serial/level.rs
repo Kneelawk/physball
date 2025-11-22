@@ -3,7 +3,7 @@ use crate::game::assets::asset_ref;
 use crate::game::assets::asset_ref::default_plane_material;
 use crate::game::assets::fonts::FontNames;
 use crate::game::assets::preload::Preloads;
-use crate::game::levels::button::LevelButton;
+use crate::game::levels::button::{ControlledBy, LevelButton, LevelButtonDoor};
 use crate::game::levels::death::DeathCollider;
 use crate::game::levels::finish_point::FinishPoint;
 use crate::game::levels::serial::error::{KdlBindError, MergeKdlBindError};
@@ -38,6 +38,7 @@ pub struct SerialLevel {
     pub planes: Vec<SerialPlane>,
     pub texts: Vec<SerialText>,
     pub buttons: Vec<SerialButton>,
+    pub button_doors: Vec<SerialButtonDoor>,
 }
 
 #[derive(Debug, Clone, Reflect)]
@@ -87,7 +88,15 @@ pub struct SerialButton {
     pub trans: Transform,
 }
 
-pub struct SerialButtonDoor {}
+#[derive(Debug, Clone, Reflect)]
+#[reflect(Debug, Clone)]
+pub struct SerialButtonDoor {
+    pub name: String,
+    pub trans: Transform,
+    pub open_trans: Transform,
+    pub dimensions: Vec3,
+    pub material: Handle<StandardMaterial>,
+}
 
 impl SerialLevel {
     pub fn bind(
@@ -129,8 +138,16 @@ impl SerialLevel {
             .collect::<Vec<_>>()
             .merge();
 
-        let (spawn, finish, planes, texts, buttons) =
-            (spawn, finish, planes, texts, buttons).merge()?;
+        let button_doors = doc
+            .nodes()
+            .iter()
+            .filter(|node| node.name().value() == "button_door")
+            .map(|node| SerialButtonDoor::bind(node, load_context, source.clone()))
+            .collect::<Vec<_>>()
+            .merge();
+
+        let (spawn, finish, planes, texts, buttons, button_doors) =
+            (spawn, finish, planes, texts, buttons, button_doors).merge()?;
 
         Ok(Self {
             spawn,
@@ -138,6 +155,7 @@ impl SerialLevel {
             planes,
             texts,
             buttons,
+            button_doors,
         })
     }
 
@@ -156,6 +174,10 @@ impl SerialLevel {
         let mut button_names = HashMap::new();
         for button in self.buttons.iter() {
             button_names.insert(button.name.clone(), button.spawn(args));
+        }
+
+        for button_door in self.button_doors.iter() {
+            button_door.spawn(&button_names, args);
         }
     }
 }
@@ -329,5 +351,63 @@ impl SerialButton {
 
     pub fn spawn(&self, args: &mut LevelBuildArgs) -> Entity {
         args.cmd.spawn((LevelButton, self.trans)).id()
+    }
+}
+
+impl SerialButtonDoor {
+    pub fn bind(
+        node: &KdlNode,
+        load_context: &mut LoadContext,
+        source: Arc<String>,
+    ) -> Result<Self, KdlBindError> {
+        let name = node
+            .must_get_string(0, &source)
+            .map(|name| name.to_string());
+
+        let trans = node
+            .must_children(&source)
+            .and_then(|children| children.must_children("default", &source))
+            .and_then(|default| default.get_transform(&source));
+
+        let open_trans = node
+            .must_children(&source)
+            .and_then(|children| children.must_children("open", &source))
+            .and_then(|open| open.get_transform(&source));
+
+        let dimensions = node
+            .must_child("size", &source)
+            .and_then(|child| child.must_get_vec3(0, &source));
+
+        let material = node
+            .get_handle("material", load_context, &source)
+            .map(|handle| handle.unwrap_or_else(|| default_plane_material(load_context)));
+
+        let (name, trans, open_trans, dimensions, material) =
+            (name, trans, open_trans, dimensions, material).merge()?;
+
+        Ok(Self {
+            name,
+            trans,
+            open_trans,
+            dimensions,
+            material,
+        })
+    }
+
+    pub fn spawn(&self, button_names: &HashMap<String, Entity>, args: &mut LevelBuildArgs) {
+        let mut commands = args.cmd.spawn((
+            LevelButtonDoor {
+                default_trans: self.trans,
+                open_trans: self.open_trans,
+                openness: 0.0,
+            },
+            Mesh3d(args.assets.add(Cuboid::from_size(self.dimensions).into())),
+            MeshMaterial3d(self.material.clone()),
+            RigidBody::Kinematic,
+            Collider::cuboid(self.dimensions.x, self.dimensions.y, self.dimensions.z),
+        ));
+        if let Some(button) = button_names.get(&self.name) {
+            commands.insert(ControlledBy(*button));
+        }
     }
 }

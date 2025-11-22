@@ -13,7 +13,7 @@ use bevy::scene::SceneInstanceReady;
 
 // needs to be less than gravity so we don't have oscillations
 pub const BUTTON_DEPRESSION_SPEED: f32 = 8.0;
-pub const BUTTON_DEBOUNCE: f32 = 0.1;
+pub const DOOR_SLIDE_SPEED: f32 = 1.25;
 
 #[derive(Debug, Default)]
 pub struct ButtonPlugin;
@@ -75,9 +75,31 @@ pub struct LevelButtonSensor {
 
 #[derive(Debug, Default, Clone, PartialEq, Component, Reflect)]
 #[reflect(Debug, Default, Clone, PartialEq, Component)]
-#[require(LevelObject, Transform)]
+#[require(
+    LevelObject,
+    Transform,
+    PlaybackSettings = PlaybackSettings::REMOVE.with_spatial(true)
+)]
 pub struct LevelButtonDoor {
-    pub level: f32,
+    pub default_trans: Transform,
+    pub open_trans: Transform,
+    pub openness: f32,
+}
+
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Clone, PartialEq, Hash, Component)]
+#[relationship(relationship_target = ControlledObjects)]
+pub struct ControlledBy(pub Entity);
+
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Clone, PartialEq, Hash, Component)]
+#[relationship_target(relationship = ControlledBy)]
+pub struct ControlledObjects(Vec<Entity>);
+
+impl ControlledObjects {
+    pub fn controlled(&self) -> &[Entity] {
+        &self.0
+    }
 }
 
 fn level_button_on_insert(mut world: DeferredWorld, ctx: HookContext) {
@@ -136,9 +158,11 @@ fn detect_button_press(
     mut cmd: Commands,
     buttons: Query<Entity, With<LevelButton>>,
     children: Query<&Children>,
-    mut button_plates: Query<(&mut LevelButtonPlate, &mut Transform)>,
+    controlled: Query<&ControlledObjects>,
+    mut button_plates: Query<(&mut LevelButtonPlate, &mut Transform), Without<LevelButtonDoor>>,
     mut button_sensors: Query<(&CollidingEntities, &mut LevelButtonSensor)>,
     button_pressers: Query<(), With<ButtonPresser>>,
+    mut button_doors: Query<(&mut LevelButtonDoor, &mut Transform), Without<LevelButtonPlate>>,
     time: Res<Time>,
     preloads: Res<Preloads>,
 ) {
@@ -195,6 +219,35 @@ fn detect_button_press(
                 commands.insert(AudioPlayer::new(preloads.button_on()));
             } else {
                 commands.insert(AudioPlayer::new(preloads.button_off()));
+            }
+        }
+
+        for door_entity in controlled
+            .get(button)
+            .iter()
+            .flat_map(|controlled| controlled.controlled().iter())
+            .copied()
+        {
+            if let Ok((mut door, mut door_trans)) = button_doors.get_mut(door_entity) {
+                if sensor_pressed {
+                    door.openness = (door.openness + time.delta_secs() * DOOR_SLIDE_SPEED).min(1.0);
+                } else {
+                    door.openness = (door.openness - time.delta_secs() * DOOR_SLIDE_SPEED).max(0.0);
+                }
+
+                *door_trans =
+                    Transform::interpolate(&door.default_trans, &door.open_trans, door.openness);
+
+                if button_sensor.prev_sensor_pressed != sensor_pressed {
+                    let mut commands = cmd.entity(door_entity);
+                    commands.remove::<(AudioPlayer, AudioSink)>();
+
+                    if sensor_pressed {
+                        commands.insert(AudioPlayer::new(preloads.door_open()));
+                    } else {
+                        commands.insert(AudioPlayer::new(preloads.door_close()));
+                    }
+                }
             }
         }
 

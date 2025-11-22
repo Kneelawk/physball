@@ -23,6 +23,8 @@ pub const PRELOAD_MATERIAL_GLOW_TEXT: &str = "glow-text";
 pub const PRELOAD_MATERIAL_DEFAULT_PLANE: &str = "default-plane";
 pub const PRELOAD_AUDIO_BUTTON_ON: &str = "button-on";
 pub const PRELOAD_AUDIO_BUTTON_OFF: &str = "button-off";
+pub const PRELOAD_AUDIO_DOOR_OPEN: &str = "door-open";
+pub const PRELOAD_AUDIO_DOOR_CLOSE: &str = "door-close";
 
 lazy_static! {
     pub static ref ASSET_TYPES: HashMap<String, TypeId> = {
@@ -67,6 +69,14 @@ lazy_static! {
         ));
         reqs.insert((
             PRELOAD_AUDIO_BUTTON_OFF.to_string(),
+            AudioSource::TYPE_NAME.to_string(),
+        ));
+        reqs.insert((
+            PRELOAD_AUDIO_DOOR_OPEN.to_string(),
+            AudioSource::TYPE_NAME.to_string(),
+        ));
+        reqs.insert((
+            PRELOAD_AUDIO_DOOR_CLOSE.to_string(),
             AudioSource::TYPE_NAME.to_string(),
         ));
         reqs
@@ -176,6 +186,14 @@ impl Preloads {
 
     pub fn button_off(&self) -> Handle<AudioSource> {
         self.handle(PRELOAD_AUDIO_BUTTON_OFF)
+    }
+
+    pub fn door_open(&self) -> Handle<AudioSource> {
+        self.handle(PRELOAD_AUDIO_DOOR_OPEN)
+    }
+
+    pub fn door_close(&self) -> Handle<AudioSource> {
+        self.handle(PRELOAD_AUDIO_DOOR_CLOSE)
     }
 }
 

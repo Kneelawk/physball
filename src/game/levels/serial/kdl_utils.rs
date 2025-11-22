@@ -140,6 +140,10 @@ impl KdlDocumentExt for KdlDocument {
 pub trait KdlNodeExt {
     fn must_children(&self, args: &Arc<String>) -> Result<&KdlDocument, KdlBindError>;
 
+    fn must_child(&self, name: &str, source: &Arc<String>) -> Result<&KdlNode, KdlBindError>;
+
+    fn child(&self, name: &str) -> Option<&KdlNode>;
+
     fn must_entry(
         &self,
         key: impl Into<NodeKey>,
@@ -268,6 +272,15 @@ impl KdlNodeExt for KdlNode {
     fn must_children(&self, source: &Arc<String>) -> Result<&KdlDocument, KdlBindError> {
         self.children()
             .ok_or_else(|| source.no_children(self.span()))
+    }
+
+    fn must_child(&self, name: &str, source: &Arc<String>) -> Result<&KdlNode, KdlBindError> {
+        self.must_children(source)
+            .and_then(|children| children.must_get(name, source))
+    }
+
+    fn child(&self, name: &str) -> Option<&KdlNode> {
+        self.children().and_then(|children| children.get(name))
     }
 
     fn must_entry(

@@ -49,6 +49,16 @@
       "name": "button-off",
       "type": "audio",
       "path": "preload/button/22015__jpolito__switches/391700__jpolito__jp_lightswitch01.ogg"
+    },
+    {
+      "name": "door-open",
+      "type": "audio",
+      "path": "preload/door/37537__rubberduck9999__effects/678452__rubberduck9999__hydraulic-office-chair-moving-effect-01.ogg"
+    },
+    {
+      "name": "door-close",
+      "type": "audio",
+      "path": "preload/door/37537__rubberduck9999__effects/678453__rubberduck9999__hydraulic-office-chair-moving-effect-02.ogg"
     }
   ]
 }
