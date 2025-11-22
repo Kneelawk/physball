@@ -50,17 +50,27 @@ pub struct LevelButton;
     LevelObject,
     Transform,
     RigidBody::Kinematic,
-    Collider::cuboid(0.54, 0.05, 0.54),
-    CollidingEntities::default()
+    Collider::cuboid(0.54, 0.05, 0.54)
 )]
 #[component(on_insert = level_button_plate_on_insert)]
 pub struct LevelButtonPlate {
     pub default_trans: Transform,
     pub depressed_trans: Transform,
     pub depression: f32,
-    pub debounce: f32,
-    pub prev_debounce: f32,
-    pub depressing: bool,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Component)]
+#[require(
+    LevelObject,
+    Transform,
+    RigidBody::Static,
+    Collider::cuboid(0.54, 0.08, 0.54),
+    Sensor,
+    CollidingEntities::default()
+)]
+pub struct LevelButtonSensor {
+    pub prev_sensor_pressed: bool,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Component, Reflect)]
@@ -86,6 +96,10 @@ fn level_button_on_insert(mut world: DeferredWorld, ctx: HookContext) {
                 depressed_trans: Transform::from_xyz(0.0, -0.005, 0.0),
                 ..default()
             },
+            Transform::from_xyz(0.0, 0.035, 0.0),
+        ));
+        b.spawn((
+            LevelButtonSensor::default(),
             Transform::from_xyz(0.0, 0.035, 0.0),
         ));
     });
@@ -120,68 +134,70 @@ fn level_button_plate_on_insert(mut world: DeferredWorld, ctx: HookContext) {
 
 fn detect_button_press(
     mut cmd: Commands,
-    button_plates: Query<(
-        Entity,
-        &CollidingEntities,
-        &mut LevelButtonPlate,
-        &mut Transform,
-    )>,
-    button_pressers: Query<(&Collider, &ColliderDensity), With<ButtonPresser>>,
-    parents: Query<&ChildOf>,
+    buttons: Query<Entity, With<LevelButton>>,
+    children: Query<&Children>,
+    mut button_plates: Query<(&mut LevelButtonPlate, &mut Transform)>,
+    mut button_sensors: Query<(&CollidingEntities, &mut LevelButtonSensor)>,
+    button_pressers: Query<(), With<ButtonPresser>>,
     time: Res<Time>,
     preloads: Res<Preloads>,
 ) {
-    for (plate_entity, colliding_entities, mut button_plate, mut plate_transform) in button_plates {
+    for button in buttons {
+        let Some(plate_entity) = children
+            .get(button)
+            .iter()
+            .flat_map(|children| children.iter())
+            .find(|child| button_plates.contains(*child))
+        else {
+            continue;
+        };
+        let (mut button_plate, mut plate_transform) = button_plates
+            .get_mut(plate_entity)
+            .expect("button_plates does not have a contained entity");
+        let Some(sensor_entity) = children
+            .get(button)
+            .iter()
+            .flat_map(|children| children.iter())
+            .find(|child| button_sensors.contains(*child))
+        else {
+            continue;
+        };
+        let (sensor_collisions, mut button_sensor) = button_sensors
+            .get_mut(sensor_entity)
+            .expect("button_sensors does not have a contained entity");
         let LevelButtonPlate {
             default_trans,
             depressed_trans,
             depression,
-            debounce,
-            prev_debounce,
-            depressing,
         } = &mut *button_plate;
 
-        let mut total_pressure = 0.0;
-        for entity in colliding_entities.iter() {
-            if let Ok((collider, density)) = button_pressers.get(*entity) {
-                total_pressure += collider.mass(density.0);
+        let mut sensor_pressed = false;
+        for entity in sensor_collisions.iter() {
+            if button_pressers.contains(*entity) {
+                sensor_pressed = true;
+                break;
             }
         }
 
-        if total_pressure > 0.01 {
+        if sensor_pressed {
             *depression = (*depression + time.delta_secs() * BUTTON_DEPRESSION_SPEED).min(1.0);
-
-            if !*depressing {
-                *debounce = BUTTON_DEBOUNCE;
-                *depressing = true;
-            }
         } else {
             *depression = (*depression - time.delta_secs() * BUTTON_DEPRESSION_SPEED).max(0.0);
-
-            if *depressing {
-                *debounce = BUTTON_DEBOUNCE;
-                *depressing = false;
-            }
         }
 
-        if *debounce < 0.0001
-            && *prev_debounce > 0.0001
-            && let Ok(parent) = parents.get(plate_entity)
-        {
-            let holder_entity = parent.parent();
-            let mut commands = cmd.entity(holder_entity);
+        *plate_transform = Transform::interpolate(&*default_trans, &*depressed_trans, *depression);
+
+        if button_sensor.prev_sensor_pressed != sensor_pressed {
+            let mut commands = cmd.entity(button);
             commands.remove::<(AudioPlayer, AudioSink)>();
 
-            if *depressing {
+            if sensor_pressed {
                 commands.insert(AudioPlayer::new(preloads.button_on()));
             } else {
                 commands.insert(AudioPlayer::new(preloads.button_off()));
             }
         }
-        *prev_debounce = *debounce;
 
-        *debounce = (*debounce - time.delta_secs()).max(0.0);
-
-        *plate_transform = Transform::interpolate(&*default_trans, &*depressed_trans, *depression);
+        button_sensor.prev_sensor_pressed = sensor_pressed;
     }
 }
