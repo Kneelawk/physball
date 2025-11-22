@@ -3,7 +3,7 @@ use crate::game::assets::asset_ref;
 use crate::game::assets::asset_ref::default_plane_material;
 use crate::game::assets::fonts::FontNames;
 use crate::game::assets::preload::Preloads;
-use crate::game::levels::button::{LevelButton, LevelButtonPlate};
+use crate::game::levels::button::LevelButton;
 use crate::game::levels::death::DeathCollider;
 use crate::game::levels::finish_point::FinishPoint;
 use crate::game::levels::serial::error::{KdlBindError, MergeKdlBindError};

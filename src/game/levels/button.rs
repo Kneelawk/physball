@@ -67,9 +67,9 @@ fn level_button_on_insert(mut world: DeferredWorld, ctx: HookContext) {
     let button_holder = preloads.button_holder();
     let mut binding = world.commands();
     let mut commands = binding.entity(ctx.entity);
-    commands.insert_if_new(SceneRoot(button_holder));
-    commands.observe(level_button_on_scene_load);
     commands.with_children(|b| {
+        b.spawn(SceneRoot(button_holder))
+            .observe(level_button_on_scene_load);
         b.spawn((
             LevelButtonPlate {
                 default_trans: Transform::from_xyz(0.0, 0.035, 0.0),
@@ -91,7 +91,7 @@ fn level_button_on_scene_load(
     for child in children.iter_descendants(scene.entity) {
         if let Ok(mesh3d) = mesh_handles.get(child)
             && let Some(mesh) = meshes.get(&mesh3d.0)
-            && let Some(collider) = Collider::convex_decomposition_from_mesh(mesh)
+            && let Some(collider) = Collider::trimesh_from_mesh(mesh)
         {
             cmd.entity(child).insert((RigidBody::Static, collider));
         }
