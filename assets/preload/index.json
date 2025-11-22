@@ -13,12 +13,12 @@
     {
       "name": "button-holder",
       "type": "scene",
-      "path": "preload/button-holder.glb#Scene0"
+      "path": "preload/button/button-holder.glb#Scene0"
     },
     {
       "name": "button-plate",
       "type": "scene",
-      "path": "preload/button-plate.glb#Scene0"
+      "path": "preload/button/button-plate.glb#Scene0"
     },
     {
       "name": "title",
@@ -39,6 +39,16 @@
       "name": "default-plane",
       "type": "material",
       "path": "preload/default-plane.material.json"
+    },
+    {
+      "name": "button-on",
+      "type": "audio",
+      "path": "preload/button/22015__jpolito__switches/391698__jpolito__jp_lightswitch03.ogg"
+    },
+    {
+      "name": "button-off",
+      "type": "audio",
+      "path": "preload/button/22015__jpolito__switches/391700__jpolito__jp_lightswitch01.ogg"
     }
   ]
 }

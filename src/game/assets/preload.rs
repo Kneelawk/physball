@@ -21,6 +21,8 @@ pub const PRELOAD_FONT_TITLE: &str = "title";
 pub const PRELOAD_FONT_TEXT: &str = "text";
 pub const PRELOAD_MATERIAL_GLOW_TEXT: &str = "glow-text";
 pub const PRELOAD_MATERIAL_DEFAULT_PLANE: &str = "default-plane";
+pub const PRELOAD_AUDIO_BUTTON_ON: &str = "button-on";
+pub const PRELOAD_AUDIO_BUTTON_OFF: &str = "button-off";
 
 lazy_static! {
     pub static ref ASSET_TYPES: HashMap<String, TypeId> = {
@@ -58,6 +60,14 @@ lazy_static! {
         reqs.insert((
             PRELOAD_MATERIAL_DEFAULT_PLANE.to_string(),
             StandardMaterial::TYPE_NAME.to_string(),
+        ));
+        reqs.insert((
+            PRELOAD_AUDIO_BUTTON_ON.to_string(),
+            AudioSource::TYPE_NAME.to_string(),
+        ));
+        reqs.insert((
+            PRELOAD_AUDIO_BUTTON_OFF.to_string(),
+            AudioSource::TYPE_NAME.to_string(),
         ));
         reqs
     };
@@ -158,6 +168,14 @@ impl Preloads {
 
     pub fn glow_text_material(&self) -> Handle<StandardMaterial> {
         self.handle(PRELOAD_MATERIAL_GLOW_TEXT)
+    }
+
+    pub fn button_on(&self) -> Handle<AudioSource> {
+        self.handle(PRELOAD_AUDIO_BUTTON_ON)
+    }
+
+    pub fn button_off(&self) -> Handle<AudioSource> {
+        self.handle(PRELOAD_AUDIO_BUTTON_OFF)
     }
 }
 

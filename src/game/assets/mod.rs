@@ -76,6 +76,10 @@ impl AssetType for StandardMaterial {
     const TYPE_NAME: &'static str = "material";
 }
 
+impl AssetType for AudioSource {
+    const TYPE_NAME: &'static str = "audio";
+}
+
 macro_rules! define_asset_type_macro {
     ($($at:ident),*) => {
         macro_rules! asset_types {
@@ -90,4 +94,4 @@ macro_rules! define_asset_type_macro {
     };
 }
 
-define_asset_type_macro!(Font, Image, Scene, StandardMaterial);
+define_asset_type_macro!(Font, Image, Scene, StandardMaterial, AudioSource);

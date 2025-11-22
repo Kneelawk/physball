@@ -4,6 +4,7 @@
 
 use crate::game::assets::preload::Preloads;
 use crate::game::levels::LevelObject;
+use crate::game::state::AppState;
 use avian3d::prelude::*;
 use bevy::ecs::lifecycle::HookContext;
 use bevy::ecs::world::DeferredWorld;
@@ -12,13 +13,14 @@ use bevy::scene::SceneInstanceReady;
 
 // needs to be less than gravity so we don't have oscillations
 pub const BUTTON_DEPRESSION_SPEED: f32 = 8.0;
+pub const BUTTON_DEBOUNCE: f32 = 0.1;
 
 #[derive(Debug, Default)]
 pub struct ButtonPlugin;
 
 impl Plugin for ButtonPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, detect_button_press);
+        app.add_systems(Update, detect_button_press.run_if(in_state(AppState::Game)));
     }
 }
 
@@ -33,7 +35,12 @@ pub struct PressedButton;
 
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
 #[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
-#[require(LevelObject, Transform, InheritedVisibility)]
+#[require(
+    LevelObject,
+    Transform,
+    InheritedVisibility,
+    PlaybackSettings = PlaybackSettings::REMOVE.with_spatial(true)
+)]
 #[component(on_insert = level_button_on_insert)]
 pub struct LevelButton;
 
@@ -51,6 +58,9 @@ pub struct LevelButtonPlate {
     pub default_trans: Transform,
     pub depressed_trans: Transform,
     pub depression: f32,
+    pub debounce: f32,
+    pub prev_debounce: f32,
+    pub depressing: bool,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Component, Reflect)]
@@ -109,11 +119,28 @@ fn level_button_plate_on_insert(mut world: DeferredWorld, ctx: HookContext) {
 }
 
 fn detect_button_press(
-    button_plates: Query<(&CollidingEntities, &mut LevelButtonPlate, &mut Transform)>,
+    mut cmd: Commands,
+    button_plates: Query<(
+        Entity,
+        &CollidingEntities,
+        &mut LevelButtonPlate,
+        &mut Transform,
+    )>,
     button_pressers: Query<(&Collider, &ColliderDensity), With<ButtonPresser>>,
+    parents: Query<&ChildOf>,
     time: Res<Time>,
+    preloads: Res<Preloads>,
 ) {
-    for (colliding_entities, mut button_plate, mut plate_transform) in button_plates {
+    for (plate_entity, colliding_entities, mut button_plate, mut plate_transform) in button_plates {
+        let LevelButtonPlate {
+            default_trans,
+            depressed_trans,
+            depression,
+            debounce,
+            prev_debounce,
+            depressing,
+        } = &mut *button_plate;
+
         let mut total_pressure = 0.0;
         for entity in colliding_entities.iter() {
             if let Ok((collider, density)) = button_pressers.get(*entity) {
@@ -122,17 +149,39 @@ fn detect_button_press(
         }
 
         if total_pressure > 0.01 {
-            button_plate.depression =
-                (button_plate.depression + time.delta_secs() * BUTTON_DEPRESSION_SPEED).min(1.0);
+            *depression = (*depression + time.delta_secs() * BUTTON_DEPRESSION_SPEED).min(1.0);
+
+            if !*depressing {
+                *debounce = BUTTON_DEBOUNCE;
+                *depressing = true;
+            }
         } else {
-            button_plate.depression =
-                (button_plate.depression - time.delta_secs() * BUTTON_DEPRESSION_SPEED).max(0.0);
+            *depression = (*depression - time.delta_secs() * BUTTON_DEPRESSION_SPEED).max(0.0);
+
+            if *depressing {
+                *debounce = BUTTON_DEBOUNCE;
+                *depressing = false;
+            }
         }
 
-        *plate_transform = Transform::interpolate(
-            &button_plate.default_trans,
-            &button_plate.depressed_trans,
-            button_plate.depression,
-        );
+        if *debounce < 0.0001
+            && *prev_debounce > 0.0001
+            && let Ok(parent) = parents.get(plate_entity)
+        {
+            let holder_entity = parent.parent();
+            let mut commands = cmd.entity(holder_entity);
+            commands.remove::<(AudioPlayer, AudioSink)>();
+
+            if *depressing {
+                commands.insert(AudioPlayer::new(preloads.button_on()));
+            } else {
+                commands.insert(AudioPlayer::new(preloads.button_off()));
+            }
+        }
+        *prev_debounce = *debounce;
+
+        *debounce = (*debounce - time.delta_secs()).max(0.0);
+
+        *plate_transform = Transform::interpolate(&*default_trans, &*depressed_trans, *depression);
     }
 }
