@@ -69,6 +69,11 @@
       "name": "background-2",
       "type": "audio",
       "path": "preload/music/Another Idea.ogg"
+    },
+    {
+      "name": "camera",
+      "type": "audio",
+      "path": "preload/camerasound.ogg"
     }
   ]
 }

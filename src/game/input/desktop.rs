@@ -4,12 +4,13 @@ use bevy::input::keyboard::Key;
 use bevy::input::mouse::{MouseMotion, MouseWheel};
 use bevy::prelude::*;
 
+#[allow(dead_code)]
 pub fn build(app: &mut App) {
     app.add_systems(
         PreUpdate,
         (
             pause_play,
-            debug_gizmos,
+            fn_key_input,
             keyboard_input,
             mouse_input,
             mouse_scroll,
@@ -17,19 +18,25 @@ pub fn build(app: &mut App) {
     );
 }
 
+#[allow(dead_code)]
 pub fn game_started(state: &mut NextState<GameState>) {
     state.set(GameState::Playing);
 }
 
+#[allow(dead_code)]
 pub fn pause_play(mut writer: MessageWriter<PlayerInput>, input: Res<ButtonInput<Key>>) {
     if input.just_pressed(Key::Escape) {
         writer.write(PlayerInput::Pause { toggle: true });
     }
 }
 
-pub fn debug_gizmos(mut writer: MessageWriter<PlayerInput>, input: Res<ButtonInput<Key>>) {
+pub fn fn_key_input(mut writer: MessageWriter<PlayerInput>, input: Res<ButtonInput<Key>>) {
     if input.just_pressed(Key::F3) {
         writer.write(PlayerInput::ToggleGizmos);
+    }
+
+    if input.just_pressed(Key::F2) {
+        writer.write(PlayerInput::Screenshot);
     }
 }
 

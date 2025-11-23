@@ -1,5 +1,7 @@
 mod assets;
 mod camera;
+#[cfg(not(feature = "web-storage"))]
+mod dirs;
 mod game_state;
 mod gizmos;
 mod gui;
@@ -8,6 +10,7 @@ mod levels;
 mod logic;
 mod menus;
 mod music;
+mod screenshot;
 mod settings;
 mod startup;
 mod state;
@@ -111,6 +114,7 @@ plugin_group! {
         levels::death:::DeathPlugin,
         game_state:::GameStatePlugin,
         logic:::GamePlugin,
+        screenshot:::ScreenshotPlugin,
         gizmos:::GizmosPlugin,
     }
 }

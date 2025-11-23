@@ -25,6 +25,7 @@ pub const PRELOAD_AUDIO_BUTTON_ON: &str = "button-on";
 pub const PRELOAD_AUDIO_BUTTON_OFF: &str = "button-off";
 pub const PRELOAD_AUDIO_DOOR_OPEN: &str = "door-open";
 pub const PRELOAD_AUDIO_DOOR_CLOSE: &str = "door-close";
+pub const PRELOAD_AUDIO_CAMERA: &str = "camera";
 
 lazy_static! {
     pub static ref ASSET_TYPES: HashMap<String, TypeId> = {
@@ -77,6 +78,10 @@ lazy_static! {
         ));
         reqs.insert((
             PRELOAD_AUDIO_DOOR_CLOSE.to_string(),
+            AudioSource::TYPE_NAME.to_string(),
+        ));
+        reqs.insert((
+            PRELOAD_AUDIO_CAMERA.to_string(),
             AudioSource::TYPE_NAME.to_string(),
         ));
         reqs
@@ -194,6 +199,10 @@ impl Preloads {
 
     pub fn door_close(&self) -> Handle<AudioSource> {
         self.handle(PRELOAD_AUDIO_DOOR_CLOSE)
+    }
+
+    pub fn camera_sound(&self) -> Handle<AudioSource> {
+        self.handle(PRELOAD_AUDIO_CAMERA)
     }
 }
 

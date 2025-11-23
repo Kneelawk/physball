@@ -2,17 +2,9 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[cfg(not(feature = "web-storage"))]
-use directories::ProjectDirs;
-#[cfg(not(feature = "web-storage"))]
-use lazy_static::lazy_static;
+use crate::game::dirs::PROJECT_DIRS;
 #[cfg(not(feature = "web-storage"))]
 use std::fs::{OpenOptions, create_dir_all};
-
-#[cfg(not(feature = "web-storage"))]
-lazy_static! {
-    pub static ref PROJECT_DIRS: ProjectDirs = ProjectDirs::from("com", "kneelawk", "physball")
-        .expect("Unable to find user home directory");
-}
 
 pub const DEFAULT_MOUSE_SPEED: f32 = 2.5;
 

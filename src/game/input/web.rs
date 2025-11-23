@@ -17,7 +17,7 @@ pub fn build(app: &mut App) {
             (
                 pause_on_lose_focus,
                 pause_play,
-                desktop::debug_gizmos,
+                desktop::fn_key_input,
                 desktop::keyboard_input,
                 desktop::mouse_input,
                 desktop::mouse_scroll,

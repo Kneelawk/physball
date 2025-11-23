@@ -34,6 +34,7 @@ pub fn game_started(state: &mut NextState<GameState>) {
 
 #[derive(Debug, Copy, Clone, PartialEq, Message, Reflect)]
 #[reflect(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub enum PlayerInput {
     CameraMovement(Vec2),
     Zoom(f32),
@@ -41,4 +42,5 @@ pub enum PlayerInput {
     Jump,
     Pause { toggle: bool },
     ToggleGizmos,
+    Screenshot,
 }
