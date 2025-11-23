@@ -2,7 +2,7 @@ use crate::capture_result;
 use crate::game::assets::asset_ref;
 use crate::game::assets::fonts::FontNames;
 use crate::game::assets::preload::Preloads;
-use crate::game::levels::button::{ControlledBy, LevelButton, LevelButtonDoor};
+use crate::game::levels::button::{ButtonPresser, ControlledBy, LevelButton, LevelButtonDoor};
 use crate::game::levels::death::DeathCollider;
 use crate::game::levels::finish_point::FinishPoint;
 use crate::game::levels::serial::error::{KdlBindError, MergeKdlBindError};
@@ -614,6 +614,7 @@ impl SerialDynamicObject {
             args.cmd.spawn((
                 LevelObject,
                 self.trans,
+                ButtonPresser,
                 Mesh3d(args.assets.add(self.ty.to_mesh(self.dimensions))),
                 MeshMaterial3d(self.material.clone()),
                 RigidBody::Dynamic,
