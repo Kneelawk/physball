@@ -1,6 +1,5 @@
 use crate::capture_result;
 use crate::game::assets::asset_ref;
-use crate::game::assets::asset_ref::default_plane_material;
 use crate::game::assets::fonts::FontNames;
 use crate::game::assets::preload::Preloads;
 use crate::game::levels::button::{ControlledBy, LevelButton, LevelButtonDoor};
@@ -39,6 +38,7 @@ pub struct SerialLevel {
     pub texts: Vec<SerialText>,
     pub buttons: Vec<SerialButton>,
     pub button_doors: Vec<SerialButtonDoor>,
+    pub dynamic_objects: Vec<SerialDynamicObject>,
 }
 
 #[derive(Debug, Clone, Reflect)]
@@ -98,6 +98,26 @@ pub struct SerialButtonDoor {
     pub material: Handle<StandardMaterial>,
 }
 
+#[derive(Debug, Clone, Reflect)]
+#[reflect(Debug, Clone)]
+pub struct SerialDynamicObject {
+    pub ty: DynamicObjectType,
+    pub dimensions: Vec3,
+    pub trans: Transform,
+    pub material: Handle<StandardMaterial>,
+}
+
+#[derive(
+    Debug, Default, Copy, Clone, Eq, PartialEq, Hash, Reflect, strum::VariantArray, strum::Display,
+)]
+#[reflect(Debug, Default, Clone, PartialEq, Hash)]
+#[strum(serialize_all = "snake_case")]
+pub enum DynamicObjectType {
+    #[default]
+    Sphere,
+    Cube,
+}
+
 impl SerialLevel {
     pub fn bind(
         doc: &KdlDocument,
@@ -146,8 +166,24 @@ impl SerialLevel {
             .collect::<Vec<_>>()
             .merge();
 
-        let (spawn, finish, planes, texts, buttons, button_doors) =
-            (spawn, finish, planes, texts, buttons, button_doors).merge()?;
+        let dynamic_objects = doc
+            .nodes()
+            .iter()
+            .filter(|node| node.name().value() == "dyn")
+            .map(|node| SerialDynamicObject::bind(node, load_context, source.clone()))
+            .collect::<Vec<_>>()
+            .merge();
+
+        let (spawn, finish, planes, texts, buttons, button_doors, dynamic_objects) = (
+            spawn,
+            finish,
+            planes,
+            texts,
+            buttons,
+            button_doors,
+            dynamic_objects,
+        )
+            .merge()?;
 
         Ok(Self {
             spawn,
@@ -156,6 +192,7 @@ impl SerialLevel {
             texts,
             buttons,
             button_doors,
+            dynamic_objects,
         })
     }
 
@@ -179,6 +216,10 @@ impl SerialLevel {
         for button_door in self.button_doors.iter() {
             button_door.spawn(&button_names, args);
         }
+
+        for dynamic_object in self.dynamic_objects.iter() {
+            dynamic_object.spawn(args);
+        }
     }
 }
 
@@ -197,7 +238,9 @@ impl SerialPlane {
 
         let material = node
             .get_handle("material", load_context, &source)
-            .map(|handle| handle.unwrap_or_else(|| default_plane_material(load_context)));
+            .map(|handle| {
+                handle.unwrap_or_else(|| asset_ref::default_plane_material(load_context))
+            });
 
         let trans = node
             .children()
@@ -380,7 +423,9 @@ impl SerialButtonDoor {
 
         let material = node
             .get_handle("material", load_context, &source)
-            .map(|handle| handle.unwrap_or_else(|| default_plane_material(load_context)));
+            .map(|handle| {
+                handle.unwrap_or_else(|| asset_ref::default_plane_material(load_context))
+            });
 
         let (name, trans, open_trans, dimensions, material) =
             (name, trans, open_trans, dimensions, material).merge()?;
@@ -408,6 +453,75 @@ impl SerialButtonDoor {
         ));
         if let Some(button) = button_names.get(&self.name) {
             commands.insert(ControlledBy(*button));
+        }
+    }
+}
+
+impl SerialDynamicObject {
+    pub fn bind(
+        node: &KdlNode,
+        load_context: &mut LoadContext,
+        source: Arc<String>,
+    ) -> Result<Self, KdlBindError> {
+        let ty = node
+            .get_variant("type", DynamicObjectType::VARIANTS, &source)
+            .map(|ty| ty.copied().unwrap_or_default());
+
+        let material = node
+            .get_handle("material", load_context, &source)
+            .map(|handle| {
+                handle.unwrap_or_else(|| asset_ref::default_plane_material(load_context))
+            });
+
+        let trans = node
+            .children()
+            .map_or(Ok(None), |children| {
+                children.get_transform(&source).map(Some)
+            })
+            .map(|trans| trans.unwrap_or_default());
+
+        let dimensions = node
+            .children()
+            .and_then(|children| children.get("size"))
+            .map_or(Ok(None), |size| size.must_get_vec3(0, &source).map(Some))
+            .map(|size| size.unwrap_or(Vec3::splat(0.25)));
+
+        let (ty, material, trans, dimensions) = (ty, material, trans, dimensions).merge()?;
+
+        Ok(Self {
+            ty,
+            dimensions,
+            trans,
+            material,
+        })
+    }
+
+    pub fn spawn(&self, args: &mut LevelBuildArgs) {
+        if args.dyn_assets {
+            args.cmd.spawn((
+                LevelObject,
+                self.trans,
+                Mesh3d(args.assets.add(self.ty.to_mesh(self.dimensions))),
+                MeshMaterial3d(self.material.clone()),
+                RigidBody::Dynamic,
+                self.ty.to_collider(self.dimensions),
+            ));
+        }
+    }
+}
+
+impl DynamicObjectType {
+    pub fn to_mesh(self, dimensions: Vec3) -> Mesh {
+        match self {
+            DynamicObjectType::Sphere => Sphere::new(dimensions.x).into(),
+            DynamicObjectType::Cube => Cuboid::from_size(dimensions).into(),
+        }
+    }
+
+    pub fn to_collider(self, dimensions: Vec3) -> Collider {
+        match self {
+            DynamicObjectType::Sphere => Collider::sphere(dimensions.x),
+            DynamicObjectType::Cube => Collider::cuboid(dimensions.x, dimensions.y, dimensions.z),
         }
     }
 }
