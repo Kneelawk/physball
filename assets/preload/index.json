@@ -59,6 +59,16 @@
       "name": "door-close",
       "type": "audio",
       "path": "preload/door/37537__rubberduck9999__effects/678453__rubberduck9999__hydraulic-office-chair-moving-effect-02.ogg"
+    },
+    {
+      "name": "background-1",
+      "type": "audio",
+      "path": "preload/music/lynndova/the worst song i've ever made.ogg"
+    },
+    {
+      "name": "background-2",
+      "type": "audio",
+      "path": "preload/music/Another Idea.ogg"
     }
   ]
 }

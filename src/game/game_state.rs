@@ -73,16 +73,25 @@ fn show_hide_cursor(
     cur_state: Res<State<GameState>>,
     mut cursor: Single<&mut CursorOptions>,
     mut physics: ResMut<Time<Physics>>,
+    audio_players: Query<&AudioSink>,
 ) {
     if cur_state.is_changed() {
         if *cur_state == GameState::Playing {
             cursor.grab_mode = CursorGrabMode::Locked;
             cursor.visible = false;
             physics.unpause();
+
+            for player in audio_players {
+                player.play();
+            }
         } else {
             cursor.grab_mode = CursorGrabMode::None;
             cursor.visible = true;
             physics.pause();
+
+            for player in audio_players {
+                player.pause();
+            }
         }
     }
 }

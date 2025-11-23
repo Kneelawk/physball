@@ -7,6 +7,7 @@ mod input;
 mod levels;
 mod logic;
 mod menus;
+mod music;
 mod settings;
 mod startup;
 mod state;
@@ -98,6 +99,7 @@ plugin_group! {
         camera:::CameraPlugin,
         input:::InputPlugin,
         gui:::GuiPlugin,
+        music:::MusicPlugin,
         menus:::MainMenuPlugin,
         menus:::OptionsMenuPlugin,
         menus:::LoadingScreenPlugin,

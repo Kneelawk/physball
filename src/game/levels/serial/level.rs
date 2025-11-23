@@ -8,6 +8,8 @@ use crate::game::levels::finish_point::FinishPoint;
 use crate::game::levels::serial::error::{KdlBindError, MergeKdlBindError};
 use crate::game::levels::serial::kdl_utils::{KdlDocumentExt, KdlNodeExt};
 use crate::game::levels::{LevelObject, PlayerSpawnPoint};
+use crate::game::music;
+use crate::game::music::{BackgroundMusic, BackgroundMusicTrigger};
 use avian3d::prelude::*;
 use bevy::asset::LoadContext;
 use bevy::prelude::*;
@@ -34,11 +36,27 @@ pub struct LevelBuildArgs<'a, 'w, 's> {
 pub struct SerialLevel {
     pub spawn: Transform,
     pub finish: Transform,
+    pub default_music: Option<SerialMusic>,
+    pub triggered_music: Vec<SerialTriggeredMusic>,
     pub planes: Vec<SerialPlane>,
     pub texts: Vec<SerialText>,
     pub buttons: Vec<SerialButton>,
     pub button_doors: Vec<SerialButtonDoor>,
     pub dynamic_objects: Vec<SerialDynamicObject>,
+}
+
+#[derive(Debug, Clone, Reflect)]
+#[reflect(Debug, Clone)]
+pub struct SerialMusic {
+    pub audio: Handle<AudioSource>,
+}
+
+#[derive(Debug, Clone, Reflect)]
+#[reflect(Debug, Clone)]
+pub struct SerialTriggeredMusic {
+    pub audio: Handle<AudioSource>,
+    pub dimensions: Vec3,
+    pub trans: Transform,
 }
 
 #[derive(Debug, Clone, Reflect)]
@@ -134,6 +152,22 @@ impl SerialLevel {
             doc.get_transform(&source)
         };
 
+        let default_music = doc
+            .nodes()
+            .iter()
+            .find(|node| node.name().value() == "music")
+            .map_or(Ok(None), |node| {
+                SerialMusic::bind(node, load_context, source.clone()).map(Some)
+            });
+
+        let triggered_music = doc
+            .nodes()
+            .iter()
+            .filter(|node| node.name().value() == "triggered_music")
+            .map(|node| SerialTriggeredMusic::bind(node, load_context, source.clone()))
+            .collect::<Vec<_>>()
+            .merge();
+
         let planes = doc
             .nodes()
             .iter()
@@ -174,9 +208,21 @@ impl SerialLevel {
             .collect::<Vec<_>>()
             .merge();
 
-        let (spawn, finish, planes, texts, buttons, button_doors, dynamic_objects) = (
+        let (
             spawn,
             finish,
+            default_music,
+            triggered_music,
+            planes,
+            texts,
+            buttons,
+            button_doors,
+            dynamic_objects,
+        ) = (
+            spawn,
+            finish,
+            default_music,
+            triggered_music,
             planes,
             texts,
             buttons,
@@ -187,6 +233,8 @@ impl SerialLevel {
 
         Ok(Self {
             spawn,
+            default_music,
+            triggered_music,
             finish,
             planes,
             texts,
@@ -199,6 +247,14 @@ impl SerialLevel {
     pub fn spawn(&self, args: &mut LevelBuildArgs) {
         args.cmd.spawn((LevelObject, PlayerSpawnPoint, self.spawn));
         args.cmd.spawn((LevelObject, FinishPoint, self.finish));
+
+        if let Some(default_music) = &self.default_music {
+            default_music.spawn(args);
+        }
+
+        for triggered_music in self.triggered_music.iter() {
+            triggered_music.spawn(args);
+        }
 
         for plane in self.planes.iter() {
             plane.spawn(args);
@@ -220,6 +276,63 @@ impl SerialLevel {
         for dynamic_object in self.dynamic_objects.iter() {
             dynamic_object.spawn(args);
         }
+    }
+}
+
+impl SerialMusic {
+    pub fn bind(
+        node: &KdlNode,
+        load_context: &mut LoadContext,
+        source: Arc<String>,
+    ) -> Result<Self, KdlBindError> {
+        let audio = node.must_get_handle(0, load_context, &source)?;
+        Ok(Self { audio })
+    }
+
+    pub fn spawn(&self, args: &mut LevelBuildArgs) {
+        args.cmd.spawn((
+            LevelObject,
+            BackgroundMusic(self.audio.id()),
+            music::PLAYBACK_SETTINGS,
+            AudioPlayer(self.audio.clone()),
+        ));
+    }
+}
+
+impl SerialTriggeredMusic {
+    pub fn bind(
+        node: &KdlNode,
+        load_context: &mut LoadContext,
+        source: Arc<String>,
+    ) -> Result<Self, KdlBindError> {
+        let audio = node.must_get_handle(0, load_context, &source);
+
+        let dimensions = node
+            .must_children(&source)
+            .and_then(|doc| doc.must_get("size", &source))
+            .and_then(|node| node.must_get_scale(0, &source));
+
+        let trans = node
+            .must_children(&source)
+            .and_then(|doc| doc.get_transform(&source));
+
+        let (audio, dimensions, trans) = (audio, dimensions, trans).merge()?;
+
+        Ok(Self {
+            audio,
+            dimensions,
+            trans,
+        })
+    }
+
+    pub fn spawn(&self, args: &mut LevelBuildArgs) {
+        args.cmd.spawn((
+            LevelObject,
+            self.trans,
+            BackgroundMusicTrigger(self.audio.clone()),
+            Sensor,
+            Collider::cuboid(self.dimensions.x, self.dimensions.y, self.dimensions.z),
+        ));
     }
 }
 
@@ -419,7 +532,7 @@ impl SerialButtonDoor {
 
         let dimensions = node
             .must_child("size", &source)
-            .and_then(|child| child.must_get_vec3(0, &source));
+            .and_then(|child| child.must_get_scale(0, &source));
 
         let material = node
             .get_handle("material", load_context, &source)
@@ -483,7 +596,7 @@ impl SerialDynamicObject {
         let dimensions = node
             .children()
             .and_then(|children| children.get("size"))
-            .map_or(Ok(None), |size| size.must_get_vec3(0, &source).map(Some))
+            .map_or(Ok(None), |size| size.must_get_scale(0, &source).map(Some))
             .map(|size| size.unwrap_or(Vec3::splat(0.25)));
 
         let (ty, material, trans, dimensions) = (ty, material, trans, dimensions).merge()?;
