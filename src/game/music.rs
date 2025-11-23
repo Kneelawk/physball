@@ -1,9 +1,10 @@
 use crate::game::levels::LevelObject;
 use crate::game::logic::Player;
 use avian3d::prelude::*;
+use bevy::audio::Volume;
 use bevy::prelude::*;
 
-pub const PLAYBACK_SETTINGS: PlaybackSettings = PlaybackSettings::LOOP;
+pub const PLAYBACK_SETTINGS: PlaybackSettings = PlaybackSettings::LOOP.with_volume(Volume::Decibels(-20.0));
 
 #[derive(Debug, Default)]
 pub struct MusicPlugin;

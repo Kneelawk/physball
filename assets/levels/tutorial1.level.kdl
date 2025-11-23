@@ -6,6 +6,8 @@ finish {
     pos 0.0 0.5 -10.0
 }
 
+music preload:background-1
+
 plane 5.0 15.0 {
     pos 0.0 0.0 -5.0
 }
