@@ -5,6 +5,7 @@ use crate::game::levels::finish_point::FinishPoint;
 use crate::game::levels::serial::error::{KdlBindError, MergeKdlBindError};
 use crate::game::levels::serial::kdl_utils::KdlDocumentExt;
 use crate::game::levels::serial::level::button::{SerialButton, SerialButtonDoor};
+use crate::game::levels::serial::level::cuboid::SerialCuboid;
 use crate::game::levels::serial::level::dynamic::SerialDynamicObject;
 use crate::game::levels::serial::level::music::{SerialMusic, SerialTriggeredMusic};
 use crate::game::levels::serial::level::plane::SerialPlane;
@@ -17,6 +18,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 mod button;
+mod cuboid;
 mod dynamic;
 mod music;
 mod plane;
@@ -41,6 +43,7 @@ pub struct SerialLevel {
     pub default_music: Option<SerialMusic>,
     pub triggered_music: Vec<SerialTriggeredMusic>,
     pub planes: Vec<SerialPlane>,
+    pub cuboids: Vec<SerialCuboid>,
     pub texts: Vec<SerialText>,
     pub buttons: Vec<SerialButton>,
     pub button_doors: Vec<SerialButtonDoor>,
@@ -87,6 +90,14 @@ impl SerialLevel {
             .collect::<Vec<_>>()
             .merge();
 
+        let cuboids = doc
+            .nodes()
+            .iter()
+            .filter(|node| node.name().value() == "cuboid")
+            .map(|node| SerialCuboid::bind(node, load_context, source.clone()))
+            .collect::<Vec<_>>()
+            .merge();
+
         let texts = doc
             .nodes()
             .iter()
@@ -125,6 +136,7 @@ impl SerialLevel {
             default_music,
             triggered_music,
             planes,
+            cuboids,
             texts,
             buttons,
             button_doors,
@@ -135,6 +147,7 @@ impl SerialLevel {
             default_music,
             triggered_music,
             planes,
+            cuboids,
             texts,
             buttons,
             button_doors,
@@ -148,6 +161,7 @@ impl SerialLevel {
             triggered_music,
             finish,
             planes,
+            cuboids,
             texts,
             buttons,
             button_doors,
