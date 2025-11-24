@@ -1,0 +1,11 @@
+{
+  "base_color": {
+    "Srgba": {
+      "red": 0,
+      "green": 0.2,
+      "blue": 0.4,
+      "alpha": 1
+    }
+  },
+  "perceptual_roughness": 0.25
+}

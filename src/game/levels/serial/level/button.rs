@@ -72,9 +72,7 @@ impl SerialButtonDoor {
             .and_then(|children| children.must_children("open", &source))
             .and_then(|open| open.get_transform(&source));
 
-        let dimensions = node
-            .must_child("size", &source)
-            .and_then(|child| child.must_get_scale(0, &source));
+        let dimensions = node.must_get_scale(1, &source);
 
         let material = node
             .get_handle("material", load_context, &source)

@@ -251,6 +251,17 @@ pub trait KdlNodeExt {
         ))
     }
 
+    fn get_scale(&self, arg_offset: usize) -> Option<Vec3> {
+        let x = self.get(arg_offset).and_then(KdlValue::as_number)?;
+        let y = self.get(arg_offset + 1).and_then(KdlValue::as_number);
+        let z = self.get(arg_offset + 2).and_then(KdlValue::as_number);
+        Some(Vec3::new(
+            x as f32,
+            y.unwrap_or(x) as f32,
+            z.unwrap_or(x) as f32,
+        ))
+    }
+
     fn must_get_rotation(
         &self,
         arg_offset: usize,

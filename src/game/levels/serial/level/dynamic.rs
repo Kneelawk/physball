@@ -54,13 +54,9 @@ impl SerialDynamicObject {
             })
             .map(|trans| trans.unwrap_or_default());
 
-        let dimensions = node
-            .children()
-            .and_then(|children| children.get("size"))
-            .map_or(Ok(None), |size| size.must_get_scale(0, &source).map(Some))
-            .map(|size| size.unwrap_or(Vec3::splat(0.25)));
+        let dimensions = node.get_scale(0).unwrap_or(Vec3::splat(0.25));
 
-        let (ty, material, trans, dimensions) = (ty, material, trans, dimensions).merge()?;
+        let (ty, material, trans) = (ty, material, trans).merge()?;
 
         Ok(Self {
             ty,

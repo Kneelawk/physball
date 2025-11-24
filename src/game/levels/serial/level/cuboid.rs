@@ -29,10 +29,7 @@ impl SerialCuboid {
                 handle.unwrap_or_else(|| asset_ref::default_plane_material(load_context))
             });
 
-        let dimensions = node
-            .must_children(&source)
-            .and_then(|doc| doc.must_get("size", &source))
-            .and_then(|node| node.must_get_scale(0, &source));
+        let dimensions = node.must_get_scale(0, &source);
 
         let trans = node
             .children()

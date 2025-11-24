@@ -11,9 +11,9 @@
       "path": "levels/tutorial2.level.kdl"
     },
     {
-      "name": "test1",
-      "display": "Test 1",
-      "path": "levels/test1/test1.level.kdl"
+      "name": "level1",
+      "display": "Level 1",
+      "path": "levels/level1/level1.level.kdl"
     }
   ]
 }

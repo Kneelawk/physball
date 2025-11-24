@@ -1,0 +1,172 @@
+spawn {
+    pos 0 1 0
+}
+
+finish {
+    pos 0 0.5 -37.5
+}
+
+// music
+music preload:background-1
+
+triggered_music preload:background-2 5 {
+    pos -17.5 2.5 -12.5
+}
+
+plane 100 type=death {
+    pos 0 -10 0
+}
+
+// anti-cheat plane
+plane 5 10 type=death {
+    pos -15 2.5 -20
+    rot z 90
+}
+
+plane 5 10 material=base.material.json {
+    pos 0 0 -2.5
+}
+
+plane 20 10 material=base.material.json {
+    pos 0 0 -12.5
+}
+
+// center railings
+cuboid 20.2 0.1 0.1 material=railing.material.json {
+    pos 0 0.375 -17.55
+}
+
+cuboid 5.2 0.1 0.1 material=railing.material.json {
+    pos 0 0.375 2.55
+}
+
+cuboid 7.5 0.1 0.1 material=railing.material.json {
+    pos -6.35 0.375 -7.45
+}
+
+cuboid 7.5 0.1 0.1 material=railing.material.json {
+    pos 6.35 0.375 -7.45
+}
+
+cuboid 0.1 0.1 10 material=railing.material.json {
+    pos -2.55 0.375 -2.5
+}
+
+cuboid 0.1 0.1 10 material=railing.material.json {
+    pos 2.55 0.375 -2.5
+}
+
+cuboid 0.1 0.1 2.5 material=railing.material.json {
+    pos -10.05 0.375 -8.75
+}
+
+cuboid 0.1 0.1 2.5 material=railing.material.json {
+    pos 10.05 0.375 -8.75
+}
+
+cuboid 0.1 0.1 2.5 material=railing.material.json {
+    pos -10.05 0.375 -16.25
+}
+
+cuboid 0.1 0.1 2.5 material=railing.material.json {
+    pos 10.05 0.375 -16.25
+}
+
+// left wing
+plane 10 5 material=base.material.json {
+    pos -15 0 -12.5
+}
+
+plane 5 30 material=base.material.json {
+    pos -22.5 0 -25
+}
+
+plane 22.5 5 material=base.material.json {
+    pos -8.75 0 -37.5
+}
+
+// left wing railings
+cuboid 4.9 0.1 0.1 material=railing.material.json {
+    pos -12.55 0.375 -9.95
+}
+
+cuboid 4.9 0.1 0.1 material=railing.material.json {
+    pos -12.55 0.375 -15.05
+}
+
+cuboid 10.1 0.1 0.1 material=railing.material.json {
+    pos -20.05 -0.05 -9.95
+}
+
+cuboid 4.9 0.1 0.1 material=railing.material.json {
+    pos -17.45 -0.05 -15.05
+}
+
+cuboid 0.1 0.1 30 material=railing.material.json {
+    pos -25.05 -0.05 -25
+}
+
+cuboid 0.1 0.1 20 material=railing.material.json {
+    pos -19.95 -0.05 -25
+}
+
+cuboid 22.5 0.1 0.1 material=railing.material.json {
+    pos -8.65 -0.05 -34.95
+}
+
+cuboid 27.7 0.1 0.1 material=railing.material.json {
+    pos -11.25 -0.05 -40.05
+}
+
+cuboid 0.1 0.1 5 material=railing.material.json {
+    pos 2.55 -0.05 -37.5
+}
+
+// right wing
+plane 10 5 material=base.material.json {
+    pos 14.9384 0.7822 -12.5
+    rot z 9
+}
+
+// right wing railings
+cuboid 9.9 0.1 0.1 material=railing.material.json {
+    pos 14.9812 1.1487 -9.95
+    rot z 9
+}
+
+cuboid 9.9 0.1 0.1 material=railing.material.json {
+    pos 14.9812 1.1487 -15.05
+    rot z 9
+}
+
+// buttons and doors
+button left {
+    pos -9.5 0 -17
+}
+
+button_door left 0.5 2.5 5 material=base.material.json {
+    default {
+        pos -15 1.25 -12.5
+    }
+    open {
+        pos -15 -1.5 -12.5
+    }
+}
+
+button right {
+    pos 9.5 0 -17
+}
+
+button_door right 0.5 2.5 5 material=base.material.json {
+    default {
+        pos 15 1.75 -12.5
+    }
+    open {
+        pos 15 -0.75 -12.5
+    }
+}
+
+// dynamics
+dyn material=ball.material.json {
+    pos 17.5 2.0 -12.5
+}

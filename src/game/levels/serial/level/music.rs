@@ -51,10 +51,7 @@ impl SerialTriggeredMusic {
     ) -> Result<Self, KdlBindError> {
         let audio = node.must_get_handle(0, load_context, &source);
 
-        let dimensions = node
-            .must_children(&source)
-            .and_then(|doc| doc.must_get("size", &source))
-            .and_then(|node| node.must_get_scale(0, &source));
+        let dimensions = node.must_get_scale(1, &source);
 
         let trans = node
             .must_children(&source)
