@@ -3,15 +3,11 @@ use crate::game::levels::LevelObject;
 use crate::game::levels::serial::error::{KdlBindError, MergeKdlBindError};
 use crate::game::levels::serial::kdl_utils::{KdlDocumentExt, KdlNodeExt};
 use crate::game::levels::serial::level::{DEFAULT_TEXT_PT, LevelBuildArgs};
-use bevy::asset::{Handle, LoadContext};
-use bevy::math::Vec2;
-use bevy::mesh::Mesh3d;
-use bevy::pbr::{MeshMaterial3d, StandardMaterial};
-use bevy::prelude;
-use bevy::prelude::{Font, Reflect, Transform};
+use bevy::prelude::*;
 use bevy_rich_text3d::{Text3d, Text3dStyling, TextAlign};
 use kdl::KdlNode;
 use std::sync::Arc;
+use bevy::asset::LoadContext;
 use strum::VariantArray;
 use tracing::warn;
 
@@ -41,7 +37,7 @@ impl SerialText {
         node: &KdlNode,
         load_context: &mut LoadContext,
         source: Arc<String>,
-    ) -> prelude::Result<Self, KdlBindError> {
+    ) -> Result<Self, KdlBindError> {
         let text = node
             .must_get_string(0, &source)
             .map(|text| text.to_string());

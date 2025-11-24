@@ -4,13 +4,9 @@ use crate::game::levels::button::ButtonPresser;
 use crate::game::levels::serial::error::{KdlBindError, MergeKdlBindError};
 use crate::game::levels::serial::kdl_utils::{KdlDocumentExt, KdlNodeExt};
 use crate::game::levels::serial::level::LevelBuildArgs;
-use avian3d::prelude::{Collider, RigidBody};
-use bevy::asset::{Handle, LoadContext};
-use bevy::math::Vec3;
-use bevy::mesh::{Mesh, Mesh3d};
-use bevy::pbr::{MeshMaterial3d, StandardMaterial};
-use bevy::prelude;
-use bevy::prelude::{Cuboid, Reflect, Sphere, Transform};
+use avian3d::prelude::*;
+use bevy::asset::LoadContext;
+use bevy::prelude::*;
 use kdl::KdlNode;
 use std::sync::Arc;
 use strum::VariantArray;
@@ -40,7 +36,7 @@ impl SerialDynamicObject {
         node: &KdlNode,
         load_context: &mut LoadContext,
         source: Arc<String>,
-    ) -> prelude::Result<Self, KdlBindError> {
+    ) -> Result<Self, KdlBindError> {
         let ty = node
             .get_variant("type", DynamicObjectType::VARIANTS, &source)
             .map(|ty| ty.copied().unwrap_or_default());

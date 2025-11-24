@@ -9,6 +9,8 @@ use bevy::prelude::*;
 use kdl::KdlNode;
 use std::sync::Arc;
 
+#[derive(Debug, Clone, Reflect)]
+#[reflect(Debug, Clone)]
 pub struct SerialCuboid {
     pub material: Handle<StandardMaterial>,
     pub dimensions: Vec3,
@@ -51,7 +53,7 @@ impl SerialCuboid {
             LevelObject,
             self.trans,
             Mesh3d(args.assets.add(Cuboid::from_size(self.dimensions).into())),
-            MeshMaterial3d(self.material),
+            MeshMaterial3d(self.material.clone()),
             RigidBody::Static,
             Collider::cuboid(self.dimensions.x, self.dimensions.y, self.dimensions.z),
         ));

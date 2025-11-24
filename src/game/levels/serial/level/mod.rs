@@ -185,6 +185,10 @@ impl SerialLevel {
             plane.spawn(args);
         }
 
+        for cuboid in self.cuboids.iter() {
+            cuboid.spawn(args);
+        }
+
         for text in self.texts.iter() {
             text.spawn(args);
         }

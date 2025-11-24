@@ -3,13 +3,9 @@ use crate::game::levels::button::{ControlledBy, LevelButton, LevelButtonDoor};
 use crate::game::levels::serial::error::{KdlBindError, MergeKdlBindError};
 use crate::game::levels::serial::kdl_utils::{KdlDocumentExt, KdlNodeExt};
 use crate::game::levels::serial::level::LevelBuildArgs;
-use avian3d::prelude::{Collider, RigidBody};
-use bevy::asset::{Handle, LoadContext};
-use bevy::math::Vec3;
-use bevy::mesh::Mesh3d;
-use bevy::pbr::{MeshMaterial3d, StandardMaterial};
-use bevy::prelude;
-use bevy::prelude::{Cuboid, Entity, Reflect, Transform};
+use avian3d::prelude::*;
+use bevy::asset::LoadContext;
+use bevy::prelude::*;
 use kdl::KdlNode;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -36,7 +32,7 @@ impl SerialButton {
         node: &KdlNode,
         _load_context: &mut LoadContext,
         source: Arc<String>,
-    ) -> prelude::Result<Self, KdlBindError> {
+    ) -> Result<Self, KdlBindError> {
         let name = node
             .must_get_string(0, &source)
             .map(|name| name.to_string());
@@ -61,7 +57,7 @@ impl SerialButtonDoor {
         node: &KdlNode,
         load_context: &mut LoadContext,
         source: Arc<String>,
-    ) -> prelude::Result<Self, KdlBindError> {
+    ) -> Result<Self, KdlBindError> {
         let name = node
             .must_get_string(0, &source)
             .map(|name| name.to_string());

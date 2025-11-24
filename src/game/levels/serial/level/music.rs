@@ -2,13 +2,10 @@ use crate::game::levels::LevelObject;
 use crate::game::levels::serial::error::{KdlBindError, MergeKdlBindError};
 use crate::game::levels::serial::kdl_utils::{KdlDocumentExt, KdlNodeExt};
 use crate::game::levels::serial::level::LevelBuildArgs;
-use crate::game::music::{BackgroundMusic, BackgroundMusicTrigger};
-use avian3d::prelude::{Collider, Sensor};
-use bevy::asset::{Handle, LoadContext};
-use bevy::audio::{AudioPlayer, AudioSource};
-use bevy::math::Vec3;
-use bevy::prelude;
-use bevy::prelude::{Reflect, Transform};
+use crate::game::music::{BackgroundMusic, BackgroundMusicTrigger, PLAYBACK_SETTINGS};
+use avian3d::prelude::*;
+use bevy::asset::LoadContext;
+use bevy::prelude::*;
 use kdl::KdlNode;
 use std::sync::Arc;
 
@@ -31,7 +28,7 @@ impl SerialMusic {
         node: &KdlNode,
         load_context: &mut LoadContext,
         source: Arc<String>,
-    ) -> prelude::Result<Self, KdlBindError> {
+    ) -> Result<Self, KdlBindError> {
         let audio = node.must_get_handle(0, load_context, &source)?;
         Ok(Self { audio })
     }
@@ -40,7 +37,7 @@ impl SerialMusic {
         args.cmd.spawn((
             LevelObject,
             BackgroundMusic(self.audio.id()),
-            music::PLAYBACK_SETTINGS,
+            PLAYBACK_SETTINGS,
             AudioPlayer(self.audio.clone()),
         ));
     }
@@ -51,7 +48,7 @@ impl SerialTriggeredMusic {
         node: &KdlNode,
         load_context: &mut LoadContext,
         source: Arc<String>,
-    ) -> prelude::Result<Self, KdlBindError> {
+    ) -> Result<Self, KdlBindError> {
         let audio = node.must_get_handle(0, load_context, &source);
 
         let dimensions = node
