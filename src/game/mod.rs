@@ -47,6 +47,7 @@ pub fn physball_client_main() -> AppExit {
                             maximize: false,
                             close: true,
                         },
+                        name: Some("physball".to_string()),
                         canvas: Some(format!("#{CANVAS_ID}")),
                         ..default()
                     }),

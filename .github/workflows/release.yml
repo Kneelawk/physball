@@ -85,16 +85,18 @@ jobs:
         run: cargo install --git https://github.com/TheBevyFlock/bevy_cli --rev ${{ env.BEVY_CLI_VERSION }} --locked bevy_cli
       - name: Build
         run: bevy build --release --yes web --bundle
-      - name: Upload Build as Artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: target/bevy_web/web-release/${{ env.BINARY_NAME }}/
-      - name: Deploy GitHub Pages
-        uses: actions/deploy-pages@v4
       - name: Create Dist Directory
         run: mkdir dist
       - name: Copy Bundle
         run: cp  -r target/bevy_web/web-release/${{ env.BINARY_NAME }}/* dist/
+      - name: Copy Favicon
+        run: cp assets/icon-64.png dist/favicon.png
+      - name: Upload Build as Artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/
+      - name: Deploy GitHub Pages
+        uses: actions/deploy-pages@v4
       - name: Zip Dist Directory
         run: zip -vr ../${{ env.BINARY_NAME }}-${{ github.ref_name }}-${{ steps.date.outputs.date }}-web.zip *
         working-directory: dist
