@@ -161,7 +161,7 @@ fn update_grounded(mut cmd: Commands, player: Entity, collisions: Collisions) {
                 }
             })
         })
-        .any(|hit| hit.angle_between(Vec3::Y).abs() <= PI * 2.0 / 3.0);
+        .any(|hit| hit.angle_between(Vec3::Y).abs() <= PI / 3.0);
 
     if is_grounded {
         cmd.entity(player).insert(Grounded);
