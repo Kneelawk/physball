@@ -140,7 +140,7 @@ cuboid 9.9 0.1 0.1 material=railing.material.json {
 }
 
 // buttons and doors
-button left {
+button left on=button.on.material.json off=button.off.material.json {
     pos -9.5 0 -17
 }
 
@@ -153,7 +153,7 @@ button_door left 0.5 2.5 5 material=base.material.json {
     }
 }
 
-button right {
+button right on=button.on.material.json off=button.off.material.json {
     pos 9.5 0 -17
 }
 

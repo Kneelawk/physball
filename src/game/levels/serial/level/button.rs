@@ -15,6 +15,8 @@ use std::sync::Arc;
 pub struct SerialButton {
     pub name: String,
     pub trans: Transform,
+    pub off_material: Handle<StandardMaterial>,
+    pub on_material: Handle<StandardMaterial>,
 }
 
 #[derive(Debug, Clone, Reflect)]
@@ -30,25 +32,47 @@ pub struct SerialButtonDoor {
 impl SerialButton {
     pub fn bind(
         node: &KdlNode,
-        _load_context: &mut LoadContext,
+        load_context: &mut LoadContext,
         source: Arc<String>,
     ) -> Result<Self, KdlBindError> {
         let name = node
             .must_get_string(0, &source)
             .map(|name| name.to_string());
 
+        let off_material = node.get_handle("off", load_context, &source).map(|handle| {
+            handle.unwrap_or_else(|| asset_ref::default_plane_material(load_context))
+        });
+
+        let on_material = node.get_handle("on", load_context, &source).map(|handle| {
+            handle.unwrap_or_else(|| asset_ref::default_plane_material(load_context))
+        });
+
         let trans = node
             .children()
             .map_or(Ok(None), |doc| doc.get_transform(&source).map(Some))
             .map(|trans| trans.unwrap_or_default());
 
-        let (name, trans) = (name, trans).merge()?;
+        let (name, trans, off_material, on_material) =
+            (name, trans, off_material, on_material).merge()?;
 
-        Ok(Self { name, trans })
+        Ok(Self {
+            name,
+            trans,
+            off_material,
+            on_material,
+        })
     }
 
     pub fn spawn(&self, args: &mut LevelBuildArgs) -> Entity {
-        args.cmd.spawn((LevelButton, self.trans)).id()
+        args.cmd
+            .spawn((
+                LevelButton {
+                    on_material: self.on_material.clone(),
+                    off_material: self.off_material.clone(),
+                },
+                self.trans,
+            ))
+            .id()
     }
 }
 

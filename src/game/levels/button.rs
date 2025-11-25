@@ -35,8 +35,8 @@ pub struct ButtonPresser;
 #[component(storage = "SparseSet")]
 pub struct PressedButton;
 
-#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
-#[reflect(Debug, Default, Clone, PartialEq, Hash, Component)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+#[reflect(Debug, Clone, PartialEq, Hash, Component)]
 #[require(
     LevelObject,
     Transform,
@@ -44,10 +44,13 @@ pub struct PressedButton;
     PlaybackSettings = PlaybackSettings::REMOVE.with_spatial(true)
 )]
 #[component(on_insert = level_button_on_insert)]
-pub struct LevelButton;
+pub struct LevelButton {
+    pub on_material: Handle<StandardMaterial>,
+    pub off_material: Handle<StandardMaterial>,
+}
 
-#[derive(Debug, Default, Clone, PartialEq, Component, Reflect)]
-#[reflect(Debug, Default, Clone, PartialEq, Component)]
+#[derive(Debug, Clone, PartialEq, Component, Reflect)]
+#[reflect(Debug, Clone, PartialEq, Component)]
 #[require(
     LevelObject,
     Transform,
@@ -56,6 +59,8 @@ pub struct LevelButton;
 )]
 #[component(on_insert = level_button_plate_on_insert)]
 pub struct LevelButtonPlate {
+    pub default_material: Handle<StandardMaterial>,
+    pub depressed_material: Handle<StandardMaterial>,
     pub default_trans: Transform,
     pub depressed_trans: Transform,
     pub depression: f32,
@@ -105,6 +110,11 @@ fn level_button_on_insert(mut world: DeferredWorld, ctx: HookContext) {
         .get_resource::<Preloads>()
         .expect("missing preloads resource");
     let button_holder = preloads.button_holder();
+    let button = world
+        .get::<LevelButton>(ctx.entity)
+        .expect("level button missing on insert");
+    let default_material = button.off_material.clone();
+    let depressed_material = button.on_material.clone();
     let mut binding = world.commands();
     let mut commands = binding.entity(ctx.entity);
     commands.with_children(|b| {
@@ -112,9 +122,11 @@ fn level_button_on_insert(mut world: DeferredWorld, ctx: HookContext) {
             .observe(level_button_on_scene_load);
         b.spawn((
             LevelButtonPlate {
+                default_material,
+                depressed_material,
                 default_trans: Transform::from_xyz(0.0, 0.035, 0.0),
                 depressed_trans: Transform::from_xyz(0.0, -0.005, 0.0),
-                ..default()
+                depression: 0.0,
             },
             Transform::from_xyz(0.0, 0.035, 0.0),
         ));
@@ -150,6 +162,25 @@ fn level_button_plate_on_insert(mut world: DeferredWorld, ctx: HookContext) {
     let mut binding = world.commands();
     let mut commands = binding.entity(ctx.entity);
     commands.insert_if_new(SceneRoot(button_plate));
+    commands.observe(level_button_plate_on_scene_load);
+}
+
+fn level_button_plate_on_scene_load(
+    scene: On<SceneInstanceReady>,
+    level_buttons: Query<&LevelButtonPlate>,
+    children: Query<&Children>,
+    mut mesh_materials: Query<&mut MeshMaterial3d<StandardMaterial>>,
+) {
+    let Ok(plate) = level_buttons.get(scene.entity) else {
+        return;
+    };
+
+    set_material(
+        scene.entity,
+        &plate.default_material,
+        &children,
+        &mut mesh_materials,
+    );
 }
 
 fn detect_button_press(
@@ -158,6 +189,7 @@ fn detect_button_press(
     children: Query<&Children>,
     controlled: Query<&ControlledObjects>,
     mut button_plates: Query<(&mut LevelButtonPlate, &mut Transform), Without<LevelButtonDoor>>,
+    mut mesh_materials: Query<&mut MeshMaterial3d<StandardMaterial>>,
     mut button_sensors: Query<(&CollidingEntities, &mut LevelButtonSensor)>,
     button_pressers: Query<(), With<ButtonPresser>>,
     mut button_doors: Query<(&mut LevelButtonDoor, &mut Transform), Without<LevelButtonPlate>>,
@@ -188,6 +220,8 @@ fn detect_button_press(
             .get_mut(sensor_entity)
             .expect("button_sensors does not have a contained entity");
         let LevelButtonPlate {
+            default_material,
+            depressed_material,
             default_trans,
             depressed_trans,
             depression,
@@ -215,8 +249,20 @@ fn detect_button_press(
 
             if sensor_pressed {
                 commands.insert((AudioPlayer::new(preloads.button_on()), PLAYBACK_SETTINGS));
+                set_material(
+                    plate_entity,
+                    &depressed_material,
+                    &children,
+                    &mut mesh_materials,
+                );
             } else {
                 commands.insert((AudioPlayer::new(preloads.button_off()), PLAYBACK_SETTINGS));
+                set_material(
+                    plate_entity,
+                    &default_material,
+                    &children,
+                    &mut mesh_materials,
+                );
             }
         }
 
@@ -252,5 +298,18 @@ fn detect_button_press(
         }
 
         button_sensor.prev_sensor_pressed = sensor_pressed;
+    }
+}
+
+fn set_material(
+    root: Entity,
+    material: &Handle<StandardMaterial>,
+    children: &Query<&Children>,
+    mesh_materials: &mut Query<&mut MeshMaterial3d<StandardMaterial>>,
+) {
+    for child in children.iter_descendants(root) {
+        if let Ok(mut mesh_material) = mesh_materials.get_mut(child) {
+            mesh_material.0 = material.clone();
+        }
     }
 }
