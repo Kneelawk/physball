@@ -1,6 +1,7 @@
 // desktop module is used by most of the other modules
 mod desktop;
-#[cfg(feature = "input_web")]
+mod gamepad;
+#[cfg(feature = "input-web")]
 mod web;
 
 use crate::game::game_state::GameState;
@@ -13,22 +14,24 @@ impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<PlayerInput>();
 
-        #[cfg(feature = "input_desktop")]
+        #[cfg(feature = "input-desktop")]
         desktop::build(app);
 
-        #[cfg(feature = "input_web")]
+        #[cfg(feature = "input-web")]
         web::build(app);
+
+        gamepad::build(app);
     }
 }
 
 pub fn game_started(state: &mut NextState<GameState>) {
-    #[cfg(not(any(feature = "input_desktop", feature = "input_web")))]
-    compile_error!("Either 'input_desktop' or 'input_web' feature must be enabled");
+    #[cfg(not(any(feature = "input-desktop", feature = "input-web")))]
+    compile_error!("Either 'input-desktop' or 'input-web' feature must be enabled");
 
-    #[cfg(feature = "input_desktop")]
+    #[cfg(feature = "input-desktop")]
     desktop::game_started(state);
 
-    #[cfg(feature = "input_web")]
+    #[cfg(feature = "input-web")]
     web::game_started(state);
 }
 

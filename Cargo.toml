@@ -9,16 +9,17 @@ hot-reload = ["bevy/file_watcher"]
 quit-button = []
 window-resize = []
 
-input_desktop = []
-input_web = ["web-sys"]
+input-desktop = []
+input-web = ["web-sys"]
+input-gamepad = []
 
 web-panic-hook = ["console_error_panic_hook"]
 web-storage = ["web-sys", "web-sys/Storage"]
 
 # Physball Platforms
-web = ["input_web", "web-panic-hook", "web-storage"]
+web = ["input-web", "web-panic-hook", "web-storage"]
 webgpu = ["web", "bevy/webgpu"]
-desktop = ["input_desktop", "hot-reload", "quit-button", "window-resize"]
+desktop = ["input-desktop", "input-gamepad", "hot-reload", "quit-button", "window-resize"]
 
 default = ["desktop"]
 

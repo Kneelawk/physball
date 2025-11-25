@@ -2,7 +2,6 @@ use crate::game::game_state::GameState;
 use crate::game::input::PlayerInput;
 use crate::game::levels::{LevelReadyEvent, LevelRestartEvent, PlayerSpawnPoint};
 use crate::game::logic::{Player, spawn_transform};
-use crate::game::settings::GamePrefs;
 use crate::game::state::AppState;
 use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::post_process::bloom::{Bloom, BloomCompositeMode};
@@ -67,14 +66,11 @@ fn setup_camera(mut cmd: Commands) {
 fn rotate_camera(
     mut camera: Single<&mut PlayerCamera>,
     mut mouse: MessageReader<PlayerInput>,
-    prefs: Res<GamePrefs>,
 ) {
-    let mouse_speed = prefs.mouse_speed / 1000.0;
     for mouse in mouse.read() {
         if let PlayerInput::CameraMovement(delta) = mouse {
-            camera.yaw += -delta.x * mouse_speed;
-            camera.pitch =
-                (camera.pitch - delta.y * mouse_speed).clamp(-PI / 2.0 + 0.001, PI / 2.0 - 0.001);
+            camera.yaw += -delta.x;
+            camera.pitch = (camera.pitch - delta.y).clamp(-PI / 2.0 + 0.001, PI / 2.0 - 0.001);
         }
     }
 }

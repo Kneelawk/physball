@@ -9,6 +9,11 @@ use bevy::ui_widgets::{Activate, SliderValue, ValueChange, observe};
 pub const MIN_MOUSE_SPEED: f32 = 0.0;
 pub const MAX_MOUSE_SPEED: f32 = 100.0;
 
+#[cfg(feature = "input-gamepad")]
+pub const MIN_GAMEPAD_LOOK_SPEED: f32 = 0.0;
+#[cfg(feature = "input-gamepad")]
+pub const MAX_GAMEPAD_LOOK_SPEED: f32 = 1000.0;
+
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct OptionsMenuPlugin;
 
@@ -20,8 +25,24 @@ impl Plugin for OptionsMenuPlugin {
             .add_systems(OnEnter(PauseMenuState::Options), set_options_menu)
             .add_systems(OnExit(PauseMenuState::Options), disable_options_menu)
             .add_systems(OnEnter(OptionsMenuState::Main), setup_main_options_menu)
-            .add_systems(Update, update_mouse_speed_slider)
-            .add_systems(Update, update_mouse_speed_text);
+            .add_systems(
+                Update,
+                (
+                    update_speed_slider::<MouseSpeedSlider>(|prefs| prefs.mouse_speed),
+                    update_speed_text::<MouseSpeedText>(|prefs| prefs.mouse_speed),
+                ),
+            );
+
+        #[cfg(feature = "input-gamepad")]
+        {
+            app.add_systems(
+                Update,
+                (
+                    update_speed_slider::<GamepadLookSpeedSlider>(|prefs| prefs.gamepad_look_speed),
+                    update_speed_text::<GamepadLookSpeedText>(|prefs| prefs.gamepad_look_speed),
+                ),
+            );
+        }
     }
 }
 
@@ -47,6 +68,16 @@ pub struct MouseSpeedSlider;
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Component, Reflect)]
 #[reflect(Debug, Default, Clone, PartialEq, Component)]
 pub struct MouseSpeedText;
+
+#[cfg(feature = "input-gamepad")]
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Component)]
+pub struct GamepadLookSpeedSlider;
+
+#[cfg(feature = "input-gamepad")]
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Component, Reflect)]
+#[reflect(Debug, Default, Clone, PartialEq, Component)]
+pub struct GamepadLookSpeedText;
 
 fn set_options_menu(mut next_state: ResMut<NextState<OptionsMenuState>>) {
     next_state.set(OptionsMenuState::Main);
@@ -74,12 +105,41 @@ fn setup_main_options_menu(mut cmd: Commands, fonts: Res<Preloads>, prefs: Res<G
                 },
                 children![
                     {
-                        #[cfg(feature = "hot-reload")]
+                        #[cfg(feature = "window-resize")]
                         {
                             window_resize_section(&fonts)
                         }
                     },
-                    mouse_sensitivity_section(&fonts, &prefs),
+                    sensitivity_section(
+                        &fonts,
+                        "Mouse Sensitivity",
+                        prefs.mouse_speed,
+                        MIN_MOUSE_SPEED,
+                        MAX_MOUSE_SPEED,
+                        |prefs, value| prefs.mouse_speed = value,
+                        |prefs| prefs.mouse_speed = DEFAULT_MOUSE_SPEED,
+                        MouseSpeedSlider,
+                        MouseSpeedText
+                    ),
+                    {
+                        #[cfg(feature = "input-gamepad")]
+                        {
+                            sensitivity_section(
+                                &fonts,
+                                "Gamepad Look Sensitivity",
+                                prefs.gamepad_look_speed,
+                                MIN_GAMEPAD_LOOK_SPEED,
+                                MAX_GAMEPAD_LOOK_SPEED,
+                                |prefs, value| prefs.gamepad_look_speed = value,
+                                |prefs| {
+                                    prefs.gamepad_look_speed =
+                                        crate::game::settings::DEFAULT_GAMEPAD_LOOK_SPEED
+                                },
+                                GamepadLookSpeedSlider,
+                                GamepadLookSpeedText,
+                            )
+                        }
+                    }
                 ]
             ),
             (
@@ -100,9 +160,19 @@ fn setup_main_options_menu(mut cmd: Commands, fonts: Res<Preloads>, prefs: Res<G
     ));
 }
 
-fn mouse_sensitivity_section(fonts: &Preloads, prefs: &GamePrefs) -> impl Bundle {
-    let min_mouse_speed_slider = (MIN_MOUSE_SPEED + 1.0).ln();
-    let max_mouse_speed_slider = (MAX_MOUSE_SPEED + 1.0).ln();
+fn sensitivity_section(
+    fonts: &Preloads,
+    title: impl ToString,
+    speed: f32,
+    min: f32,
+    max: f32,
+    mutator: impl Fn(&mut GamePrefs, f32) + Send + Sync + 'static,
+    assign_default: impl Fn(&mut GamePrefs) + Send + Sync + 'static,
+    speed_slider: impl Bundle,
+    speed_text: impl Bundle,
+) -> impl Bundle {
+    let min_speed_slider = (min + 1.0).ln();
+    let max_speed_slider = (max + 1.0).ln();
 
     (
         Node {
@@ -125,7 +195,7 @@ fn mouse_sensitivity_section(fonts: &Preloads, prefs: &GamePrefs) -> impl Bundle
                 },
                 children![
                     (
-                        Text::new("Mouse Sensitivity"),
+                        Text::new(title.to_string()),
                         TextFont {
                             font: fonts.text_font(),
                             font_size: 32.0,
@@ -134,8 +204,8 @@ fn mouse_sensitivity_section(fonts: &Preloads, prefs: &GamePrefs) -> impl Bundle
                         TextColor(TEXT_COLOR),
                     ),
                     (
-                        MouseSpeedText,
-                        Text::new(format!("{:.2}", prefs.mouse_speed)),
+                        speed_text,
+                        Text::new(format!("{:.2}", speed)),
                         TextFont {
                             font: fonts.text_font(),
                             font_size: 32.0,
@@ -157,23 +227,20 @@ fn mouse_sensitivity_section(fonts: &Preloads, prefs: &GamePrefs) -> impl Bundle
                 },
                 children![
                     (
-                        slider(
-                            min_mouse_speed_slider,
-                            max_mouse_speed_slider,
-                            (prefs.mouse_speed + 1.0).ln()
-                        ),
-                        MouseSpeedSlider,
+                        slider(min_speed_slider, max_speed_slider, (speed + 1.0).ln()),
+                        speed_slider,
                         observe(
-                            |value_change: On<ValueChange<f32>>, mut prefs: ResMut<GamePrefs>| {
-                                prefs.mouse_speed = value_change.value.exp() - 1.0;
+                            move |value_change: On<ValueChange<f32>>,
+                                  mut prefs: ResMut<GamePrefs>| {
+                                mutator(&mut *prefs, value_change.value.exp() - 1.0);
                                 prefs.save();
                             }
                         )
                     ),
                     (
                         button(fonts, "Reset", ButtonSettings::small()),
-                        observe(|_on: On<Activate>, mut prefs: ResMut<GamePrefs>| {
-                            prefs.mouse_speed = DEFAULT_MOUSE_SPEED;
+                        observe(move |_on: On<Activate>, mut prefs: ResMut<GamePrefs>| {
+                            assign_default(&mut *prefs);
                             prefs.save();
                         })
                     )
@@ -251,24 +318,24 @@ fn window_resize_button(fonts: &Preloads, width: u32, height: u32) -> impl Bundl
     )
 }
 
-fn update_mouse_speed_slider(
-    prefs: Res<GamePrefs>,
-    slider: Single<Entity, With<MouseSpeedSlider>>,
-    mut cmd: Commands,
-) {
-    if prefs.is_changed() {
-        cmd.entity(*slider)
-            .insert(SliderValue((prefs.mouse_speed + 1.0).ln()));
+fn update_speed_slider<S: Component>(
+    getter: impl Fn(&GamePrefs) -> f32 + Send + Sync + 'static,
+) -> impl FnMut(Res<GamePrefs>, Single<Entity, With<S>>, Commands) {
+    move |prefs, slider, mut cmd| {
+        if prefs.is_changed() {
+            cmd.entity(*slider)
+                .insert(SliderValue((getter(&prefs) + 1.0).ln()));
+        }
     }
 }
 
-fn update_mouse_speed_text(
-    prefs: Res<GamePrefs>,
-    slider: Single<Entity, With<MouseSpeedText>>,
-    mut cmd: Commands,
-) {
-    if prefs.is_changed() {
-        cmd.entity(*slider)
-            .insert(Text::new(format!("{:.2}", prefs.mouse_speed)));
+fn update_speed_text<S: Component>(
+    getter: impl Fn(&GamePrefs) -> f32 + Send + Sync + 'static,
+) -> impl FnMut(Res<GamePrefs>, Single<Entity, With<S>>, Commands) {
+    move |prefs, slider, mut cmd| {
+        if prefs.is_changed() {
+            cmd.entity(*slider)
+                .insert(Text::new(format!("{:.2}", getter(&prefs))));
+        }
     }
 }

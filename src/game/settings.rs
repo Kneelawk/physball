@@ -7,6 +7,8 @@ use crate::game::dirs::PROJECT_DIRS;
 use std::fs::{OpenOptions, create_dir_all};
 
 pub const DEFAULT_MOUSE_SPEED: f32 = 2.5;
+#[cfg(feature = "input-gamepad")]
+pub const DEFAULT_GAMEPAD_LOOK_SPEED: f32 = 50.0;
 
 #[cfg(not(feature = "web-storage"))]
 const PREFS_FILENAME: &str = "prefs.json";
@@ -17,14 +19,17 @@ const PREFS_KEY: &str = "com.kneelawk.physball/prefs";
 #[derive(Debug, Copy, Clone, PartialEq, Resource, Reflect, Serialize, Deserialize)]
 #[reflect(Debug, Clone, PartialEq, Resource)]
 pub struct GamePrefs {
-    #[cfg(not(feature = "web-storage"))]
+    #[cfg(feature = "window-resize")]
     #[serde(default = "default_window_width")]
     pub window_width: u32,
-    #[cfg(not(feature = "web-storage"))]
+    #[cfg(feature = "window-resize")]
     #[serde(default = "default_window_height")]
     pub window_height: u32,
     #[serde(default = "default_mouse_speed")]
     pub mouse_speed: f32,
+    #[cfg(feature = "input-gamepad")]
+    #[serde(default = "default_gamepad_look_speed")]
+    pub gamepad_look_speed: f32,
 }
 
 impl Default for GamePrefs {
@@ -35,22 +40,29 @@ impl Default for GamePrefs {
             #[cfg(not(feature = "web-storage"))]
             window_height: default_window_height(),
             mouse_speed: default_mouse_speed(),
+            #[cfg(feature = "input-gamepad")]
+            gamepad_look_speed: default_gamepad_look_speed(),
         }
     }
 }
 
-#[cfg(not(feature = "web-storage"))]
+#[cfg(feature = "window-resize")]
 fn default_window_width() -> u32 {
     1280
 }
 
-#[cfg(not(feature = "web-storage"))]
+#[cfg(feature = "window-resize")]
 fn default_window_height() -> u32 {
     720
 }
 
 fn default_mouse_speed() -> f32 {
     DEFAULT_MOUSE_SPEED
+}
+
+#[cfg(feature = "input-gamepad")]
+fn default_gamepad_look_speed() -> f32 {
+    DEFAULT_GAMEPAD_LOOK_SPEED
 }
 
 impl GamePrefs {

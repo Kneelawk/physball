@@ -116,7 +116,7 @@ fn move_player(
         }
     }
 
-    let torque = Vec3::Y.cross(movement.normalize_or_zero());
+    let torque = Vec3::Y.cross(movement);
 
     if torque.length_squared() > 0.001 {
         for mut force in forces {

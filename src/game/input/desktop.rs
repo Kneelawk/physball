@@ -1,5 +1,6 @@
 use super::PlayerInput;
 use crate::game::game_state::GameState;
+use crate::game::settings::GamePrefs;
 use bevy::input::keyboard::Key;
 use bevy::input::mouse::{MouseMotion, MouseWheel};
 use bevy::prelude::*;
@@ -55,16 +56,21 @@ pub fn keyboard_input(mut writer: MessageWriter<PlayerInput>, input: Res<ButtonI
         movement += Vec2::X;
     }
 
-    writer.write(PlayerInput::Movement(movement));
+    writer.write(PlayerInput::Movement(movement.normalize_or_zero()));
 
     if input.pressed(KeyCode::Space) {
         writer.write(PlayerInput::Jump);
     }
 }
 
-pub fn mouse_input(mut writer: MessageWriter<PlayerInput>, mut mouse: MessageReader<MouseMotion>) {
+pub fn mouse_input(
+    mut writer: MessageWriter<PlayerInput>,
+    mut mouse: MessageReader<MouseMotion>,
+    prefs: Res<GamePrefs>,
+) {
+    let mouse_speed = prefs.mouse_speed / 1000.0;
     for mouse in mouse.read() {
-        writer.write(PlayerInput::CameraMovement(mouse.delta));
+        writer.write(PlayerInput::CameraMovement(mouse.delta * mouse_speed));
     }
 }
 
