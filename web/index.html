@@ -63,6 +63,17 @@
             text-align: center;
         }
 
+        .content {
+            width: 100% !important;
+            height: auto !important;
+            aspect-ratio: 16 / 9;
+        }
+
+        .post-content {
+            width: 100%;
+            padding-top: 20px;
+        }
+
         body {
             background-color: var(--web-bg-color);
             color: var(--web-color);
@@ -136,16 +147,26 @@
             encounter
             issues.
 
-            Desktop versions are available at <a href="https://github.com/Kneelawk/physball/releases">https://github.com/Kneelawk/physball/releases</a>.
+            Desktop versions are available at <a target="_blank" href="https://github.com/Kneelawk/physball/releases">https://github.com/Kneelawk/physball/releases</a>.
         </div>
     </div>
 
-    <noscript>JavaScript support is required to run this app</noscript>
-    <div id="loading-screen" class="spinner-holder">
-        <span class="spinner"></span>
+    <div class="content">
+        <noscript>JavaScript support is required to run this app</noscript>
+        <div id="loading-screen" class="spinner-holder">
+            <span class="spinner"></span>
+        </div>
+
+        <canvas id="game"></canvas>
     </div>
 
-    <canvas id="game"></canvas>
+    <div class="post-content">
+        <div class="center-text">
+            If you have the time, I would really appreciate your feedback on my game! Please check out the survey at <a
+                target="_blank"
+                href="https://cryptpad.fr/form/#/2/form/view/loBZz9EW0ottzWhAHrYj9fCCr++HXmRHEH20gt2-tJc/">https://cryptpad.fr/form/#/2/form/view/loBZz9EW0ottzWhAHrYj9fCCr++HXmRHEH20gt2-tJc/</a>.
+        </div>
+    </div>
 </div>
 
 <script type="module">
@@ -233,37 +254,6 @@
     }).then(() => {
         console.log("Game loaded.");
         loading_screen.style.display = "none";
-    });
-</script>
-
-<script type="module">
-    // Hide loading screen when the game starts.
-    const loading_screen = document.getElementById("loading-screen");
-    const observer = new MutationObserver((records) => {
-        for (const record of records) {
-            for (const addedNode of record.addedNodes) {
-                if (addedNode instanceof HTMLCanvasElement) {
-                    if (addedNode.innerText.trim().length === 0) {
-                        // Add compatibility note
-                        addedNode.innerText =
-                            "Canvas support is required to run this app";
-                    }
-
-                    // A new canvas has been created, which means that the game has been loaded
-                    // Hide the loading screen!
-                    loading_screen.style.display = "none";
-                    observer.disconnect();
-                    return;
-                }
-            }
-        }
-    });
-
-    observer.observe(document.body, {
-        subtree: false,
-        childList: true,
-        attributes: false,
-        characterData: false,
     });
 </script>
 </body>
