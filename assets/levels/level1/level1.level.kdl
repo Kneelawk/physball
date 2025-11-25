@@ -10,7 +10,7 @@ finish {
 music preload:background-1
 
 triggered_music preload:background-2 5 {
-    pos -17.5 2.5 -12.5
+    pos -17.75 2.5 -12.5
 }
 
 plane 100 type=death {
