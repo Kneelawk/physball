@@ -2,8 +2,10 @@ use crate::game::input::PlayerInput;
 use crate::game::settings::GamePrefs;
 use bevy::prelude::*;
 
+// TODO: UI navigation
+
 pub fn build(app: &mut App) {
-    app.add_systems(PreUpdate, joystick_input);
+    app.add_systems(PreUpdate, (joystick_input, gamepad_buttons));
 }
 
 pub fn joystick_input(
@@ -28,4 +30,15 @@ pub fn joystick_input(
     let look_speed = prefs.gamepad_look_speed / 1000.0;
     writer.write(PlayerInput::CameraMovement(look * look_speed));
     writer.write(PlayerInput::Movement(move_));
+}
+
+pub fn gamepad_buttons(mut writer: MessageWriter<PlayerInput>, gamepads: Query<&Gamepad>) {
+    for gamepad in gamepads {
+        if gamepad.just_pressed(GamepadButton::South) {
+            writer.write(PlayerInput::Jump);
+        }
+        if gamepad.just_pressed(GamepadButton::Start) {
+            writer.write(PlayerInput::Pause { toggle: true });
+        }
+    }
 }
